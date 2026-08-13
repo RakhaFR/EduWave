@@ -117,6 +117,14 @@ Base URL: `/api/v1`
 | **Lesson** | `POST` | `/api/v1/lessons` | Instructor/Admin | Create a new lesson |
 | **Lesson** | `PUT` | `/api/v1/lessons/{lesson}` | Instructor/Admin | Update lesson content and metadata |
 | **Lesson** | `DELETE` | `/api/v1/lessons/{lesson}` | Instructor/Admin | Delete a lesson |
+| **Exam** | `GET` | `/api/v1/exams/{exam}` | Yes | Show exam details & questions (security suppressed) |
+| **Exam** | `POST` | `/api/v1/exams` | Instructor/Admin | Create a new exam |
+| **Exam** | `PUT` | `/api/v1/exams/{exam}` | Instructor/Admin | Update exam details |
+| **Exam** | `DELETE` | `/api/v1/exams/{exam}` | Instructor/Admin | Delete an exam |
+| **Attempt** | `POST` | `/api/v1/exams/{exam}/attempts` | Yes | Start a new attempt or resume active in-progress attempt |
+| **Attempt** | `POST` | `/api/v1/exams/{exam}/attempts/{attempt}/submit` | Yes | Submit attempt for auto-grading & reward calculation |
+| **Attempt** | `GET` | `/api/v1/exams/{exam}/attempts` | Yes | List authenticated user's attempt history for an exam |
+| **Attempt** | `GET` | `/api/v1/exams/{exam}/attempts/{attempt}` | Yes | View attempt details (suppressed for in-progress, review for completed) |
 
 ---
 
@@ -702,4 +710,153 @@ Mark a lesson completed. Idempotently awards XP on first completion, recalculate
   "meta": null
 }
 ```
+
+---
+
+### 6. Exam & Attempt Endpoints (`/api/v1/exams`, `/api/v1/exams/{exam}/attempts`)
+
+#### `GET /api/v1/exams/{exam}`
+Retrieve exam metadata and question outline.
+> **Security Requirement:** Questions strictly suppress `correct_answer` and `explanation` to prevent answer key leakage.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "x1f2e3d4-5678-90ab-cdef-1234567890ab",
+    "course_id": "c1f2e3d4-5678-90ab-cdef-1234567890ab",
+    "lesson_id": null,
+    "title": "Ujian Akhir: Oceanografi Dasar",
+    "time_limit_sec": 3600,
+    "passing_score": 70,
+    "max_attempts": 3,
+    "pearls_reward": 30,
+    "questions": [
+      {
+        "id": "q1f2e3d4-5678-90ab-cdef-1234567890ab",
+        "question_text": "Apa zona laut yang paling dalam?",
+        "type": "multiple_choice",
+        "options": [
+          { "key": "A", "value": "Pelagis" },
+          { "key": "B", "value": "Hadapelagis" },
+          { "key": "C", "value": "Mesopelagis" }
+        ],
+        "points": 10,
+        "order": 1
+      }
+    ]
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `POST /api/v1/exams/{exam}/attempts`
+Start a new exam attempt or resume an active `in_progress` attempt. Enforces `max_attempts` limit via `ExamAttemptPolicy`.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Success Response (`201 Created` / `200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "attempt_id": "a1f2e3d4-5678-90ab-cdef-1234567890ab",
+    "exam": {
+      "id": "x1f2e3d4-5678-90ab-cdef-1234567890ab",
+      "title": "Ujian Akhir: Oceanografi Dasar",
+      "time_limit_seconds": 3600,
+      "question_count": 10,
+      "passing_score": 70
+    },
+    "questions": [
+      {
+        "id": "q1f2e3d4-5678-90ab-cdef-1234567890ab",
+        "question_text": "Apa zona laut yang paling dalam?",
+        "type": "multiple_choice",
+        "options": [
+          { "key": "A", "value": "Pelagis" },
+          { "key": "B", "value": "Hadapelagis" }
+        ],
+        "points": 10,
+        "order": 1
+      }
+    ],
+    "started_at": "2026-08-13T13:40:00.000000Z",
+    "expires_at": "2026-08-13T14:40:00.000000Z"
+  },
+  "error": null,
+  "meta": null
+}
+```
+* **Error Response (`403 Forbidden` if max attempts exceeded):**
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "MAX_ATTEMPTS_EXCEEDED",
+    "message": "Anda telah mencapai batas maksimal percobaan ujian.",
+    "details": null
+  },
+  "meta": null
+}
+```
+
+---
+
+#### `POST /api/v1/exams/{exam}/attempts/{attempt}/submit`
+Submit answers for auto-grading. Calculates percentage score, determines pass/fail status, and idempotently awards `pearls_reward` on pass.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Request Body:**
+```json
+{
+  "answers": [
+    { "question_id": "q1f2e3d4-5678-90ab-cdef-1234567890ab", "selected_key": "B" }
+  ]
+}
+```
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "attempt_id": "a1f2e3d4-5678-90ab-cdef-1234567890ab",
+    "score": 85.00,
+    "passed": true,
+    "passing_score": 70,
+    "pearls_earned": 30,
+    "xp_earned": 170,
+    "correct_count": 8,
+    "total_count": 10,
+    "time_taken_seconds": 1800,
+    "results": [
+      {
+        "question_id": "q1f2e3d4-5678-90ab-cdef-1234567890ab",
+        "is_correct": true,
+        "your_answer": "B",
+        "correct_answer": "B",
+        "explanation": "Zona Hadapelagis (t Palung Laut) adalah zona terdalam."
+      }
+    ]
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `GET /api/v1/exams/{exam}/attempts`
+List history of attempt submissions for current user.
+
+---
+
+#### `GET /api/v1/exams/{exam}/attempts/{attempt}`
+View attempt payload. Returns in-progress state (with suppressed answer keys) if `submitted_at` is null, or review payload (with score & explanations) if completed.
+
 

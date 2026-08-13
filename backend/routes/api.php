@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\AttemptController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\ExamController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -46,7 +48,7 @@ Route::prefix('v1')->group(function () {
     Route::get('courses/{course}', [CourseController::class, 'show']);
 
     // ──────────────────────────────────────────────────────
-    // Course Routes (Authenticated)
+    // Course, Lesson, Enrollment, Exam & Attempt Routes (Authenticated)
     // ──────────────────────────────────────────────────────
     Route::middleware('auth:sanctum')->group(function () {
         // Enrollment
@@ -61,6 +63,13 @@ Route::prefix('v1')->group(function () {
         Route::get ('lessons/{lesson}',          [LessonController::class, 'show']);
         Route::post('lessons/{lesson}/complete', [LessonController::class, 'complete']);
 
+        // Exam access & attempt management
+        Route::get ('exams/{exam}',                           [ExamController::class, 'show']);
+        Route::post('exams/{exam}/attempts',                  [AttemptController::class, 'start']);
+        Route::post('exams/{exam}/attempts/{attempt}/submit', [AttemptController::class, 'submit']);
+        Route::get ('exams/{exam}/attempts',                  [AttemptController::class, 'index']);
+        Route::get ('exams/{exam}/attempts/{attempt}',        [AttemptController::class, 'show']);
+
         // Admin / Instructor only — course management
         Route::middleware('role:admin,instructor')->group(function () {
             Route::post  ('courses',          [CourseController::class, 'store']);
@@ -73,6 +82,13 @@ Route::prefix('v1')->group(function () {
             Route::post  ('lessons',          [LessonController::class, 'store']);
             Route::put   ('lessons/{lesson}', [LessonController::class, 'update']);
             Route::delete('lessons/{lesson}', [LessonController::class, 'destroy']);
+        });
+
+        // Admin / Instructor only — exam management
+        Route::middleware('role:admin,instructor')->group(function () {
+            Route::post  ('exams',        [ExamController::class, 'store']);
+            Route::put   ('exams/{exam}', [ExamController::class, 'update']);
+            Route::delete('exams/{exam}', [ExamController::class, 'destroy']);
         });
     });
 

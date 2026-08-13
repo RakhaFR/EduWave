@@ -47,9 +47,9 @@
 - [x] EnrollmentController: enroll, unenroll, progress
 
 ### Phase 4.4 — Exams & Attempts
-- [ ] ExamController: show, store, update, destroy
-- [ ] AttemptController: start, submit, index, show
-- [ ] ExamService: scoring, pass/fail determination, pearls/XP reward calculation
+- [x] ExamController: show, store, update, destroy
+- [x] AttemptController: start, submit, index, show
+- [x] ExamService: scoring, pass/fail determination, pearls/XP reward calculation
 
 ### Phase 4.5 — Leaderboard
 - [ ] LeaderboardController: global, weekly, monthly, course-specific
@@ -110,8 +110,8 @@
 - [x] Add admin/instructor routes for course creation, update, and deletion.
 - [x] Add lesson show and complete routes for authenticated users.
 - [x] Add admin/instructor lesson create, update, and delete routes.
-- [ ] Add exam show, attempt creation, submit, and attempt history routes for authenticated users.
-- [ ] Add admin/instructor exam create, update, and delete routes.
+- [x] Add exam show, attempt creation, submit, and attempt history routes for authenticated users.
+- [x] Add admin/instructor exam create, update, and delete routes.
 - [ ] Add leaderboard endpoints for global, weekly, monthly, and course-specific rankings.
 - [ ] Add study room routes for list, create, show, join, leave, destroy, and message retrieval.
 - [ ] Register `routes/channels.php` authorization for the `private-study-room.{room_id}` Reverb channel — without this, WebSocket connections won't authorize.
@@ -128,7 +128,7 @@
 - [x] Phase 4.1: Authorization Policies (RBAC)
 - [x] Phase 4.2: Controllers — Auth & Profile
 - [x] Phase 4.3: Controllers — Courses, Lessons, Enrollment
-- [ ] Phase 4.4: Controllers — Exams & Attempts
+- [x] Phase 4.4: Controllers — Exams & Attempts
 - [ ] Phase 4.5: Controllers — Leaderboard
 - [ ] Phase 4.6: Controllers — Study Rooms & Realtime
 - [ ] Phase 4.7: Controllers — Mascot & Achievements
