@@ -16,7 +16,7 @@ class UpdateProfileRequest extends BaseRequest
         return [
             'full_name' => ['sometimes', 'string', 'max:100'],
             'username' => ['sometimes', 'string', 'max:50', 'unique:users,username,' . ($this->user()?->id ?? 'NULL')],
-            'email' => ['sometimes', 'email:rfc,dns', 'max:255', 'unique:users,email,' . ($this->user()?->id ?? 'NULL')],
+            'email' => ['sometimes', 'email:rfc', 'max:255', 'unique:users,email,' . ($this->user()?->id ?? 'NULL')],
             'bio' => ['sometimes', 'nullable', 'string'],
             'avatar_url' => ['sometimes', 'nullable', 'url'],
         ];

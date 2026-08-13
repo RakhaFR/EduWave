@@ -37,21 +37,49 @@
 
 ## Controllers
 
-- [ ] Create the AuthController with register, login, logout, forgot password, reset password, and me endpoints.
-- [ ] Create the UserController with me, updateProfile, changePassword, stats, show, index, updateRole, and destroy actions.
-- [ ] Create the CourseController with index, show, store, update, and destroy actions for public and admin/instructor flows.
-- [ ] Create the LessonController with show, complete, store, update, and destroy actions.
-- [ ] Create the EnrollmentController with enroll, unenroll, and progress endpoints.
-- [ ] Create the ExamController with show, store, update, and destroy actions.
-- [ ] Create the AttemptController with start, submit, index, and show endpoints.
-- [ ] Create the LeaderboardController for global, weekly, monthly, and course-specific ranking responses.
-- [ ] Create the StudyRoomController with index, store, show, join, leave, and destroy actions.
-- [ ] Create the RoomMessageController to fetch room messages and support room communication.
-- [ ] Create the MascotController and AchievementController for user customization and progression data.
-- [ ] Create the AiController with chat, history, clearHistory, and recommendations endpoints, backed by an AiService wrapping `openai-php/laravel`.
-- [ ] Implement consistent API response formatting with success, data, error, and meta fields.
-- [ ] Add authorization checks for admin-only, instructor-only, and authenticated routes.
-- [ ] Ensure controller logic keeps business logic out of Blade and uses services when needed.
+### Phase 4.2 — Auth & Profile
+- [ ] AuthController: register, login, logout, forgot password, reset password, me
+- [ ] UserController (self-service): me, updateProfile, changePassword, stats, mascot, achievements
+
+### Phase 4.3 — Courses, Lessons, Enrollment
+- [ ] CourseController: index, show, store, update, destroy (public + admin/instructor)
+- [ ] LessonController: show, complete, store, update, destroy
+- [ ] EnrollmentController: enroll, unenroll, progress
+
+### Phase 4.4 — Exams & Attempts
+- [ ] ExamController: show, store, update, destroy
+- [ ] AttemptController: start, submit, index, show
+- [ ] ExamService: scoring, pass/fail determination, pearls/XP reward calculation
+
+### Phase 4.5 — Leaderboard
+- [ ] LeaderboardController: global, weekly, monthly, course-specific
+- [ ] LeaderboardService: Redis sorted set read/write, triggered on XP change
+
+### Phase 4.6 — Study Rooms & Realtime
+- [ ] StudyRoomController: index, store, show, join, leave, destroy
+- [ ] RoomMessageController: index (fetch history), store (send message)
+- [ ] Broadcasting events + `routes/channels.php` auth for `private-study-room.{room_id}`
+- [ ] Document `study_room_participants` schema back into web-analysis.md (added ad-hoc in Phase 4.1, not yet in the spec doc)
+
+### Phase 4.7 — Mascot & Achievements
+- [ ] MascotController: catalog, inventory, purchase, equip
+- [ ] AchievementController: list, user achievements
+- [ ] GamificationService: pearls earn/spend, XP award, achievement condition checks
+
+### Phase 4.8 — AI Assistant
+- [ ] AiController: chat, history, clearHistory, recommendations
+- [ ] AiService wrapping `openai-php/laravel`
+- [ ] ProcessAiResponse job
+
+### Phase 4.9 — Admin
+- [ ] Admin/UserController: index, updateRole, destroy
+- [ ] Admin/CourseController, Admin/ExamController: moderation views
+- [ ] Admin/AnalyticsController: overview stats
+
+### Cross-cutting (apply in every sub-phase above)
+- [ ] Consistent API response formatting: success, data, error, meta
+- [ ] Authorization via Policies (Phase 4.1) + role middleware — no ad-hoc checks in controllers
+- [ ] Business logic lives in Services, not Controllers
 
 ## Request Validation
 
@@ -98,7 +126,14 @@
 - [x] Phase 2: Models and relationships
 - [x] Phase 3: Request validation classes
 - [x] Phase 4.1: Authorization Policies (RBAC)
-- [ ] Phase 4.2: Controllers and business logic
+- [ ] Phase 4.2: Controllers — Auth & Profile
+- [ ] Phase 4.3: Controllers — Courses, Lessons, Enrollment
+- [ ] Phase 4.4: Controllers — Exams & Attempts
+- [ ] Phase 4.5: Controllers — Leaderboard
+- [ ] Phase 4.6: Controllers — Study Rooms & Realtime
+- [ ] Phase 4.7: Controllers — Mascot & Achievements
+- [ ] Phase 4.8: Controllers — AI Assistant
+- [ ] Phase 4.9: Controllers — Admin
 - [ ] Phase 5: API routes and authentication boundaries
 - [ ] Phase 6: Feature testing for key flows
 - [ ] Phase 7: API documentation and frontend contract review

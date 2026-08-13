@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,7 +15,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, HasUuids, Notifiable, SoftDeletes;
 
     public $incrementing = false;
 
@@ -92,6 +93,7 @@ class User extends Authenticatable
     public function mascots(): BelongsToMany
     {
         return $this->belongsToMany(Mascot::class, 'user_mascots')
+            ->using(UserMascot::class)
             ->withPivot(['is_active', 'accessories', 'unlocked_at']);
     }
 

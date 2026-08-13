@@ -12,7 +12,7 @@
 | Feature | Detail |
 |---|---|
 | Pearl Gamification (`mutiara`) | XP + pearl reward economy |
-| AI Study Assistant | OpenAI GPT integrated into lessons & study rooms |
+| AI Study Assistant | OpenAI GPT / Gemini AI integrated into lessons & study rooms |
 | Real-Time Study Rooms | WebSocket-based multi-user collaboration |
 | Mascot Customization | Unlockable avatars & accessories |
 | Course Categories | Technology, Design, Marine Science, Language |

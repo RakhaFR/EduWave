@@ -15,7 +15,7 @@ class RegisterRequest extends BaseRequest
     {
         return [
             'username' => ['required', 'string', 'max:50', 'unique:users,username'],
-            'email' => ['required', 'string', 'email:rfc,dns', 'max:255', 'unique:users,email'],
+            'email' => ['required', 'string', 'email:rfc', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'password_confirmation' => ['required', 'string'],
             'full_name' => ['required', 'string', 'max:100'],
