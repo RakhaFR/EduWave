@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Cyan to Blue Gradient -->
+    <linearGradient id="crestCyanBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+
+    <!-- Teal to Cyan Gradient -->
+    <linearGradient id="crestTealCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2DD4BF" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+  </defs>
+
+  <g id="hero-badge">
+    <!-- Shield / Crest Base Frame -->
+    <path d="M20,20 L180,20 C180,20 190,110 100,190 C10,110 20,20 20,20 Z" fill="#0F172A" stroke="url(#crestCyanBlue)" stroke-width="8" stroke-linejoin="round" />
+    
+    <!-- Inner Wave Layer Back -->
+    <path d="M35,95 C60,75 85,115 110,95 C135,75 165,90 165,90 C165,90 170,125 100,168 C38,125 35,95 35,95 Z" fill="url(#crestCyanBlue)" opacity="0.5" />
+    
+    <!-- Inner Wave Layer Front -->
+    <path d="M30,115 C55,95 80,135 105,115 C130,95 160,110 160,110 C160,110 165,125 100,172 C35,125 30,115 30,115 Z" fill="url(#crestTealCyan)" />
+    
+    <!-- Graduation Cap Overlay -->
+    <polygon points="100,40 155,60 100,80 45,60" fill="#FFFFFF" />
+    <polygon points="65,70 65,92 C65,98 80,105 100,105 C120,105 135,98 135,92 L135,70" fill="#E2E8F0" opacity="0.8" />
+    <rect x="142" y="60" width="4" height="28" rx="2" fill="#FFFFFF" />
+    <circle cx="144" cy="91" r="4" fill="#FFFFFF" />
+  </g>
+</svg>
