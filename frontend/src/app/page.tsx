@@ -19,6 +19,10 @@ import {
   Waves,
   GraduationCap,
   Rocket,
+  LayoutDashboard,
+  BotMessageSquare,
+  PenLine,
+  Smartphone,
 } from "lucide-react";
 import { FaInstagram, FaWhatsapp, FaTiktok } from "react-icons/fa";
 
@@ -327,92 +331,138 @@ export default function Home() {
       </div>
     </div>
 
-    {/* ─────────────────────────────────────────── */}
-    {/* ABOUT SECTION — putih bersih, aksen biru   */}
-    {/* ─────────────────────────────────────────── */}
+    {/* ═══════════════════════════════════════════ */}
+    {/* ABOUT SECTION                               */}
+    {/* ═══════════════════════════════════════════ */}
     <section className="relative bg-white text-[#00172e] overflow-hidden">
 
-      {/* Subtle decorative top-left blob */}
+      {/* Subtle blob dekoratif */}
       <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-cyan-50 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-      {/* Subtle bottom-right blob */}
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-blue-50 rounded-full blur-[80px] translate-x-1/3 translate-y-1/3 pointer-events-none" />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-24 md:py-32">
+      <div className="relative z-10 max-w-6xl mx-auto px-6 pt-20 pb-10 md:pt-28 md:pb-12">
 
-        {/* Section Label */}
+        {/* ── HERO ROW: gambar kiri + teks kanan ── */}
         <div
           data-aos="fade-up"
-          className="flex items-center gap-2 mb-4 justify-center"
+          className="flex flex-col md:flex-row items-center gap-10 md:gap-16 mb-20"
         >
-          <span className="h-px w-10 bg-[#008be3]/40" />
-          <span className="text-xs font-semibold tracking-widest text-[#008be3] uppercase">
-            Tentang Kami
-          </span>
-          <span className="h-px w-10 bg-[#008be3]/40" />
+          {/* Gambar / ilustrasi kiri */}
+          <div className="w-full md:w-[45%] shrink-0">
+            <div className="relative rounded-2xl overflow-hidden shadow-xl shadow-blue-100 aspect-[4/3] bg-[#e8f4ff]">
+              <Image
+                src="/quli-maskot.webp"
+                alt="Tentang EduWave"
+                fill
+                className="object-contain p-6"
+              />
+              {/* Floating badge */}
+              <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md">
+                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <span className="text-xs font-semibold text-[#00172e]">Platform Aktif 24/7</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Teks kanan */}
+          <div className="flex-1">
+            {/* Label Tentang Kami */}
+            <div className="flex items-center gap-2 mb-4">
+              <span className="h-px w-8 bg-[#008be3]/40" />
+              <span className="text-xs font-semibold tracking-widest text-[#008be3] uppercase">
+                Tentang Kami
+              </span>
+            </div>
+
+            <h2 className="text-3xl sm:text-4xl font-extrabold leading-tight mb-5 text-[#00172e]">
+              Platform Edukasi yang{" "}
+              <span className="text-[#008be3]">Mengubah Cara</span>{" "}
+              Belajar Generasi Digital
+            </h2>
+
+            <p className="text-slate-500 text-sm sm:text-base leading-relaxed mb-6">
+              EduWave hadir sebagai solusi atas rendahnya <em>completion rate</em> pada LMS konvensional.
+              Kami menggabungkan struktur kurikulum komprehensif dengan mekanik gamifikasi imersif —
+              dirancang agar setiap sesi belajar terasa seperti petualangan nyata, bukan kewajiban.
+            </p>
+
+            <p className="text-slate-500 text-sm sm:text-base leading-relaxed">
+              Dengan dukungan AI Study Assistant <strong className="text-[#00172e]">Quli</strong>,
+              Skill Tree non-linear, sistem Pet Evolution, dan Virtual Study Room kolaboratif,
+              EduWave adalah ekosistem belajar lengkap berbasis teknologi Next.js, Laravel, dan Gemini AI.
+            </p>
+          </div>
         </div>
 
-        {/* Main headline */}
-        <h2
-          data-aos="fade-up"
-          data-aos-delay="100"
-          className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-center leading-tight mb-6 max-w-3xl mx-auto text-[#00172e]"
-        >
-          Belajar Seperti{" "}
-          <span className="text-[#008be3]">Menyelam</span> ke Dunia Baru
-        </h2>
+        {/* ── LAYANAN UNGGULAN label ── */}
+        <div data-aos="fade-up" className="mb-10">
+          <p className="text-xs font-semibold tracking-widest text-[#008be3] uppercase mb-1">Fitur Kami</p>
+          <h3 className="text-2xl sm:text-3xl font-extrabold text-[#00172e]">
+            Layanan Unggulan <span className="text-[#008be3]">Kami untuk anda</span>
+          </h3>
+        </div>
 
-        {/* Description */}
-        <p
-          data-aos="fade-up"
-          data-aos-delay="200"
-          className="text-center text-slate-500 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto mb-16"
-        >
-          EduWave adalah platform edukasi interaktif bertema bawah laut yang
-          menggabungkan teknologi AI, sistem gamifikasi, dan pengalaman belajar
-          yang menyenangkan — dirancang untuk generasi penjelajah ilmu.
-        </p>
-
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-20">
+        {/* ── GRID FITUR 3 kolom — mobile 1 kolom, sm 3 kolom ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-8 gap-y-10 mb-20">
           {[
             {
-              icon: <BookOpen className="w-6 h-6 text-[#008be3]" />,
-              title: "Kurikulum Terstruktur",
-              desc: "Materi pembelajaran yang tersusun rapi mengikuti alur yang logis, dari dasar hingga mahir.",
-              delay: "100",
+              icon: <LayoutDashboard className="w-6 h-6 text-[#008be3]" />,
+              title: "Multi-Role Dashboard",
+              desc: "Dashboard terpadu untuk Pelajar, Pengajar, dan Orang Tua. Setiap peran punya tampilan dan fitur khusus sesuai kebutuhan.",
+              delay: "0",
             },
             {
-              icon: <Sparkles className="w-6 h-6 text-[#008be3]" />,
-              title: "AI Study Assistant",
-              desc: "Quli, maskot ubur-ubur pintarmu, siap membantu menjawab pertanyaan dan menemani belajar.",
-              delay: "200",
+              icon: <BotMessageSquare className="w-6 h-6 text-[#008be3]" />,
+              title: "Quli AI Study Assistant",
+              desc: "Asisten belajar berbasis AI yang siap menjawab pertanyaan seputar materi kursus kapan pun kamu butuh, 24/7.",
+              delay: "80",
             },
             {
-              icon: <ShieldCheck className="w-6 h-6 text-[#008be3]" />,
-              title: "Gamifikasi Mutiara",
-              desc: "Kumpulkan mutiara dari setiap pencapaian, naiki leaderboard, dan tunjukkan kehebatanmu.",
-              delay: "300",
+              icon: <Trophy className="w-6 h-6 text-[#008be3]" />,
+              title: "Gamifikasi & Mutiara XP",
+              desc: "Sistem XP dinamis, Level, Leaderboard, dan kumpulkan Mutiara dari setiap aktivitas pembelajaran yang kamu selesaikan.",
+              delay: "160",
+            },
+            {
+              icon: <Users className="w-6 h-6 text-[#008be3]" />,
+              title: "Virtual Study Room",
+              desc: "Ruang belajar virtual dengan timer Pomodoro bersama, pemutar musik fokus, dan forum diskusi antarsiswa.",
+              delay: "0",
+            },
+            {
+              icon: <PenLine className="w-6 h-6 text-[#008be3]" />,
+              title: "Adaptive Assessment",
+              desc: "Sistem ujian cerdas dengan Practice Mode, Exam Mode, dan mekanisme Spaced Repetition untuk materi yang belum dikuasai.",
+              delay: "80",
+            },
+            {
+              icon: <Smartphone className="w-6 h-6 text-[#008be3]" />,
+              title: "Accessibility & PWA",
+              desc: "Tampilan mobile-friendly dan dukungan Progressive Web App agar kamu tetap bisa belajar di mana saja, bahkan offline.",
+              delay: "160",
             },
           ].map((item) => (
             <div
               key={item.title}
               data-aos="fade-up"
               data-aos-delay={item.delay}
-              className="group relative rounded-2xl border border-slate-100 bg-white p-6 hover:border-[#008be3]/30 hover:shadow-lg hover:shadow-blue-50 transition-all duration-300 shadow-sm"
+              className="group flex flex-col gap-3"
             >
-              <div className="w-11 h-11 rounded-xl bg-[#008be3]/10 flex items-center justify-center mb-4 group-hover:bg-[#008be3]/20 transition-colors duration-300">
+              {/* Icon */}
+              <div className="w-11 h-11 rounded-xl bg-[#008be3]/10 flex items-center justify-center group-hover:bg-[#008be3]/20 transition-colors duration-300 shrink-0">
                 {item.icon}
               </div>
-              <h3 className="font-bold text-[#00172e] text-base mb-2">{item.title}</h3>
-              <p className="text-slate-500 text-sm leading-relaxed">{item.desc}</p>
+              <div>
+                <h4 className="font-bold text-[#00172e] text-sm mb-1">{item.title}</h4>
+                <p className="text-slate-500 text-xs leading-relaxed">{item.desc}</p>
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Stats Row */}
+        {/* ── STATS ROW ── */}
         <div
           data-aos="fade-up"
-          data-aos-delay="150"
           className="grid grid-cols-2 sm:grid-cols-4 gap-6 border-t border-slate-100 pt-12"
         >
           {[
@@ -431,15 +481,17 @@ export default function Home() {
             </div>
           ))}
         </div>
+
       </div>
 
-      {/* Bottom wave dari putih ke dark text animation section */}
+      {/* Bottom wave putih → navy */}
       <div className="relative -mb-1 pointer-events-none" style={{lineHeight: 0}}>
         <svg viewBox="0 0 1440 90" xmlns="http://www.w3.org/2000/svg" className="w-full block">
           <path d="M0,45 C360,5 1080,85 1440,45 L1440,90 L0,90 Z" fill="#00172e" />
         </svg>
       </div>
     </section>
+
 
 
     {/* ─────────────────────────────────────────── */}
