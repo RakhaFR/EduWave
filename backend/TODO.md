@@ -95,7 +95,7 @@
 
 - [x] Phase 1: Migrations and schema validation
 - [x] Phase 2: Models and relationships
-- [ ] Phase 3: Request validation classes
+- [x] Phase 3: Request validation classes
 - [ ] Phase 4: Controllers and business logic
 - [ ] Phase 5: API routes and authentication boundaries
 - [ ] Phase 6: Feature testing for key flows
