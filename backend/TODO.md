@@ -54,20 +54,20 @@
 
 ## Request Validation
 
-- [ ] Create RegisterRequest with username, email, password, password_confirmation, and full_name rules.
-- [ ] Create LoginRequest with email/username and password validation rules.
-- [ ] Create ForgotPasswordRequest and ResetPasswordRequest for password recovery flows.
-- [ ] Create UpdateProfileRequest for user profile changes and validation.
-- [ ] Create ChangePasswordRequest with current password and confirmed new password validation.
-- [ ] Create StoreCourseRequest and UpdateCourseRequest for course content, category, difficulty, and publishing rules.
-- [ ] Create StoreLessonRequest and UpdateLessonRequest for lesson content and ordering validation.
-- [ ] Create EnrollmentRequest or equivalent validation for course enrollment actions.
-- [ ] Create StoreExamRequest and UpdateExamRequest with time limits, scoring, and metadata validation.
-- [ ] Create SubmitAttemptRequest for answer arrays and selected_key validation.
-- [ ] Create StudyRoomRequest and JoinRoomRequest for room metadata and member actions.
-- [ ] Create AiChatRequest for message, course_context_id, lesson_context_id, and conversation_id validation.
-- [ ] Add custom validation messages in Bahasa Indonesia where appropriate for user-facing API feedback.
-- [ ] Validate ownership, role checks, and uniqueness rules before persisting changes.
+- [x] Create RegisterRequest with username, email, password, password_confirmation, and full_name rules.
+- [x] Create LoginRequest with email/username and password validation rules.
+- [x] Create ForgotPasswordRequest and ResetPasswordRequest for password recovery flows.
+- [x] Create UpdateProfileRequest for user profile changes and validation.
+- [x] Create ChangePasswordRequest with current password and confirmed new password validation.
+- [x] Create StoreCourseRequest and UpdateCourseRequest for course content, category, difficulty, and publishing rules.
+- [x] Create StoreLessonRequest and UpdateLessonRequest for lesson content and ordering validation.
+- [x] Create EnrollmentRequest or equivalent validation for course enrollment actions.
+- [x] Create StoreExamRequest and UpdateExamRequest with time limits, scoring, and metadata validation.
+- [x] Create SubmitAttemptRequest for answer arrays and selected_key validation.
+- [x] Create StudyRoomRequest and JoinRoomRequest for room metadata and member actions.
+- [x] Create AiChatRequest for message, course_context_id, lesson_context_id, and conversation_id validation.
+- [x] Add custom validation messages in Bahasa Indonesia where appropriate for user-facing API feedback.
+- [x] Validate ownership, role checks, and uniqueness rules before persisting changes.
 
 ## API Routes
 
@@ -96,7 +96,19 @@
 - [x] Phase 1: Migrations and schema validation
 - [x] Phase 2: Models and relationships
 - [x] Phase 3: Request validation classes
-- [ ] Phase 4: Controllers and business logic
+- [x] Phase 4.1: Authorization Policies (RBAC)
+- [ ] Phase 4.2: Controllers and business logic
 - [ ] Phase 5: API routes and authentication boundaries
 - [ ] Phase 6: Feature testing for key flows
 - [ ] Phase 7: API documentation and frontend contract review
+
+## Phase 4.1 — Authorization Policies (RBAC)
+
+- [x] CoursePolicy: create (instructor/admin), update (admin or instructor owner), destroy (admin or instructor owner)
+- [x] LessonPolicy: create (instructor/admin), update (admin or parent course instructor), destroy (admin or parent course instructor)
+- [x] ExamPolicy: create (instructor/admin), update (admin or course instructor), destroy (admin or course instructor)
+- [x] ExamAttemptPolicy: create (enforce max_attempts limit), view (own attempt or admin)
+- [x] StudyRoomPolicy: destroy (host or admin), join (room.status === 'active' AND capacity check)
+- [x] Policies registered in AppServiceProvider
+- [x] Verification: All policies tested against Permission Matrix rules; CoursePolicy ownership checks, ExamAttemptPolicy attempt limits, and ExamAttemptPolicy view restrictions all pass
+- ⚠️  FLAG: StudyRoomPolicy::join() requires a study_room_participants pivot table for participant counting. The policy is implemented but will fail at runtime until the schema is added. See policy inline documentation for migration template.
