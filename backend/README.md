@@ -1,59 +1,480 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# EduWave API Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+EduWave is an interactive maritime and technology e-learning platform featuring gamification (pearls & XP economy), AI study assistance, mascot customization, real-time study rooms, and comprehensive course progression.
 
-## About Laravel
+This backend is built using **Laravel 11**, **Laravel Sanctum** for token-based authentication, and **SQLite / MariaDB**.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🛠️ Technology Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+* **Framework:** Laravel 11
+* **Authentication:** Laravel Sanctum (Bearer Token)
+* **Database:** SQLite (Testing / Local), MariaDB / MySQL (Production)
+* **Testing:** PHPUnit / Pest (`php artisan test`)
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## 🚀 Getting Started
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 1. Requirements
+* PHP ^8.2
+* Composer
+* SQLite or MariaDB / MySQL
 
-## Laravel Sponsors
+### 2. Installation & Setup
+```bash
+# Install PHP dependencies
+composer install
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# Environment configuration
+cp .env.example .env
+php artisan key:generate
 
-### Premium Partners
+# Run database migrations
+php artisan migrate
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+# Start development server
+php artisan serve
+```
 
-## Contributing
+### 3. Running Tests
+```bash
+php artisan test
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## 📡 Standard API Response Format
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+All API responses follow a consistent JSON structure:
 
-## Security Vulnerabilities
+### Success Response
+```json
+{
+  "success": true,
+  "data": { ... },
+  "error": null,
+  "meta": null
+}
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Error Response
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "AUTH_INVALID_CREDENTIALS",
+    "message": "Email atau password salah.",
+    "details": null
+  },
+  "meta": null
+}
+```
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 🔑 Authentication
+
+Endpoints requiring authentication expect a standard HTTP `Authorization` header:
+
+```http
+Authorization: Bearer <sanctum_plain_text_token>
+```
+
+---
+
+## 📚 API Endpoints Documentation
+
+Base URL: `/api/v1`
+
+| Group | Method | Endpoint | Auth | Description |
+|---|---|---|---|---|
+| **Auth** | `POST` | `/api/v1/auth/register` | No | Register a new user account |
+| **Auth** | `POST` | `/api/v1/auth/login` | No | Authenticate user & issue Bearer token |
+| **Auth** | `POST` | `/api/v1/auth/forgot-password` | No | Request password reset link |
+| **Auth** | `POST` | `/api/v1/auth/reset-password` | No | Reset password using reset token |
+| **Auth** | `POST` | `/api/v1/auth/logout` | Yes | Revoke current authenticated token |
+| **Auth** | `GET` | `/api/v1/auth/me` | Yes | Fetch basic auth user state |
+| **User** | `GET` | `/api/v1/users/me` | Yes | Get detailed authenticated user profile |
+| **User** | `PUT` | `/api/v1/users/me` | Yes | Update user profile details |
+| **User** | `PUT` | `/api/v1/users/me/password` | Yes | Change user password (revokes tokens) |
+| **User** | `GET` | `/api/v1/users/me/stats` | Yes | Get gamification stats (pearls, xp, level, streak) |
+| **User** | `PUT` | `/api/v1/users/me/mascot` | Yes | Equip mascot and update custom accessories |
+| **User** | `GET` | `/api/v1/users/me/achievements` | Yes | Fetch list of unlocked user achievements |
+
+---
+
+### Detailed Endpoint Specifications
+
+### 1. Authentication Endpoints (`/api/v1/auth`)
+
+#### `POST /api/v1/auth/register`
+Register a new student account.
+
+* **Request Body:**
+```json
+{
+  "username": "penjelajah_baru",
+  "email": "user@example.com",
+  "password": "password123",
+  "password_confirmation": "password123",
+  "full_name": "Budi Santoso"
+}
+```
+* **Success Response (`201 Created`):**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "username": "penjelajah_baru",
+      "email": "user@example.com",
+      "full_name": "Budi Santoso",
+      "role": "student",
+      "avatar_url": null,
+      "pearls": 0,
+      "xp": 0,
+      "level": 1,
+      "created_at": "2026-08-13T12:00:00.000000Z"
+    },
+    "token": "1|sanctum_plain_text_token_string",
+    "token_type": "Bearer"
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `POST /api/v1/auth/login`
+Authenticate using email or username.
+
+* **Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "username": "penjelajah_baru",
+      "email": "user@example.com",
+      "full_name": "Budi Santoso",
+      "role": "student",
+      "avatar_url": null,
+      "pearls": 150,
+      "xp": 500,
+      "level": 3,
+      "created_at": "2026-08-13T12:00:00.000000Z"
+    },
+    "token": "2|sanctum_plain_text_token_string",
+    "token_type": "Bearer"
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `POST /api/v1/auth/forgot-password`
+Send password reset link to user email.
+
+* **Request Body:**
+```json
+{
+  "email": "user@example.com"
+}
+```
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": [],
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `POST /api/v1/auth/reset-password`
+Reset password with a valid token.
+
+* **Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "token": "valid_reset_token_string",
+  "password": "newpassword123",
+  "password_confirmation": "newpassword123"
+}
+```
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": [],
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `POST /api/v1/auth/logout`
+Revoke current authenticated Sanctum access token.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": [],
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `GET /api/v1/auth/me`
+Retrieve authenticated user auth state payload.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "username": "penjelajah_baru",
+      "email": "user@example.com",
+      "full_name": "Budi Santoso",
+      "role": "student",
+      "avatar_url": null,
+      "pearls": 150,
+      "xp": 500,
+      "level": 3,
+      "bio": "Maritime technology enthusiast",
+      "last_active": "2026-08-13T12:00:00.000000Z",
+      "created_at": "2026-08-13T12:00:00.000000Z"
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+### 2. User Self-Service Endpoints (`/api/v1/users/me`)
+
+#### `GET /api/v1/users/me`
+Get full profile payload of current user.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "username": "penjelajah_baru",
+      "email": "user@example.com",
+      "full_name": "Budi Santoso",
+      "role": "student",
+      "avatar_url": "https://example.com/avatar.jpg",
+      "bio": "Learning web & maritime tech",
+      "pearls": 250,
+      "xp": 1200,
+      "level": 5,
+      "streak_days": 7,
+      "last_active": "2026-08-13T12:00:00.000000Z",
+      "created_at": "2026-08-13T12:00:00.000000Z"
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `PUT /api/v1/users/me`
+Update user profile information.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Request Body:**
+```json
+{
+  "full_name": "Budi Santoso Updated",
+  "username": "penjelajah_baru",
+  "email": "user@example.com",
+  "bio": "New bio content",
+  "avatar_url": "https://example.com/new_avatar.jpg"
+}
+```
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "username": "penjelajah_baru",
+      "email": "user@example.com",
+      "full_name": "Budi Santoso Updated",
+      "role": "student",
+      "avatar_url": "https://example.com/new_avatar.jpg",
+      "bio": "New bio content",
+      "pearls": 250,
+      "xp": 1200,
+      "level": 5,
+      "updated_at": "2026-08-13T12:15:00.000000Z"
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `PUT /api/v1/users/me/password`
+Update user password. Automatically revokes all existing access tokens.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Request Body:**
+```json
+{
+  "current_password": "oldpassword123",
+  "password": "newpassword123",
+  "password_confirmation": "newpassword123"
+}
+```
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": [],
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `GET /api/v1/users/me/stats`
+Retrieve user gamification statistics.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "stats": {
+      "pearls": 250,
+      "xp": 1200,
+      "level": 5,
+      "streak_days": 7,
+      "is_active": true
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `PUT /api/v1/users/me/mascot`
+Equip an owned mascot and customize accessories. Automatically deactivates other owned mascots on the `user_mascots` pivot.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Request Body:**
+```json
+{
+  "mascot_id": "b45d85c5-fdd3-4c28-88fb-9b6e32d76b97",
+  "accessories": {
+    "hat": "hat-captain",
+    "glasses": "glasses-sun",
+    "outfit": "outfit-navy",
+    "background": "bg-ocean"
+  }
+}
+```
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "mascot_id": "b45d85c5-fdd3-4c28-88fb-9b6e32d76b97",
+    "accessories": {
+      "hat": "hat-captain",
+      "glasses": "glasses-sun",
+      "outfit": "outfit-navy",
+      "background": "bg-ocean"
+    },
+    "is_active": true
+  },
+  "error": null,
+  "meta": null
+}
+```
+* **Error Response (`403 Forbidden` if mascot is not owned):**
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "MASCOT_NOT_OWNED",
+    "message": "Anda tidak memiliki maskot ini.",
+    "details": null
+  },
+  "meta": null
+}
+```
+
+---
+
+#### `GET /api/v1/users/me/achievements`
+Fetch list of user earned achievements.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "achievements": [
+      {
+        "id": "ach-01",
+        "name": "First Course Completed",
+        "description": "Completed your first course on EduWave",
+        "icon_url": "https://example.com/badge1.png",
+        "condition_type": "course_completion",
+        "condition_value": 1,
+        "pearls_reward": 50,
+        "earned_at": "2026-08-10T10:00:00.000000Z"
+      }
+    ],
+    "count": 1
+  },
+  "error": null,
+  "meta": null
+}
+```
