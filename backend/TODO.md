@@ -38,13 +38,13 @@
 ## Controllers
 
 ### Phase 4.2 — Auth & Profile
-- [ ] AuthController: register, login, logout, forgot password, reset password, me
-- [ ] UserController (self-service): me, updateProfile, changePassword, stats, mascot, achievements
+- [x] AuthController: register, login, logout, forgot password, reset password, me
+- [x] UserController (self-service): me, updateProfile, changePassword, stats, mascot, achievements
 
 ### Phase 4.3 — Courses, Lessons, Enrollment
-- [ ] CourseController: index, show, store, update, destroy (public + admin/instructor)
-- [ ] LessonController: show, complete, store, update, destroy
-- [ ] EnrollmentController: enroll, unenroll, progress
+- [x] CourseController: index, show, store, update, destroy (public + admin/instructor)
+- [x] LessonController: show, complete, store, update, destroy
+- [x] EnrollmentController: enroll, unenroll, progress
 
 ### Phase 4.4 — Exams & Attempts
 - [ ] ExamController: show, store, update, destroy
@@ -100,16 +100,16 @@
 
 ## API Routes
 
-- [ ] Set up the v1 API route group and base middleware configuration.
-- [ ] Add public authentication routes for register, login, forgot password, and reset password.
-- [ ] Add protected authentication routes for logout and me under Sanctum middleware.
-- [ ] Add protected user routes for me, update profile, change password, stats, mascot, achievements, and user detail endpoints.
+- [x] Set up the v1 API route group and base middleware configuration (EnsureRole middleware registered in bootstrap/app.php during Phase 4.3).
+- [x] Add public authentication routes for register, login, forgot password, and reset password.
+- [x] Add protected authentication routes for logout and me under Sanctum middleware.
+- [x] Add protected user routes for me, update profile, change password, stats, mascot, achievements, and user detail endpoints.
 - [ ] Add admin-only user management routes for listing users, updating roles, and deleting users.
-- [ ] Add public course listing and detail routes.
-- [ ] Add authenticated course enroll, progress, and lesson access routes.
-- [ ] Add admin/instructor routes for course creation, update, and deletion.
-- [ ] Add lesson show and complete routes for authenticated users.
-- [ ] Add admin/instructor lesson create, update, and delete routes.
+- [x] Add public course listing and detail routes.
+- [x] Add authenticated course enroll, progress, and lesson access routes.
+- [x] Add admin/instructor routes for course creation, update, and deletion.
+- [x] Add lesson show and complete routes for authenticated users.
+- [x] Add admin/instructor lesson create, update, and delete routes.
 - [ ] Add exam show, attempt creation, submit, and attempt history routes for authenticated users.
 - [ ] Add admin/instructor exam create, update, and delete routes.
 - [ ] Add leaderboard endpoints for global, weekly, monthly, and course-specific rankings.
@@ -118,7 +118,7 @@
 - [ ] Add AI Assistant routes: chat, chat/history (get + delete), recommendations, rate-limited via the `ai` throttle.
 - [ ] Ensure route names and controller mappings are consistent with the frontend API contract.
 - [ ] Validate route middleware groups for guest, auth, and role-based access control.
-- [ ] Document the final route list and response contracts in the backend API reference as implementation progresses.
+- [x] Document the final route list and response contracts in the backend API reference as implementation progresses.
 
 ## Implementation Order
 
@@ -126,8 +126,8 @@
 - [x] Phase 2: Models and relationships
 - [x] Phase 3: Request validation classes
 - [x] Phase 4.1: Authorization Policies (RBAC)
-- [ ] Phase 4.2: Controllers — Auth & Profile
-- [ ] Phase 4.3: Controllers — Courses, Lessons, Enrollment
+- [x] Phase 4.2: Controllers — Auth & Profile
+- [x] Phase 4.3: Controllers — Courses, Lessons, Enrollment
 - [ ] Phase 4.4: Controllers — Exams & Attempts
 - [ ] Phase 4.5: Controllers — Leaderboard
 - [ ] Phase 4.6: Controllers — Study Rooms & Realtime

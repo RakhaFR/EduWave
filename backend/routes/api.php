@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CourseController;
+use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\LessonController;
 use App\Http\Controllers\UserController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -35,6 +37,43 @@ Route::prefix('v1')->group(function () {
         Route::get('users/me/stats', [UserController::class, 'stats']);
         Route::put('users/me/mascot', [UserController::class, 'updateMascot']);
         Route::get('users/me/achievements', [UserController::class, 'achievements']);
+    });
+
+    // ──────────────────────────────────────────────────────
+    // Course Routes (Public — index + show)
+    // ──────────────────────────────────────────────────────
+    Route::get('courses', [CourseController::class, 'index']);
+    Route::get('courses/{course}', [CourseController::class, 'show']);
+
+    // ──────────────────────────────────────────────────────
+    // Course Routes (Authenticated)
+    // ──────────────────────────────────────────────────────
+    Route::middleware('auth:sanctum')->group(function () {
+        // Enrollment
+        Route::post  ('courses/{course}/enroll',   [EnrollmentController::class, 'enroll']);
+        Route::delete('courses/{course}/enroll',   [EnrollmentController::class, 'unenroll']);
+        Route::get   ('courses/{course}/progress', [EnrollmentController::class, 'progress']);
+
+        // Lesson listing for a course
+        Route::get('courses/{course}/lessons', [LessonController::class, 'index']);
+
+        // Lesson access + completion
+        Route::get ('lessons/{lesson}',          [LessonController::class, 'show']);
+        Route::post('lessons/{lesson}/complete', [LessonController::class, 'complete']);
+
+        // Admin / Instructor only — course management
+        Route::middleware('role:admin,instructor')->group(function () {
+            Route::post  ('courses',          [CourseController::class, 'store']);
+            Route::put   ('courses/{course}', [CourseController::class, 'update']);
+            Route::delete('courses/{course}', [CourseController::class, 'destroy']);
+        });
+
+        // Admin / Instructor only — lesson management
+        Route::middleware('role:admin,instructor')->group(function () {
+            Route::post  ('lessons',          [LessonController::class, 'store']);
+            Route::put   ('lessons/{lesson}', [LessonController::class, 'update']);
+            Route::delete('lessons/{lesson}', [LessonController::class, 'destroy']);
+        });
     });
 
 });
