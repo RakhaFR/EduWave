@@ -103,6 +103,20 @@ Base URL: `/api/v1`
 | **User** | `GET` | `/api/v1/users/me/stats` | Yes | Get gamification stats (pearls, xp, level, streak) |
 | **User** | `PUT` | `/api/v1/users/me/mascot` | Yes | Equip mascot and update custom accessories |
 | **User** | `GET` | `/api/v1/users/me/achievements` | Yes | Fetch list of unlocked user achievements |
+| **Course** | `GET` | `/api/v1/courses` | No | List published courses (filterable by category, difficulty, search, sort) |
+| **Course** | `GET` | `/api/v1/courses/{course}` | No | Show course details with lesson outline |
+| **Course** | `POST` | `/api/v1/courses` | Instructor/Admin | Create a new course |
+| **Course** | `PUT` | `/api/v1/courses/{course}` | Instructor/Admin | Update course details |
+| **Course** | `DELETE` | `/api/v1/courses/{course}` | Instructor/Admin | Soft-delete a course |
+| **Enrollment** | `POST` | `/api/v1/courses/{course}/enroll` | Yes | Enroll authenticated user in a course |
+| **Enrollment** | `DELETE` | `/api/v1/courses/{course}/enroll` | Yes | Unenroll user from a course |
+| **Enrollment** | `GET` | `/api/v1/courses/{course}/progress` | Yes | Get course enrollment and lesson completion status |
+| **Lesson** | `GET` | `/api/v1/courses/{course}/lessons` | Yes | List lessons for a course (preview-filtered for non-enrolled) |
+| **Lesson** | `GET` | `/api/v1/lessons/{lesson}` | Yes | Show lesson details (gated by enrollment or preview flag) |
+| **Lesson** | `POST` | `/api/v1/lessons/{lesson}/complete` | Yes | Complete lesson, award XP & course completion pearls |
+| **Lesson** | `POST` | `/api/v1/lessons` | Instructor/Admin | Create a new lesson |
+| **Lesson** | `PUT` | `/api/v1/lessons/{lesson}` | Instructor/Admin | Update lesson content and metadata |
+| **Lesson** | `DELETE` | `/api/v1/lessons/{lesson}` | Instructor/Admin | Delete a lesson |
 
 ---
 
@@ -478,3 +492,214 @@ Fetch list of user earned achievements.
   "meta": null
 }
 ```
+
+---
+
+### 3. Course Endpoints (`/api/v1/courses`)
+
+#### `GET /api/v1/courses`
+List published courses (public or authenticated). Instructors and Admins see all course statuses.
+
+* **Query Parameters:**
+  - `page`: Page number (default: `1`)
+  - `per_page`: Items per page (default: `12`, max: `50`)
+  - `category`: Filter by category (`technology`, `design`, `marine`, `language`, `science`, `business`)
+  - `difficulty`: Filter by difficulty (`beginner`, `intermediate`, `advanced`)
+  - `search`: Search title and description
+  - `sort`: `newest` (default) or `popular`
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "c1f2e3d4-5678-90ab-cdef-1234567890ab",
+      "title": "Pengenalan Oceanografi & Ekosistem Laut",
+      "description": "Pelajari dasar-dasar ilmu kelautan dan ekosistem terumbu karang.",
+      "instructor": {
+        "id": "u1f2e3d4-5678-90ab-cdef-1234567890ab",
+        "full_name": "Dr. Aris Ocean",
+        "avatar_url": "https://example.com/instructor.jpg"
+      },
+      "category": "marine",
+      "difficulty": "beginner",
+      "thumbnail_url": "https://example.com/thumb.jpg",
+      "trailer_url": "https://example.com/trailer.mp4",
+      "duration_minutes": 120,
+      "lesson_count": 5,
+      "enrolled_count": 42,
+      "status": "published",
+      "pearls_reward": 50,
+      "created_at": "2026-08-13T12:00:00.000000Z",
+      "updated_at": "2026-08-13T12:00:00.000000Z"
+    }
+  ],
+  "error": null,
+  "meta": {
+    "current_page": 1,
+    "per_page": 12,
+    "total": 1,
+    "last_page": 1
+  }
+}
+```
+
+---
+
+#### `GET /api/v1/courses/{course}`
+Get course details along with lesson outline list.
+
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "c1f2e3d4-5678-90ab-cdef-1234567890ab",
+    "title": "Pengenalan Oceanografi",
+    "lessons": [
+      {
+        "id": "l1f2e3d4-5678-90ab-cdef-1234567890ab",
+        "title": "Pengantar Zona Laut",
+        "type": "video",
+        "duration_minutes": 15,
+        "order": 1,
+        "xp_reward": 30,
+        "is_preview": true
+      }
+    ]
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `POST /api/v1/courses`
+Create a new course (Requires `instructor` or `admin` role).
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Request Body:**
+```json
+{
+  "title": "Pemrograman Laravel 11 untuk Pemula",
+  "description": "Panduan lengkap membangun API modern.",
+  "category": "technology",
+  "difficulty": "beginner",
+  "pearls_reward": 100,
+  "duration_minutes": 180,
+  "status": "published"
+}
+```
+
+---
+
+#### `PUT /api/v1/courses/{course}`
+Update course details (Admin or course owner instructor).
+
+---
+
+#### `DELETE /api/v1/courses/{course}`
+Soft-delete a course (Admin or course owner instructor).
+
+---
+
+### 4. Enrollment Endpoints (`/api/v1/courses/{course}/enroll`)
+
+#### `POST /api/v1/courses/{course}/enroll`
+Enroll the authenticated user in a published course. Prevents duplicate enrollment (`409 Conflict`).
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Success Response (`201 Created`):**
+```json
+{
+  "success": true,
+  "data": {
+    "enrollment": {
+      "id": "e1f2e3d4-5678-90ab-cdef-1234567890ab",
+      "course_id": "c1f2e3d4-5678-90ab-cdef-1234567890ab",
+      "course_title": "Pengenalan Oceanografi",
+      "user_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "progress_pct": 0,
+      "status": "enrolled",
+      "enrolled_at": "2026-08-13T13:00:00.000000Z",
+      "completed_at": null
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `DELETE /api/v1/courses/{course}/enroll`
+Unenroll / drop user from course.
+
+---
+
+#### `GET /api/v1/courses/{course}/progress`
+Get current user's enrollment status and completed lesson checklist.
+
+---
+
+### 5. Lesson Endpoints (`/api/v1/lessons`)
+
+#### `GET /api/v1/lessons/{lesson}`
+View lesson content. Access granted if lesson `is_preview` is `true`, user is enrolled, or user is staff (`admin`/`instructor`).
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "lesson": {
+      "id": "l1f2e3d4-5678-90ab-cdef-1234567890ab",
+      "course_id": "c1f2e3d4-5678-90ab-cdef-1234567890ab",
+      "title": "Pengantar Zona Laut",
+      "type": "video",
+      "duration_minutes": 15,
+      "order": 1,
+      "xp_reward": 30,
+      "is_preview": true,
+      "content": "Materi pengantar...",
+      "video_url": "https://example.com/video.mp4"
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `POST /api/v1/lessons/{lesson}/complete`
+Mark a lesson completed. Idempotently awards XP on first completion, recalculates course progress percentage, and awards course pearls if progress hits 100%.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Request Body (Optional):** `{"watch_seconds": 900}`
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "lesson_id": "l1f2e3d4-5678-90ab-cdef-1234567890ab",
+    "is_first_completion": true,
+    "xp_awarded": 30,
+    "progress": {
+      "watch_seconds": 900,
+      "completed_at": "2026-08-13T13:05:00.000000Z"
+    },
+    "enrollment": {
+      "progress_pct": 100,
+      "status": "completed",
+      "transitioned_to_completed": true,
+      "pearls_awarded": 50
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
