@@ -85,7 +85,7 @@ class UserController extends ApiController
         $user->tokens()->delete();
         auth()->forgetGuards();
 
-        return $this->success([], 'Password berhasil diubah. Silakan login kembali.');
+        return $this->success(null, 'Password berhasil diubah. Silakan login kembali.');
     }
 
     /**

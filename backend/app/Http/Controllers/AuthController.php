@@ -104,7 +104,7 @@ class AuthController extends ApiController
         $request->user()->currentAccessToken()->delete();
         auth()->forgetGuards();
 
-        return $this->success([], 'Logout berhasil.');
+        return $this->success(null, 'Logout berhasil.');
     }
 
     /**
@@ -145,7 +145,7 @@ class AuthController extends ApiController
             return $this->error('RESET_FAILED', 'Gagal mengirim link reset.', 400);
         }
 
-        return $this->success([], 'Link reset password telah dikirim ke email.');
+        return $this->success(null, 'Link reset password telah dikirim ke email.');
     }
 
     /**
@@ -173,6 +173,6 @@ class AuthController extends ApiController
             return $this->error('RESET_FAILED', 'Token reset tidak valid atau kadaluarsa.', 400);
         }
 
-        return $this->success([], 'Password berhasil direset.');
+        return $this->success(null, 'Password berhasil direset.');
     }
 }

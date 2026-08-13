@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\XpAwarded;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -73,6 +74,9 @@ class Lesson extends Model
             if ($this->xp_reward > 0) {
                 $user->increment('xp', $this->xp_reward);
                 $xpAwarded = $this->xp_reward;
+                
+                // Dispatch event to update leaderboard
+                XpAwarded::dispatch($user, $this->xp_reward, 'lesson');
             }
         }
 

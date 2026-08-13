@@ -125,6 +125,9 @@ Base URL: `/api/v1`
 | **Attempt** | `POST` | `/api/v1/exams/{exam}/attempts/{attempt}/submit` | Yes | Submit attempt for auto-grading & reward calculation |
 | **Attempt** | `GET` | `/api/v1/exams/{exam}/attempts` | Yes | List authenticated user's attempt history for an exam |
 | **Attempt** | `GET` | `/api/v1/exams/{exam}/attempts/{attempt}` | Yes | View attempt details (suppressed for in-progress, review for completed) |
+| **Leaderboard** | `GET` | `/api/v1/leaderboard` | Yes | Get global all-time leaderboard rankings |
+| **Leaderboard** | `GET` | `/api/v1/leaderboard/weekly` | Yes | Get current week leaderboard rankings |
+| **Leaderboard** | `GET` | `/api/v1/leaderboard/me` | Yes | Get authenticated user's rank and neighboring users |
 
 ---
 
@@ -222,7 +225,7 @@ Send password reset link to user email.
 ```json
 {
   "success": true,
-  "data": [],
+  "data": null,
   "error": null,
   "meta": null
 }
@@ -246,7 +249,7 @@ Reset password with a valid token.
 ```json
 {
   "success": true,
-  "data": [],
+  "data": null,
   "error": null,
   "meta": null
 }
@@ -262,7 +265,7 @@ Revoke current authenticated Sanctum access token.
 ```json
 {
   "success": true,
-  "data": [],
+  "data": null,
   "error": null,
   "meta": null
 }
@@ -768,7 +771,7 @@ Start a new exam attempt or resume an active `in_progress` attempt. Enforces `ma
     "exam": {
       "id": "x1f2e3d4-5678-90ab-cdef-1234567890ab",
       "title": "Ujian Akhir: Oceanografi Dasar",
-      "time_limit_seconds": 3600,
+      "time_limit_sec": 3600,
       "question_count": 10,
       "passing_score": 70
     },
@@ -858,5 +861,223 @@ List history of attempt submissions for current user.
 
 #### `GET /api/v1/exams/{exam}/attempts/{attempt}`
 View attempt payload. Returns in-progress state (with suppressed answer keys) if `submitted_at` is null, or review payload (with score & explanations) if completed.
+
+---
+
+### 7. Leaderboard Endpoints (`/api/v1/leaderboard`)
+
+#### `GET /api/v1/leaderboard`
+Get global all-time leaderboard rankings. Rankings are calculated and cached in Redis sorted sets for performance.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Query Parameters:**
+  - `page`: Page number (default: `1`)
+  - `per_page`: Items per page (default: `50`, max: `100`)
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "rankings": [
+      {
+        "rank": 1,
+        "user": {
+          "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+          "username": "coral_explorer",
+          "full_name": "Rina Kartika",
+          "avatar_url": "https://example.com/avatar.jpg",
+          "level": 18
+        },
+        "xp": 25000,
+        "pearls": 4800
+      },
+      {
+        "rank": 2,
+        "user": {
+          "id": "8a2cdb3c-2b6c-3cad-8bcc-1a0c6b2cb5c",
+          "username": "ocean_scholar",
+          "full_name": "Ahmad Wijaya",
+          "avatar_url": "https://example.com/avatar2.jpg",
+          "level": 16
+        },
+        "xp": 22000,
+        "pearls": 4200
+      }
+    ]
+  },
+  "error": null,
+  "meta": {
+    "scope": "global",
+    "current_page": 1,
+    "per_page": 50
+  }
+}
+```
+
+---
+
+#### `GET /api/v1/leaderboard/weekly`
+Get current week leaderboard rankings (week format: ISO 8601 year-week, e.g., `2026-W33`).
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Query Parameters:**
+  - `page`: Page number (default: `1`)
+  - `per_page`: Items per page (default: `50`, max: `100`)
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "rankings": [
+      {
+        "rank": 1,
+        "user": {
+          "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+          "username": "weekly_champion",
+          "full_name": "Sarah Andini",
+          "avatar_url": "https://example.com/avatar3.jpg",
+          "level": 12
+        },
+        "xp": 5000,
+        "pearls": 800
+      }
+    ]
+  },
+  "error": null,
+  "meta": {
+    "scope": "weekly",
+    "week": "2026-W33",
+    "current_page": 1,
+    "per_page": 50
+  }
+}
+```
+
+---
+
+#### `GET /api/v1/leaderboard/me`
+Get authenticated user's rank and neighboring users (context leaderboard). Returns user's position with a few users above and below for social comparison.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Query Parameters:**
+  - `scope`: Scope of leaderboard (`global` | `weekly`, default: `global`)
+  - `neighbors`: Number of users to show above/below current user (default: `3`, max: `10`)
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "user_rank": 42,
+    "neighbors": [
+      {
+        "rank": 39,
+        "user": {
+          "id": "7a1bca2b-1a5b-2bad-7acc-0a0b6a1ba4b",
+          "username": "user_above_3",
+          "full_name": "Dewi Lestari",
+          "avatar_url": null,
+          "level": 10
+        },
+        "xp": 3200,
+        "pearls": 550
+      },
+      {
+        "rank": 40,
+        "user": {
+          "id": "6a0ab19a-0a4a-1a9c-6abb-9a9a5a0a93a",
+          "username": "user_above_2",
+          "full_name": "Rudi Hermawan",
+          "avatar_url": null,
+          "level": 10
+        },
+        "xp": 3150,
+        "pearls": 540
+      },
+      {
+        "rank": 41,
+        "user": {
+          "id": "5a9aa08a-9a3a-0a8b-5aaa-8a8a4a9a82a",
+          "username": "user_above_1",
+          "full_name": "Nina Kusuma",
+          "avatar_url": null,
+          "level": 10
+        },
+        "xp": 3100,
+        "pearls": 535
+      },
+      {
+        "rank": 42,
+        "user": {
+          "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+          "username": "penjelajah_baru",
+          "full_name": "Budi Santoso",
+          "avatar_url": null,
+          "level": 10
+        },
+        "xp": 3050,
+        "pearls": 530
+      },
+      {
+        "rank": 43,
+        "user": {
+          "id": "4a8a97a-8a2a-9a7a-4aa9-7a7a3a8a71a",
+          "username": "user_below_1",
+          "full_name": "Eka Prasetyo",
+          "avatar_url": null,
+          "level": 9
+        },
+        "xp": 3000,
+        "pearls": 520
+      },
+      {
+        "rank": 44,
+        "user": {
+          "id": "3a7a86a-7a1a-8a6a-3aa8-6a6a2a7a60a",
+          "username": "user_below_2",
+          "full_name": "Fitri Amalia",
+          "avatar_url": null,
+          "level": 9
+        },
+        "xp": 2950,
+        "pearls": 515
+      },
+      {
+        "rank": 45,
+        "user": {
+          "id": "2a6a75a-6a0a-7a5a-2aa7-5a5a1a6a5fa",
+          "username": "user_below_3",
+          "full_name": "Andi Setiawan",
+          "avatar_url": null,
+          "level": 9
+        },
+        "xp": 2900,
+        "pearls": 510
+      }
+    ]
+  },
+  "error": null,
+  "meta": {
+    "scope": "global"
+  }
+}
+```
+
+* **Response for user with no XP (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "user_rank": null,
+    "neighbors": [],
+    "message": "Anda belum memiliki XP atau belum terdaftar di leaderboard."
+  },
+  "error": null,
+  "meta": {
+    "scope": "global"
+  }
+}
+```
+
+> **Implementation Note**: Leaderboard rankings are calculated using **Redis Sorted Sets** (`ZREVRANK`, `ZREVRANGE`) for O(log N) performance. XP awards automatically update both global and weekly leaderboards via the `XpAwarded` event and `UpdateLeaderboardOnXpAwarded` listener.
 
 

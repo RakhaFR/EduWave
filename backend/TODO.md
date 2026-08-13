@@ -52,8 +52,24 @@
 - [x] ExamService: scoring, pass/fail determination, pearls/XP reward calculation
 
 ### Phase 4.5 — Leaderboard
-- [ ] LeaderboardController: global, weekly, monthly, course-specific
-- [ ] LeaderboardService: Redis sorted set read/write, triggered on XP change
+- [x] LeaderboardController: global, weekly endpoints (monthly dropped per requirements; course-specific requires XP tracking per course which current schema doesn't support)
+- [x] LeaderboardService: Redis sorted set read/write (`leaderboard:global`, `leaderboard:weekly:{Y-W}`)
+- [x] XpAwarded event and UpdateLeaderboardOnXpAwarded listener registered
+- [x] Event dispatched at XP increment call sites (Lesson::markComplete, ExamService::submit)
+- [x] Tests written (require Redis PHP extension, currently fail in local Windows env without Redis)
+- [x] Routes registered: `/api/v1/leaderboard`, `/api/v1/leaderboard/weekly`, `/api/v1/leaderboard/me`
+- [x] README.md updated with leaderboard endpoint documentation
+- [x] Consistency fixes: `data: []` → `data: null` for logout/forgot-password/reset-password/change-password
+- [x] Consistency fix: `time_limit_seconds` → `time_limit_sec` in exam attempt start payload
+- [ ] **DECISION REQUIRED:** Auth refresh token strategy — current implementation uses single long-lived Sanctum token. Original web-analysis.md spec mentioned "no refresh token rotation needed" but frontend may expect separate access + refresh tokens. Clarify expected token lifecycle before Phase 4.6.
+
+> **Note on course-specific leaderboard:** Current schema does not track XP earned per course (only global user.xp). Implementing course-specific leaderboard would require either:
+> 1. A new `course_xp` pivot table to track XP earned per enrollment, or
+> 2. Separate Redis sorted sets per course updated when XP is awarded in a course context.
+> This was flagged as out-of-scope for Phase 4.5 per instructions.
+
+> **Note on monthly leaderboard:** Original Redis key design in web-analysis.md only included `leaderboard:global` and `leaderboard:weekly:{Y-W}`. Monthly was not in the spec, so it was intentionally dropped to avoid inventing a new key scheme without product decision.
+
 
 ### Phase 4.6 — Study Rooms & Realtime
 - [ ] StudyRoomController: index, store, show, join, leave, destroy
@@ -112,7 +128,7 @@
 - [x] Add admin/instructor lesson create, update, and delete routes.
 - [x] Add exam show, attempt creation, submit, and attempt history routes for authenticated users.
 - [x] Add admin/instructor exam create, update, and delete routes.
-- [ ] Add leaderboard endpoints for global, weekly, monthly, and course-specific rankings.
+- [x] Add leaderboard endpoints for global and weekly rankings (monthly and course-specific dropped per Phase 4.5 notes).
 - [ ] Add study room routes for list, create, show, join, leave, destroy, and message retrieval.
 - [ ] Register `routes/channels.php` authorization for the `private-study-room.{room_id}` Reverb channel — without this, WebSocket connections won't authorize.
 - [ ] Add AI Assistant routes: chat, chat/history (get + delete), recommendations, rate-limited via the `ai` throttle.
@@ -129,7 +145,7 @@
 - [x] Phase 4.2: Controllers — Auth & Profile
 - [x] Phase 4.3: Controllers — Courses, Lessons, Enrollment
 - [x] Phase 4.4: Controllers — Exams & Attempts
-- [ ] Phase 4.5: Controllers — Leaderboard
+- [x] Phase 4.5: Controllers — Leaderboard
 - [ ] Phase 4.6: Controllers — Study Rooms & Realtime
 - [ ] Phase 4.7: Controllers — Mascot & Achievements
 - [ ] Phase 4.8: Controllers — AI Assistant

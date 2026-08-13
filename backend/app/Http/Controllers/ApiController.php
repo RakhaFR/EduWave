@@ -12,13 +12,13 @@ class ApiController extends Controller
     /**
      * Return a successful response with data.
      */
-    protected function success(mixed $data, string $message = '', int $status = 200): JsonResponse
+    protected function success(mixed $data, string $message = '', int $status = 200, ?array $meta = null): JsonResponse
     {
         return response()->json([
             'success' => true,
             'data' => $data,
             'error' => null,
-            'meta' => null,
+            'meta' => $meta,
         ], $status);
     }
 

@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\ExamController;
+use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -69,6 +70,11 @@ Route::prefix('v1')->group(function () {
         Route::post('exams/{exam}/attempts/{attempt}/submit', [AttemptController::class, 'submit']);
         Route::get ('exams/{exam}/attempts',                  [AttemptController::class, 'index']);
         Route::get ('exams/{exam}/attempts/{attempt}',        [AttemptController::class, 'show']);
+
+        // Leaderboard
+        Route::get('leaderboard',        [LeaderboardController::class, 'global']);
+        Route::get('leaderboard/weekly', [LeaderboardController::class, 'weekly']);
+        Route::get('leaderboard/me',     [LeaderboardController::class, 'me']);
 
         // Admin / Instructor only — course management
         Route::middleware('role:admin,instructor')->group(function () {

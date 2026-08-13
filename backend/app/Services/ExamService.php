@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\XpAwarded;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\ExamQuestion;
@@ -95,6 +96,13 @@ class ExamService
 
         $passed = $score >= $exam->passing_score;
         $pearlsEarned = 0;
+        $xpEarned = (int) round($score * 2);
+
+        // Award XP based on score (always, regardless of pass/fail)
+        if ($xpEarned > 0) {
+            $user->increment('xp', $xpEarned);
+            XpAwarded::dispatch($user, $xpEarned, 'exam');
+        }
 
         // Idempotently award pearls on pass (only if user hasn't passed this exam before)
         if ($passed && $exam->pearls_reward > 0) {
@@ -124,7 +132,7 @@ class ExamService
             'passed'             => (bool) $attempt->passed,
             'passing_score'      => (int) $exam->passing_score,
             'pearls_earned'      => $pearlsEarned,
-            'xp_earned'          => (int) round($score * 2),
+            'xp_earned'          => $xpEarned,
             'correct_count'      => $correctCount,
             'total_count'        => $questions->count(),
             'time_taken_seconds' => $timeTakenSeconds,
@@ -145,11 +153,11 @@ class ExamService
         return [
             'attempt_id' => $attempt->id,
             'exam'       => [
-                'id'                 => $exam->id,
-                'title'              => $exam->title,
-                'time_limit_seconds' => $exam->time_limit_sec,
-                'question_count'     => $questions->count(),
-                'passing_score'      => $exam->passing_score,
+                'id'              => $exam->id,
+                'title'           => $exam->title,
+                'time_limit_sec'  => $exam->time_limit_sec,
+                'question_count'  => $questions->count(),
+                'passing_score'   => $exam->passing_score,
             ],
             'questions'  => $questions,
             'started_at' => $attempt->started_at,
