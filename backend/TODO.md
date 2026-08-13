@@ -14,6 +14,7 @@
 - [x] Create the `room_messages` table to store chat messages, user references, room_id, type (text/file/ai), and timestamps.
 - [x] Create the `mascots` table (name, avatar_url, description, unlock_cost, rarity, category) and `user_mascots` pivot (user_id, mascot_id, is_active, accessories json).
 - [x] Create the `achievements` table (name, description, icon_url, condition_type, condition_value, pearls_reward) and `user_achievements` pivot (user_id, achievement_id, earned_at).
+- [x] Create the `study_room_participants` pivot table (user_id, room_id, joined_at) for tracking study room membership and capacity checks.
 - [x] Leaderboard has **no DB table** — ranking is Redis Sorted Sets (`leaderboard:global`, `leaderboard:weekly:{Y-W}`), updated on XP change. Do not create a `leaderboard` model/migration.
 - [x] Add foreign keys, indexes, unique constraints, and soft deletes where needed for efficient querying and data integrity.
 - [x] Run migrations and validate schema for all core LMS entities before API implementation.
@@ -111,4 +112,4 @@
 - [x] StudyRoomPolicy: destroy (host or admin), join (room.status === 'active' AND capacity check)
 - [x] Policies registered in AppServiceProvider
 - [x] Verification: All policies tested against Permission Matrix rules; CoursePolicy ownership checks, ExamAttemptPolicy attempt limits, and ExamAttemptPolicy view restrictions all pass
-- ⚠️  FLAG: StudyRoomPolicy::join() requires a study_room_participants pivot table for participant counting. The policy is implemented but will fail at runtime until the schema is added. See policy inline documentation for migration template.
+- [x] study_room_participants pivot table created and StudyRoom model updated with participants() relationship

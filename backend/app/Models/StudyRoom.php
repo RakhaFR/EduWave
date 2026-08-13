@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class StudyRoom extends Model
@@ -41,5 +42,10 @@ class StudyRoom extends Model
     public function messages(): HasMany
     {
         return $this->hasMany(RoomMessage::class, 'room_id');
+    }
+
+    public function participants(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'study_room_participants', 'room_id', 'user_id');
     }
 }
