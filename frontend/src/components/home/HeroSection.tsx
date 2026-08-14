@@ -99,7 +99,7 @@ export default function HeroSection({ bubbles }: HeroSectionProps) {
 
         {/* Water splash kanan */}
         <div
-          data-aos="fade-left"
+          data-aos="fade-right"
           data-aos-delay="200"
           className="absolute bottom-0 right-0 w-64 md:w-[440px] h-64 md:h-[440px] scale-x-[-1] z-10 pointer-events-none"
         >

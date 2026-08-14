@@ -7,6 +7,7 @@ import "aos/dist/aos.css";
 import Navbar from "@/components/home/Navbar";
 import HeroSection from "@/components/home/HeroSection";
 import AboutSection from "@/components/home/AboutSection";
+import CoursesSection from "@/components/home/CoursesSection";
 import TextAnimationSection from "@/components/home/TextAnimationSection";
 
 export default function Home() {
@@ -20,14 +21,11 @@ export default function Home() {
     }>
   >([]);
 
-  // "light" = putih (hero + about), "dark" = liquid glass (text-animation ke bawah)
   const [navTheme, setNavTheme] = useState<"light" | "dark">("dark");
 
   useEffect(() => {
-    // Init AOS
     AOS.init({ duration: 800, once: true, easing: "ease-out-cubic" });
 
-    // Generate gelembung
     setBubbles(
       Array.from({ length: 18 }).map((_, i) => ({
         id: i,
@@ -38,7 +36,6 @@ export default function Home() {
       }))
     );
 
-    // Scroll listener — switch navbar theme
     const handleScroll = () => {
       const textSection = document.getElementById("text-animation-section");
       if (textSection) {
@@ -57,7 +54,8 @@ export default function Home() {
       <Navbar theme={navTheme} />
       <HeroSection bubbles={bubbles} />
       <AboutSection />
+      <CoursesSection />
       <TextAnimationSection />
     </>
   );
-}
+} 

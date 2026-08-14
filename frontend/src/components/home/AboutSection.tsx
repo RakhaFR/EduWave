@@ -193,12 +193,7 @@ export default function AboutSection() {
         </div>
       </div>
 
-      {/* ── Wave ke Text Animation (navy) ── */}
-      <div className="relative -mb-1 pointer-events-none" style={{ lineHeight: 0 }}>
-        <svg viewBox="0 0 1440 90" xmlns="http://www.w3.org/2000/svg" className="w-full block">
-          <path d="M0,45 C360,5 1080,85 1440,45 L1440,90 L0,90 Z" fill="#00172e" />
-        </svg>
-      </div>
+
     </section>
   );
 }
