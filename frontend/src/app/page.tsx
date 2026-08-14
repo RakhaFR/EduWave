@@ -9,6 +9,7 @@ import HeroSection from "@/components/home/HeroSection";
 import AboutSection from "@/components/home/AboutSection";
 import CoursesSection from "@/components/home/CoursesSection";
 import TextAnimationSection from "@/components/home/TextAnimationSection";
+import Footer from "@/components/home/FooterSection";
 
 export default function Home() {
   const [bubbles, setBubbles] = useState<
@@ -56,6 +57,7 @@ export default function Home() {
       <AboutSection />
       <CoursesSection />
       <TextAnimationSection />
+      <Footer />
     </>
   );
-} 
+}

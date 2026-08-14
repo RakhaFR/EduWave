@@ -130,14 +130,9 @@ export default function CoursesSection() {
       : COURSES.filter((c) => c.category === active);
 
   return (
-    <section className="relative bg-[#f0f7ff] text-[#00172e] overflow-hidden">
+    <section className="relative bg-[#f0f7ff] text-[#00172e]">
 
-      {/* Wave putih → biru muda */}
-      <div className="relative -mt-1 pointer-events-none" style={{ lineHeight: 0 }}>
-        <svg viewBox="0 0 1440 70" xmlns="http://www.w3.org/2000/svg" className="w-full block">
-          <path d="M0,35 C360,0 1080,70 1440,35 L1440,0 L0,0 Z" fill="#ffffff" />
-        </svg>
-      </div>
+
 
       <div className="max-w-6xl mx-auto px-6 py-16 md:py-24">
 
@@ -272,6 +267,7 @@ export default function CoursesSection() {
           </Link>
         </div>
       </div>
+
 
       {/* Bottom wave biru muda → navy */}
       <div className="relative -mb-1 pointer-events-none" style={{ lineHeight: 0 }}>

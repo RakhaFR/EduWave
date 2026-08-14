@@ -60,9 +60,7 @@ export default function AboutSection() {
   return (
     <section className="relative bg-white text-[#00172e] overflow-hidden">
 
-      {/* Blob dekoratif */}
-      <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-cyan-50 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-blue-50 rounded-full blur-[80px] translate-x-1/3 translate-y-1/3 pointer-events-none" />
+
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 pt-20 pb-10 md:pt-28 md:pb-12">
 
@@ -106,6 +104,10 @@ export default function AboutSection() {
                   sizes="(max-width: 768px) 45vw, (max-width: 1280px) 22vw, 270px"
                   className="object-cover"
                 />
+                <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md">
+                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse shrink-0" />
+                  <span className="text-xs font-semibold text-[#00172e] truncate">Platform Aktif 24/7</span>
+                </div>
               </div>
 
             </div>
@@ -194,6 +196,12 @@ export default function AboutSection() {
       </div>
 
 
+      {/* Wave tipis putih → biru muda */}
+      <div className="relative -mb-1 pointer-events-none" style={{ lineHeight: 0 }}>
+        <svg viewBox="0 0 1440 50" xmlns="http://www.w3.org/2000/svg" className="w-full block">
+          <path d="M0,25 C360,50 1080,0 1440,25 L1440,50 L0,50 Z" fill="#f0f7ff" />
+        </svg>
+      </div>
     </section>
   );
 }
