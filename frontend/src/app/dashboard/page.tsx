@@ -1,12 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
   Home, Users, GraduationCap, BookOpen, Library,
   BarChart2, Bell, Search, ChevronRight, LogOut,
-  Play, Trash2, Trophy, Flame, Target, Calendar,
+  Play, Trash2, Trophy, Flame, Target, Calendar, ChevronDown,
 } from "lucide-react";
+import FloatingBubbles from "@/components/ui/FloatingBubbles";
 
 const SIDEBAR_ITEMS = [
   { icon: <Home className="w-5 h-5" />,          label: "Home",       href: "/dashboard", active: true },
@@ -39,74 +41,129 @@ const TOP3 = [
 ];
 
 export default function DashboardPage() {
+  const [avatarOpen, setAvatarOpen] = useState(false);
+
   return (
-    <div className="flex min-h-screen bg-[#c9e8ff] font-sans">
+    <div className="flex min-h-screen font-sans relative" style={{ background: "linear-gradient(180deg, #42AEED 0%, #0063A7 100%)" }}>
 
-      {/* Sidebar */}
-      <aside className="w-64 shrink-0 bg-white flex flex-col px-5 py-6 shadow-md z-20">
-        <Link href="/" className="flex items-center gap-2 mb-6">
-          <Image src="/logo-eduwave.webp" alt="EduWave" width={32} height={32} className="h-8 w-auto" />
-          <span className="text-lg font-bold text-[#00172e]">Edu<span className="text-[#008be3]">Wave</span></span>
-        </Link>
-        <div className="border-b border-slate-100 mb-6" />
+      {/* Bubble animasi naik */}
+      <FloatingBubbles count={20} />
 
-        <nav className="flex flex-col gap-1 flex-1">
-          {SIDEBAR_ITEMS.map((item) => (
-            <Link key={item.label} href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
-                ${item.active
-                  ? "bg-[#008be3]/10 text-[#008be3] border-l-4 border-[#008be3]"
-                  : "text-slate-500 hover:bg-slate-50 hover:text-[#008be3]"}`}>
-              {item.icon}{item.label}
-            </Link>
-          ))}
-        </nav>
+      {/* Ornamen karang SVG — fixed di bawah */}
+      <div className="fixed bottom-0 left-0 right-0 pointer-events-none" style={{ zIndex: 1 }}>
+        <img
+          src="/ocean-ornament.svg"
+          alt=""
+          className="w-full"
+          style={{ display: "block", height: "240px", objectFit: "cover", objectPosition: "top" }}
+        />
+      </div>
 
-        {/* Logout — hapus tombol update/masuk, ganti dengan logout */}
-        <Link href="/auth/login"
-          className="flex items-center justify-center gap-2 mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-red-400 hover:bg-red-50 transition-colors">
-          <LogOut className="w-4 h-4" />Keluar
-        </Link>
-      </aside>
+      {/* Sidebar — card putih dengan border radius, padding dari tepi */}
+      <div className="w-64 shrink-0 p-3 relative" style={{ zIndex: 20 }}>
+        <aside className="relative h-full rounded-3xl bg-white flex flex-col px-5 py-6 shadow-xl">
+
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 mb-2">
+            <Image src="/logo-eduwave.webp" alt="EduWave" width={32} height={32} className="h-8 w-auto" />
+            <span className="text-lg font-bold text-[#00172e]">Edu<span className="text-[#008be3]">Wave</span></span>
+            <ChevronRight className="w-4 h-4 text-slate-300 ml-auto" />
+          </Link>
+
+          <div className="border-b border-slate-100 mb-5" />
+
+          {/* Nav */}
+          <nav className="flex flex-col gap-0.5 flex-1">
+            {SIDEBAR_ITEMS.map((item) => (
+              <Link key={item.label} href={item.href}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
+                  ${item.active
+                    ? "bg-[#008be3]/10 text-[#008be3] border-l-4 border-[#008be3]"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-[#008be3]"}`}>
+                {item.icon}{item.label}
+              </Link>
+            ))}
+          </nav>
+
+
+        </aside>
+      </div>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 relative" style={{ zIndex: 10 }}>
 
         {/* Topbar */}
-        <header className="flex items-center justify-between px-8 py-4 bg-[#c9e8ff]">
+        <header className="flex items-center justify-between px-8 py-4 bg-transparent">
           <div className="relative w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input type="text" placeholder="Search..."
               className="w-full pl-9 pr-4 py-2.5 rounded-full bg-white text-sm text-slate-700 placeholder-slate-400 outline-none shadow-sm focus:ring-2 focus:ring-[#008be3]/30" />
           </div>
           <div className="flex items-center gap-4">
-            <button className="relative w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-sm">
-              <Bell className="w-4 h-4 text-slate-500" />
+            <button className="relative w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20 hover:bg-white/30 transition-colors">
+              <Bell className="w-4 h-4 text-white" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-400" />
             </button>
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-full bg-[#008be3] flex items-center justify-center text-white text-sm font-bold">R</div>
-              <span className="text-sm font-semibold text-[#00172e]">Rasya Raya Agung</span>
+            <div className="relative">
+              <button
+                onClick={() => setAvatarOpen(!avatarOpen)}
+                className="flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 pl-1 pr-3 py-1 hover:bg-white/30 transition-colors"
+              >
+                <div className="w-7 h-7 rounded-full bg-[#008be3] flex items-center justify-center text-white text-xs font-bold">R</div>
+                <span className="text-sm font-semibold text-white">Rasya Raya Agung</span>
+                <ChevronDown className={`w-3.5 h-3.5 text-white/70 transition-transform ${avatarOpen ? "rotate-180" : ""}`} />
+              </button>
+              {avatarOpen && (
+                <div className="absolute right-0 top-full mt-2 w-44 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50">
+                  <Link href="/profile"
+                    onClick={() => setAvatarOpen(false)}
+                    className="flex items-center gap-2 px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+                    <Users className="w-4 h-4" />Profil
+                  </Link>
+                  <div className="border-t border-slate-100" />
+                  <Link href="/auth/login"
+                    onClick={() => setAvatarOpen(false)}
+                    className="flex items-center gap-2 px-4 py-3 text-sm text-red-400 hover:bg-red-50 transition-colors">
+                    <LogOut className="w-4 h-4" />Keluar
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </header>
 
         <main className="flex-1 px-8 py-6 flex flex-col gap-6">
 
-          {/* Welcome banner — full width spanning semua kolom */}
-          <div className="relative rounded-3xl bg-[#b8d8f0] overflow-hidden px-8 py-8 flex items-center justify-between w-full shadow-sm">
-            <div className="flex-1">
-              <p className="text-xs font-semibold tracking-widest text-[#008be3] uppercase mb-2">Selamat Datang</p>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#00172e] mb-5 underline decoration-[#008be3]/40 underline-offset-4">
-                Halo Rasya Raya Agung
+          {/* Welcome banner — putih dengan border kiri aksen + dot pattern */}
+          <div className="relative rounded-3xl bg-white overflow-hidden px-8 py-8 flex items-center justify-between w-full shadow-lg">
+
+            {/* Border kiri aksen tebal */}
+            <div className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-3xl bg-gradient-to-b from-[#42AEED] to-[#0063A7]" />
+
+            {/* Dot pattern dekoratif pojok kanan atas */}
+            <div className="absolute top-4 right-48 opacity-[0.07] pointer-events-none select-none"
+              style={{
+                width: 120, height: 80,
+                backgroundImage: "radial-gradient(circle, #008be3 1.5px, transparent 1.5px)",
+                backgroundSize: "14px 14px",
+              }}
+            />
+
+            <div className="flex-1 pl-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full bg-[#008be3] animate-pulse" />
+                <p className="text-xs font-semibold tracking-widest text-[#008be3] uppercase">Selamat Datang</p>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#00172e] mb-5">
+                Halo, <span className="text-[#008be3]">Rasya Raya Agung</span>
               </h1>
               <Link href="/course"
-                className="inline-flex items-center gap-2 rounded-xl border-2 border-[#00172e]/20 bg-white/70 backdrop-blur-sm px-6 py-2.5 text-sm font-bold text-[#00172e] hover:bg-white transition-colors">
-                Mulai <ChevronRight className="w-4 h-4" />
+                className="inline-flex items-center gap-2 rounded-xl bg-[#008be3] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#0078c8] transition-colors shadow-md shadow-[#008be3]/30">
+                Mulai Belajar <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
             <div className="relative w-40 h-40 shrink-0 ml-4">
-              <Image src="/quli-maskot.webp" alt="Quli" fill className="object-contain" sizes="160px" />
+              <Image src="/quli-maskot.webp" alt="Quli" fill className="object-contain drop-shadow-lg" sizes="160px" />
             </div>
           </div>
 
@@ -119,8 +176,8 @@ export default function DashboardPage() {
             {/* Kursus saya */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-bold text-[#00172e]">Kursus Saya</h2>
-                <Link href="/course" className="text-xs text-[#008be3] font-semibold hover:underline flex items-center gap-1">
+                <h2 className="text-base font-bold text-white">Kursus Saya</h2>
+                <Link href="/course" className="text-xs text-white/80 font-semibold hover:underline flex items-center gap-1">
                   Lihat Semua <ChevronRight className="w-3 h-3" />
                 </Link>
               </div>
@@ -171,13 +228,12 @@ export default function DashboardPage() {
               {/* XP + mutiara */}
               <div className="flex items-center gap-3">
                 {/* Mutiara image */}
-                <div className="relative w-12 h-12 shrink-0">
-                  <Image
+                <div className="w-12 h-12 shrink-0 flex items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                     src="/pearl.webp"
                     alt="Mutiara"
-                    fill
-                    sizes="48px"
-                    className="object-contain drop-shadow-md"
+                    className="w-full h-full object-contain drop-shadow-md"
                   />
                 </div>
                 <div>

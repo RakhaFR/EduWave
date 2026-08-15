@@ -1,0 +1,157 @@
+<svg width="100%" viewBox="0 0 1440 240" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>Ornamen dasar laut</title>
+  <desc>Ilustrasi terumbu karang dan rumput laut untuk dekorasi dashboard</desc>
+
+  <defs>
+    <linearGradient id="bggrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#42AEED" stop-opacity="0"/>
+      <stop offset="60%" stop-color="#1A7EC4" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#0D4F82" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="sandgrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#B8D8F0"/>
+      <stop offset="100%" stop-color="#8BB8D8"/>
+    </linearGradient>
+    <linearGradient id="coralred" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF8C7A"/>
+      <stop offset="100%" stop-color="#E05040"/>
+    </linearGradient>
+    <linearGradient id="coralorg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFB060"/>
+      <stop offset="100%" stop-color="#E07830"/>
+    </linearGradient>
+    <linearGradient id="coralpurp" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#C090E0"/>
+      <stop offset="100%" stop-color="#8050B0"/>
+    </linearGradient>
+    <linearGradient id="coralping" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFB0C8"/>
+      <stop offset="100%" stop-color="#E07090"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Pasir dasar -->
+  <path d="M0,195 C120,188 280,200 440,193 C600,186 760,200 920,193 C1080,186 1240,198 1440,192 L1440,240 L0,240 Z"
+    fill="url(#sandgrad)" opacity="0.85"/>
+  <path d="M0,202 C160,195 340,206 540,199 C740,192 900,206 1100,199 C1260,194 1360,203 1440,198 L1440,240 L0,240 Z"
+    fill="#9BBDD4" opacity="0.5"/>
+
+  <!-- ══ SEAWEED kiri ══ -->
+  <path d="M80,205 C75,188 88,176 80,158 C72,140 88,128 80,110 C72,92 88,80 80,62"
+    fill="none" stroke="#2D8A4E" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M80,168 C68,158 60,145 65,133" fill="none" stroke="#2D8A4E" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M80,138 C92,126 98,112 90,100" fill="none" stroke="#2D8A4E" stroke-width="3.5" stroke-linecap="round"/>
+  <ellipse cx="80" cy="58" rx="8" ry="12" fill="#3AAA60" opacity="0.9"/>
+
+  <path d="M108,205 C114,186 100,173 108,155 C116,137 100,123 108,105 C116,87 100,74 108,58"
+    fill="none" stroke="#4DB870" stroke-width="4" stroke-linecap="round"/>
+  <path d="M108,166 C122,154 128,140 120,128" fill="none" stroke="#4DB870" stroke-width="3" stroke-linecap="round"/>
+  <ellipse cx="108" cy="55" rx="7" ry="10" fill="#5DCF80" opacity="0.85"/>
+
+  <path d="M58,205 C53,192 62,182 56,170 C50,158 61,148 55,136"
+    fill="none" stroke="#1A6B38" stroke-width="3.5" stroke-linecap="round"/>
+  <ellipse cx="55" cy="133" rx="6" ry="8" fill="#2A8A48" opacity="0.8"/>
+
+  <!-- ══ SEAWEED kanan ══ -->
+  <path d="M1340,205 C1335,188 1348,176 1340,158 C1332,140 1348,128 1340,110 C1332,92 1348,80 1340,62"
+    fill="none" stroke="#2D8A4E" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M1340,168 C1328,158 1320,145 1326,133" fill="none" stroke="#2D8A4E" stroke-width="3.5" stroke-linecap="round"/>
+  <ellipse cx="1340" cy="58" rx="8" ry="12" fill="#3AAA60" opacity="0.9"/>
+
+  <path d="M1365,205 C1372,186 1357,173 1365,155 C1373,137 1357,123 1365,105"
+    fill="none" stroke="#4DB870" stroke-width="4" stroke-linecap="round"/>
+  <path d="M1365,160 C1380,146 1385,130 1375,118" fill="none" stroke="#4DB870" stroke-width="3" stroke-linecap="round"/>
+  <ellipse cx="1365" cy="102" rx="7" ry="10" fill="#5DCF80" opacity="0.85"/>
+
+  <path d="M1390,205 C1385,192 1395,182 1388,170 C1381,158 1392,148 1386,136"
+    fill="none" stroke="#1A6B38" stroke-width="3.5" stroke-linecap="round"/>
+  <ellipse cx="1386" cy="133" rx="6" ry="8" fill="#2A8A48" opacity="0.8"/>
+
+  <!-- ══ CORAL merah kiri ══ -->
+  <line x1="210" y1="205" x2="210" y2="155" stroke="#C03828" stroke-width="4" stroke-linecap="round"/>
+  <line x1="210" y1="178" x2="190" y2="152" stroke="#C03828" stroke-width="3" stroke-linecap="round"/>
+  <line x1="210" y1="170" x2="230" y2="147" stroke="#C03828" stroke-width="3" stroke-linecap="round"/>
+  <line x1="210" y1="162" x2="196" y2="138" stroke="#C03828" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="210" y1="162" x2="224" y2="136" stroke="#C03828" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="190" cy="150" r="5" fill="url(#coralred)"/>
+  <circle cx="230" cy="145" r="5" fill="url(#coralred)"/>
+  <circle cx="196" cy="136" r="4" fill="url(#coralred)"/>
+  <circle cx="224" cy="134" r="4" fill="url(#coralred)"/>
+  <circle cx="210" cy="153" r="5" fill="url(#coralred)"/>
+
+  <!-- ══ CORAL oranye tengah kiri ══ -->
+  <line x1="380" y1="205" x2="380" y2="160" stroke="#C06020" stroke-width="4.5" stroke-linecap="round"/>
+  <line x1="380" y1="182" x2="358" y2="156" stroke="#C06020" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="380" y1="175" x2="402" y2="152" stroke="#C06020" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="358" y1="156" x2="346" y2="136" stroke="#C06020" stroke-width="3" stroke-linecap="round"/>
+  <line x1="358" y1="156" x2="370" y2="134" stroke="#C06020" stroke-width="3" stroke-linecap="round"/>
+  <line x1="402" y1="152" x2="390" y2="131" stroke="#C06020" stroke-width="3" stroke-linecap="round"/>
+  <line x1="402" y1="152" x2="414" y2="133" stroke="#C06020" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="346" cy="134" r="5" fill="url(#coralorg)"/>
+  <circle cx="370" cy="132" r="5" fill="url(#coralorg)"/>
+  <circle cx="390" cy="129" r="5" fill="url(#coralorg)"/>
+  <circle cx="414" cy="131" r="5" fill="url(#coralorg)"/>
+  <circle cx="380" cy="158" r="6" fill="url(#coralorg)"/>
+
+  <!-- ══ CORAL ungu bubble tengah ══ -->
+  <line x1="720" y1="205" x2="720" y2="174" stroke="#6030A0" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="720" cy="163" r="12" fill="url(#coralpurp)" opacity="0.9"/>
+  <circle cx="704" cy="170" r="10" fill="url(#coralpurp)" opacity="0.85"/>
+  <circle cx="736" cy="168" r="11" fill="url(#coralpurp)" opacity="0.88"/>
+  <circle cx="712" cy="154" r="9" fill="url(#coralpurp)" opacity="0.8"/>
+  <circle cx="728" cy="153" r="10" fill="url(#coralpurp)" opacity="0.82"/>
+  <circle cx="720" cy="145" r="8" fill="url(#coralpurp)" opacity="0.75"/>
+  <circle cx="717" cy="160" r="3" fill="white" opacity="0.3"/>
+  <circle cx="702" cy="166" r="2.5" fill="white" opacity="0.25"/>
+  <circle cx="733" cy="164" r="2.5" fill="white" opacity="0.25"/>
+
+  <!-- ══ CORAL pink tengah kanan ══ -->
+  <line x1="1060" y1="205" x2="1060" y2="158" stroke="#B04870" stroke-width="4.5" stroke-linecap="round"/>
+  <line x1="1060" y1="180" x2="1038" y2="154" stroke="#B04870" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="1060" y1="173" x2="1082" y2="150" stroke="#B04870" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="1038" y1="154" x2="1026" y2="133" stroke="#B04870" stroke-width="3" stroke-linecap="round"/>
+  <line x1="1038" y1="154" x2="1050" y2="131" stroke="#B04870" stroke-width="3" stroke-linecap="round"/>
+  <line x1="1082" y1="150" x2="1070" y2="129" stroke="#B04870" stroke-width="3" stroke-linecap="round"/>
+  <line x1="1082" y1="150" x2="1094" y2="131" stroke="#B04870" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="1026" cy="131" r="5" fill="url(#coralping)"/>
+  <circle cx="1050" cy="129" r="5" fill="url(#coralping)"/>
+  <circle cx="1070" cy="127" r="5" fill="url(#coralping)"/>
+  <circle cx="1094" cy="129" r="5" fill="url(#coralping)"/>
+  <circle cx="1060" cy="156" r="6" fill="url(#coralping)"/>
+
+  <!-- ══ CORAL merah kanan ══ -->
+  <line x1="1220" y1="205" x2="1220" y2="158" stroke="#C03828" stroke-width="4" stroke-linecap="round"/>
+  <line x1="1220" y1="178" x2="1200" y2="153" stroke="#C03828" stroke-width="3" stroke-linecap="round"/>
+  <line x1="1220" y1="170" x2="1240" y2="148" stroke="#C03828" stroke-width="3" stroke-linecap="round"/>
+  <line x1="1220" y1="162" x2="1208" y2="140" stroke="#C03828" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="1220" y1="162" x2="1232" y2="138" stroke="#C03828" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="1200" cy="151" r="5" fill="url(#coralred)"/>
+  <circle cx="1240" cy="146" r="5" fill="url(#coralred)"/>
+  <circle cx="1208" cy="138" r="4" fill="url(#coralred)"/>
+  <circle cx="1232" cy="136" r="4" fill="url(#coralred)"/>
+  <circle cx="1220" cy="156" r="5" fill="url(#coralred)"/>
+
+  <!-- ══ Batu karang ══ -->
+  <ellipse cx="560" cy="200" rx="30" ry="12" fill="#8899B0" opacity="0.65"/>
+  <ellipse cx="560" cy="197" rx="24" ry="9" fill="#99AABF" opacity="0.75"/>
+  <ellipse cx="290" cy="201" rx="20" ry="9" fill="#7A8EA8" opacity="0.6"/>
+  <ellipse cx="880" cy="200" rx="26" ry="10" fill="#8899B0" opacity="0.65"/>
+  <ellipse cx="1150" cy="201" rx="18" ry="8" fill="#7A8EA8" opacity="0.6"/>
+
+  <!-- ══ Gelembung ══ -->
+  <circle cx="160" cy="148" r="5" fill="none" stroke="#C0EAFF" stroke-width="1.2" opacity="0.55"/>
+  <circle cx="165" cy="126" r="3.5" fill="none" stroke="#C0EAFF" stroke-width="1" opacity="0.45"/>
+  <circle cx="158" cy="108" r="2.5" fill="none" stroke="#C0EAFF" stroke-width="1" opacity="0.35"/>
+  <circle cx="480" cy="138" r="6" fill="none" stroke="#C0EAFF" stroke-width="1.2" opacity="0.5"/>
+  <circle cx="485" cy="116" r="4" fill="none" stroke="#C0EAFF" stroke-width="1" opacity="0.4"/>
+  <circle cx="820" cy="130" r="5" fill="none" stroke="#B8E4FF" stroke-width="1.2" opacity="0.5"/>
+  <circle cx="823" cy="110" r="3" fill="none" stroke="#B8E4FF" stroke-width="1" opacity="0.38"/>
+  <circle cx="960" cy="142" r="5.5" fill="none" stroke="#C0EAFF" stroke-width="1.2" opacity="0.52"/>
+  <circle cx="957" cy="120" r="3.5" fill="none" stroke="#C0EAFF" stroke-width="1" opacity="0.4"/>
+  <circle cx="1280" cy="138" r="4.5" fill="none" stroke="#B8E4FF" stroke-width="1" opacity="0.48"/>
+  <circle cx="1284" cy="118" r="3" fill="none" stroke="#B8E4FF" stroke-width="1" opacity="0.36"/>
+
+  <!-- Garis ombak tipis -->
+  <path d="M0,190 C180,184 380,194 580,188 C780,182 980,194 1180,187 C1300,184 1380,191 1440,188"
+    fill="none" stroke="#C8E8F8" stroke-width="1.2" opacity="0.45"/>
+</svg>
