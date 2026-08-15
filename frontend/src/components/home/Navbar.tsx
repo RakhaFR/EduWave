@@ -18,10 +18,10 @@ interface NavbarProps {
 }
 
 const NAV_ITEMS = [
-  { href: "/course",           icon: <BookOpen className="h-4 w-4" />, label: "Kursus" },
-  { href: "/leaderboard",      icon: <Trophy className="h-4 w-4" />,   label: "Leaderboard" },
-  { href: "/study-room",       icon: <Users className="h-4 w-4" />,    label: "Study Room" },
-  { href: "/mascot-customize", icon: <Smile className="h-4 w-4" />,    label: "Mascot" },
+  { href: "/auth/login",           icon: <BookOpen className="h-4 w-4" />, label: "Kursus" },
+  { href: "/auth/login",      icon: <Trophy className="h-4 w-4" />,   label: "Leaderboard" },
+  { href: "/auth/login",       icon: <Users className="h-4 w-4" />,    label: "Study Room" },
+  { href: "/auth/login", icon: <Smile className="h-4 w-4" />,    label: "Mascot" },
 ];
 
 export default function Navbar({ theme }: NavbarProps) {
@@ -71,7 +71,7 @@ export default function Navbar({ theme }: NavbarProps) {
         >
           {NAV_ITEMS.map((item) => (
             <Link
-              key={item.href}
+              key={item.label}
               href={item.href}
               className={[
                 "flex items-center gap-1.5 transition-all hover:scale-105",
@@ -140,7 +140,7 @@ export default function Navbar({ theme }: NavbarProps) {
         >
           {NAV_ITEMS.map((item) => (
             <Link
-              key={item.href}
+              key={item.label}
               href={item.href}
               onClick={() => setMobileOpen(false)}
               className={[

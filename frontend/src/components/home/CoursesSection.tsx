@@ -244,7 +244,7 @@ export default function CoursesSection() {
                     {course.price}
                   </span>
                   <Link
-                    href={`/course/${course.id}`}
+                    href="/auth/login"
                     className="flex items-center gap-1 rounded-full bg-[#008be3] px-4 py-1.5 text-[11px] font-bold text-white transition-all hover:bg-[#0078c8] hover:gap-2 group-hover:shadow-md"
                   >
                     Selami Kursus
@@ -259,7 +259,7 @@ export default function CoursesSection() {
         {/* ── CTA lihat semua ── */}
         <div data-aos="fade-up" className="mt-12 text-center">
           <Link
-            href="/course"
+            href="/auth/login"
             className="inline-flex items-center gap-2 rounded-full border-2 border-[#008be3] text-[#008be3] px-8 py-3 text-sm font-bold transition-all hover:bg-[#008be3] hover:text-white hover:scale-105"
           >
             Lihat Semua Kursus
