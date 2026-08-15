@@ -104,10 +104,6 @@ export default function AboutSection() {
                   sizes="(max-width: 768px) 45vw, (max-width: 1280px) 22vw, 270px"
                   className="object-cover"
                 />
-                <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md">
-                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse shrink-0" />
-                  <span className="text-xs font-semibold text-[#00172e] truncate">Platform Aktif 24/7</span>
-                </div>
               </div>
 
             </div>
