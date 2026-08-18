@@ -31,6 +31,17 @@ class MascotSeeder extends Seeder
             'category' => 'marine',
         ]);
 
+        // Add a cheap mascot for testing purchase with insufficient pearls
+        Mascot::create([
+            'id' => '33333333-3333-3333-3333-333333333331',
+            'name' => 'Kepiting Gesit',
+            'avatar_url' => 'https://api.eduwave.id/mascots/crab.png',
+            'description' => 'Maskot kepiting yang lincah dan ceria',
+            'unlock_cost' => 500,
+            'rarity' => 'epic',
+            'category' => 'marine',
+        ]);
+
         $student = User::where('email', 'student@eduwave.id')->first();
         if ($student) {
             UserMascot::create([

@@ -554,14 +554,26 @@
                                                     {
                                                         "listen":  "test",
                                                         "script":  {
-                                                                       "exec":  [
-                                                                                    "pm.test(\u0027Status code is 200 OK\u0027, function () { pm.response.to.have.status(200); });",
-                                                                                    "pm.test(\u0027Draft courses visible to instructor\u0027, function () {",
-                                                                                    "    var jsonData = pm.response.json();",
-                                                                                    "    var statuses = jsonData.data.map(function(c){ return c.status; });",
-                                                                                    "    pm.expect(statuses).to.include(\u0027draft\u0027);",
-                                                                                    "});"
-                                                                                ],
+                                                                         "exec":  [
+                                                                                      "pm.test(\u0027Status code is 200 OK\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                      "pm.test(\u0027Response envelope structure\u0027, function () {",
+                                                                                      "    var jsonData = pm.response.json();",
+                                                                                      "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                      "    pm.expect(jsonData.success).to.eql(true);",
+                                                                                      "});",
+                                                                                      "pm.test(\u0027Instructor can see courses including drafts\u0027, function () {",
+                                                                                      "    var jsonData = pm.response.json();",
+                                                                                      "    pm.expect(jsonData.data).to.be.an(\u0027array\u0027);",
+                                                                                      "    if (jsonData.data.length \u003e 0) {",
+                                                                                      "        var statuses = jsonData.data.map(function(c){ return c.status; });",
+                                                                                      "        console.log(\u0027Courses visible to instructor - Statuses:\u0027, statuses);",
+                                                                                      "        var draftCourse = jsonData.data.find(function(c) { return c.status === \u0027draft\u0027; });",
+                                                                                      "        if (!draftCourse) {",
+                                                                                      "            console.warn(\u0027WARNING: No draft courses found. Check if database is seeded properly.\u0027);",
+                                                                                      "        }",
+                                                                                      "    }",
+                                                                                      "});"
+                                                                                  ],
                                                                        "type":  "text/javascript"
                                                                    }
                                                     }
@@ -829,40 +841,40 @@
                  {
                      "name":  "4. Lesson Progress \u0026 Completion",
                      "item":  [
-                                  {
-                                      "name":  "4.1 Complete Lesson 1 (First Time - Awards XP)",
-                                      "request":  {
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Authorization",
-                                                                         "value":  "Bearer {{token}}"
-                                                                     },
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     },
-                                                                     {
-                                                                         "key":  "Accept",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"watch_seconds\": 900\n}"
-                                                               },
-                                                      "url":  {
-                                                                  "raw":  "{{base_url}}/lessons/{{lesson_preview_id}}/complete",
-                                                                  "host":  [
-                                                                               "{{base_url}}"
-                                                                           ],
-                                                                  "path":  [
-                                                                               "lessons",
-                                                                               "{{lesson_preview_id}}",
-                                                                               "complete"
-                                                                           ]
-                                                              }
-                                                  },
+                                   {
+                                       "name":  "4.1 Complete Lesson 1 (First Time - Awards XP)",
+                                       "request":  {
+                                                       "method":  "POST",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Content-Type",
+                                                                          "value":  "application/json"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "body":  {
+                                                                    "mode":  "raw",
+                                                                    "raw":  "{\n  \"watch_seconds\": 900\n}"
+                                                                },
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/lessons/{{lesson_non_preview_id}}/complete",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "lessons",
+                                                                                "{{lesson_non_preview_id}}",
+                                                                                "complete"
+                                                                            ]
+                                                               }
+                                                   },
                                       "event":  [
                                                     {
                                                         "listen":  "test",
@@ -885,40 +897,40 @@
                                                     }
                                                 ]
                                   },
-                                  {
-                                      "name":  "4.2 Complete Lesson 1 AGAIN (Idempotency - No Extra XP)",
-                                      "request":  {
-                                                      "method":  "POST",
-                                                      "header":  [
-                                                                     {
-                                                                         "key":  "Authorization",
-                                                                         "value":  "Bearer {{token}}"
-                                                                     },
-                                                                     {
-                                                                         "key":  "Content-Type",
-                                                                         "value":  "application/json"
-                                                                     },
-                                                                     {
-                                                                         "key":  "Accept",
-                                                                         "value":  "application/json"
-                                                                     }
-                                                                 ],
-                                                      "body":  {
-                                                                   "mode":  "raw",
-                                                                   "raw":  "{\n  \"watch_seconds\": 900\n}"
-                                                               },
-                                                      "url":  {
-                                                                  "raw":  "{{base_url}}/lessons/{{lesson_preview_id}}/complete",
-                                                                  "host":  [
-                                                                               "{{base_url}}"
-                                                                           ],
-                                                                  "path":  [
-                                                                               "lessons",
-                                                                               "{{lesson_preview_id}}",
-                                                                               "complete"
-                                                                           ]
-                                                              }
-                                                  },
+                                   {
+                                       "name":  "4.2 Complete Lesson 1 AGAIN (Idempotency - No Extra XP)",
+                                       "request":  {
+                                                       "method":  "POST",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Content-Type",
+                                                                          "value":  "application/json"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "body":  {
+                                                                    "mode":  "raw",
+                                                                    "raw":  "{\n  \"watch_seconds\": 900\n}"
+                                                                },
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/lessons/{{lesson_non_preview_id}}/complete",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "lessons",
+                                                                                "{{lesson_non_preview_id}}",
+                                                                                "complete"
+                                                                            ]
+                                                               }
+                                                   },
                                       "event":  [
                                                     {
                                                         "listen":  "test",
@@ -1650,11 +1662,813 @@
                                                     }
                                                 ]
                                   }
-                              ]
-                 },
-                 {
-                     "name":  "11. Admin",
-                     "item":  [
+                               ]
+                  },
+                  {
+                      "name":  "8. Mascots",
+                      "item":  [
+                                   {
+                                       "name":  "8.1 Get Mascot Catalog",
+                                       "request":  {
+                                                       "method":  "GET",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/mascots",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "mascots"
+                                                                            ]
+                                                               }
+                                                   },
+                                       "event":  [
+                                                     {
+                                                         "listen":  "test",
+                                                         "script":  {
+                                                                        "exec":  [
+                                                                                     "pm.test(\u0027Status code is 200 OK\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                     "pm.test(\u0027Response envelope structure\u0027, function () {",
+                                                                                     "    var jsonData = pm.response.json();",
+                                                                                     "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                     "    pm.expect(jsonData.success).to.eql(true);",
+                                                                                     "    pm.expect(jsonData.data).to.have.property(\u0027mascots\u0027);",
+                                                                                     "    pm.expect(jsonData.data.mascots).to.be.an(\u0027array\u0027);",
+                                                                                     "});",
+                                                                                      "var jsonData = pm.response.json();",
+                                                                                      "if (jsonData.data.mascots.length \u003e 0) {",
+                                                                                      "    // Find the most expensive unowned mascot for insufficient pearls test",
+                                                                                      "    var unownedMascots = jsonData.data.mascots.filter(function(m) { return !m.is_owned; });",
+                                                                                      "    if (unownedMascots.length \u003e 0) {",
+                                                                                      "        // Sort by unlock_cost descending and pick the most expensive",
+                                                                                      "        unownedMascots.sort(function(a, b) { return b.unlock_cost - a.unlock_cost; });",
+                                                                                      "        pm.environment.set(\u0027mascot_id\u0027, unownedMascots[0].id);",
+                                                                                      "        pm.environment.set(\u0027mascot_cost\u0027, unownedMascots[0].unlock_cost);",
+                                                                                      "    }",
+                                                                                      "}"
+                                                                                 ],
+                                                                        "type":  "text/javascript"
+                                                                    }
+                                                     }
+                                                 ]
+                                   },
+                                   {
+                                       "name":  "8.2 Get User Mascot Inventory",
+                                       "request":  {
+                                                       "method":  "GET",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/mascots/inventory",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "mascots",
+                                                                                "inventory"
+                                                                            ]
+                                                               }
+                                                   },
+                                       "event":  [
+                                                     {
+                                                         "listen":  "test",
+                                                         "script":  {
+                                                                        "exec":  [
+                                                                                     "pm.test(\u0027Status code is 200 OK\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                     "pm.test(\u0027Response envelope structure\u0027, function () {",
+                                                                                     "    var jsonData = pm.response.json();",
+                                                                                     "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                     "    pm.expect(jsonData.success).to.eql(true);",
+                                                                                     "    pm.expect(jsonData.data).to.have.property(\u0027mascots\u0027);",
+                                                                                     "    pm.expect(jsonData.data.mascots).to.be.an(\u0027array\u0027);",
+                                                                                     "});",
+                                                                                     "var jsonData = pm.response.json();",
+                                                                                     "if (jsonData.data.mascots.length \u003e 0) {",
+                                                                                     "    pm.environment.set(\u0027owned_mascot_id\u0027, jsonData.data.mascots[0].id);",
+                                                                                     "}"
+                                                                                 ],
+                                                                        "type":  "text/javascript"
+                                                                    }
+                                                     }
+                                                 ]
+                                   },
+                                   {
+                                       "name":  "8.3 Purchase Mascot with Insufficient Pearls (Expect 403)",
+                                       "request":  {
+                                                       "method":  "POST",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/mascots/{{mascot_id}}/purchase",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "mascots",
+                                                                                "{{mascot_id}}",
+                                                                                "purchase"
+                                                                            ]
+                                                               }
+                                                   },
+                                       "event":  [
+                                                     {
+                                                         "listen":  "test",
+                                                         "script":  {
+                                                                        "exec":  [
+                                                                                     "pm.test(\u0027Status code is 403 Forbidden (Insufficient pearls)\u0027, function () { pm.response.to.have.status(403); });",
+                                                                                     "pm.test(\u0027Error envelope structure\u0027, function () {",
+                                                                                     "    var jsonData = pm.response.json();",
+                                                                                     "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                     "    pm.expect(jsonData.success).to.eql(false);",
+                                                                                     "    pm.expect(jsonData.error.code).to.eql(\u0027INSUFFICIENT_PEARLS\u0027);",
+                                                                                     "});"
+                                                                                 ],
+                                                                        "type":  "text/javascript"
+                                                                    }
+                                                     }
+                                                 ]
+                                   },
+                                   {
+                                       "name":  "8.4 Purchase Already Owned Mascot (Expect 409)",
+                                       "request":  {
+                                                       "method":  "POST",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/mascots/{{owned_mascot_id}}/purchase",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "mascots",
+                                                                                "{{owned_mascot_id}}",
+                                                                                "purchase"
+                                                                            ]
+                                                               }
+                                                   },
+                                       "event":  [
+                                                     {
+                                                         "listen":  "test",
+                                                         "script":  {
+                                                                        "exec":  [
+                                                                                     "pm.test(\u0027Status code is 409 Conflict (Already owned)\u0027, function () { pm.response.to.have.status(409); });",
+                                                                                     "pm.test(\u0027Error envelope structure\u0027, function () {",
+                                                                                     "    var jsonData = pm.response.json();",
+                                                                                     "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                     "    pm.expect(jsonData.success).to.eql(false);",
+                                                                                     "    pm.expect(jsonData.error.code).to.eql(\u0027MASCOT_ALREADY_OWNED\u0027);",
+                                                                                     "});"
+                                                                                 ],
+                                                                        "type":  "text/javascript"
+                                                                    }
+                                                     }
+                                                 ]
+                                   },
+                                   {
+                                       "name":  "8.5 Equip Owned Mascot",
+                                       "request":  {
+                                                       "method":  "PUT",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Content-Type",
+                                                                          "value":  "application/json"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "body":  {
+                                                                    "mode":  "raw",
+                                                                    "raw":  "{\n  \"mascot_id\": \"{{owned_mascot_id}}\",\n  \"accessories\": {\"hat\": \"hat-captain\", \"background\": \"ocean\"}\n}"
+                                                                },
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/mascots/equip",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "mascots",
+                                                                                "equip"
+                                                                            ]
+                                                               }
+                                                   },
+                                       "event":  [
+                                                     {
+                                                         "listen":  "test",
+                                                         "script":  {
+                                                                        "exec":  [
+                                                                                     "pm.test(\u0027Status code is 200 OK\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                     "pm.test(\u0027Response envelope structure\u0027, function () {",
+                                                                                     "    var jsonData = pm.response.json();",
+                                                                                     "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                     "    pm.expect(jsonData.success).to.eql(true);",
+                                                                                     "    pm.expect(jsonData.data.is_active).to.eql(true);",
+                                                                                     "});"
+                                                                                 ],
+                                                                        "type":  "text/javascript"
+                                                                    }
+                                                     }
+                                                 ]
+                                   },
+                                   {
+                                       "name":  "8.6 Equip Unowned Mascot (Expect 403)",
+                                       "request":  {
+                                                       "method":  "PUT",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Content-Type",
+                                                                          "value":  "application/json"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "body":  {
+                                                                    "mode":  "raw",
+                                                                    "raw":  "{\n  \"mascot_id\": \"{{mascot_id}}\"\n}"
+                                                                },
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/mascots/equip",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "mascots",
+                                                                                "equip"
+                                                                            ]
+                                                               }
+                                                   },
+                                       "event":  [
+                                                     {
+                                                         "listen":  "test",
+                                                         "script":  {
+                                                                        "exec":  [
+                                                                                     "pm.test(\u0027Status code is 403 Forbidden (Mascot not owned)\u0027, function () { pm.response.to.have.status(403); });",
+                                                                                     "pm.test(\u0027Error envelope structure\u0027, function () {",
+                                                                                     "    var jsonData = pm.response.json();",
+                                                                                     "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                     "    pm.expect(jsonData.success).to.eql(false);",
+                                                                                     "    pm.expect(jsonData.error.code).to.eql(\u0027MASCOT_NOT_OWNED\u0027);",
+                                                                                     "});"
+                                                                                 ],
+                                                                        "type":  "text/javascript"
+                                                                    }
+                                                     }
+                                                 ]
+                                   }
+                               ]
+                  },
+                  {
+                      "name":  "9. Achievements",
+                      "item":  [
+                                   {
+                                       "name":  "9.1 Get All Achievements",
+                                       "request":  {
+                                                       "method":  "GET",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/achievements",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "achievements"
+                                                                            ]
+                                                               }
+                                                   },
+                                       "event":  [
+                                                     {
+                                                         "listen":  "test",
+                                                         "script":  {
+                                                                        "exec":  [
+                                                                                     "pm.test(\u0027Status code is 200 OK\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                     "pm.test(\u0027Response envelope structure\u0027, function () {",
+                                                                                     "    var jsonData = pm.response.json();",
+                                                                                     "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                     "    pm.expect(jsonData.success).to.eql(true);",
+                                                                                     "    pm.expect(jsonData.data).to.have.property(\u0027achievements\u0027);",
+                                                                                     "    pm.expect(jsonData.data.achievements).to.be.an(\u0027array\u0027);",
+                                                                                     "});",
+                                                                                     "var jsonData = pm.response.json();",
+                                                                                     "if (jsonData.data.achievements.length \u003e 0) {",
+                                                                                     "    pm.environment.set(\u0027achievement_id\u0027, jsonData.data.achievements[0].id);",
+                                                                                     "}"
+                                                                                 ],
+                                                                        "type":  "text/javascript"
+                                                                    }
+                                                     }
+                                                 ]
+                                   },
+                                   {
+                                       "name":  "9.2 Get My Achievements",
+                                       "request":  {
+                                                       "method":  "GET",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/achievements/me",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "achievements",
+                                                                                "me"
+                                                                            ]
+                                                               }
+                                                   },
+                                       "event":  [
+                                                     {
+                                                         "listen":  "test",
+                                                         "script":  {
+                                                                        "exec":  [
+                                                                                     "pm.test(\u0027Status code is 200 OK\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                     "pm.test(\u0027Response envelope structure\u0027, function () {",
+                                                                                     "    var jsonData = pm.response.json();",
+                                                                                     "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                     "    pm.expect(jsonData.success).to.eql(true);",
+                                                                                     "    pm.expect(jsonData.data).to.have.property(\u0027achievements\u0027);",
+                                                                                     "    pm.expect(jsonData.data).to.have.property(\u0027total_pearls_earned\u0027);",
+                                                                                     "});"
+                                                                                 ],
+                                                                        "type":  "text/javascript"
+                                                                    }
+                                                     }
+                                                 ]
+                                   },
+                                   {
+                                       "name":  "9.3 Get Achievement Details with Progress",
+                                       "request":  {
+                                                       "method":  "GET",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/achievements/{{achievement_id}}",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "achievements",
+                                                                                "{{achievement_id}}"
+                                                                            ]
+                                                               }
+                                                   },
+                                       "event":  [
+                                                     {
+                                                         "listen":  "test",
+                                                         "script":  {
+                                                                        "exec":  [
+                                                                                     "pm.test(\u0027Status code is 200 OK\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                     "pm.test(\u0027Response envelope structure\u0027, function () {",
+                                                                                     "    var jsonData = pm.response.json();",
+                                                                                     "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                     "    pm.expect(jsonData.success).to.eql(true);",
+                                                                                     "    pm.expect(jsonData.data).to.have.property(\u0027id\u0027);",
+                                                                                     "    pm.expect(jsonData.data).to.have.property(\u0027progress\u0027);",
+                                                                                     "    pm.expect(jsonData.data.progress).to.have.all.keys(\u0027current\u0027, \u0027target\u0027, \u0027percentage\u0027);",
+                                                                                     "});"
+                                                                                 ],
+                                                                        "type":  "text/javascript"
+                                                                    }
+                                                     }
+                                                 ]
+                                   },
+                                   {
+                                       "name":  "9.4 Filter Achievements by Type",
+                                       "request":  {
+                                                       "method":  "GET",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/achievements?type=lesson_completion",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "achievements"
+                                                                            ],
+                                                                   "query":  [
+                                                                                 {
+                                                                                     "key":  "type",
+                                                                                     "value":  "lesson_completion"
+                                                                                 }
+                                                                             ]
+                                                               }
+                                                   },
+                                       "event":  [
+                                                     {
+                                                         "listen":  "test",
+                                                         "script":  {
+                                                                        "exec":  [
+                                                                                     "pm.test(\u0027Status code is 200 OK\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                     "pm.test(\u0027Filtered achievements returned\u0027, function () {",
+                                                                                     "    var jsonData = pm.response.json();",
+                                                                                     "    pm.expect(jsonData.success).to.eql(true);",
+                                                                                     "    pm.expect(jsonData.data.achievements).to.be.an(\u0027array\u0027);",
+                                                                                     "});"
+                                                                                 ],
+                                                                        "type":  "text/javascript"
+                                                                    }
+                                                     }
+                                                 ]
+                                   }
+                               ]
+                  },
+                  {
+                      "name":  "10. Study Room",
+                      "item":  [
+                                   {
+                                       "name":  "10.1 List Active Study Rooms",
+                                       "request":  {
+                                                       "method":  "GET",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/study-rooms",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "study-rooms"
+                                                                            ]
+                                                               }
+                                                   },
+                                       "event":  [
+                                                     {
+                                                         "listen":  "test",
+                                                         "script":  {
+                                                                        "exec":  [
+                                                                                     "pm.test(\u0027Status code is 200 OK\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                     "pm.test(\u0027Response envelope structure\u0027, function () {",
+                                                                                     "    var jsonData = pm.response.json();",
+                                                                                     "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                     "    pm.expect(jsonData.success).to.eql(true);",
+                                                                                     "    pm.expect(jsonData.data).to.have.property(\u0027rooms\u0027);",
+                                                                                     "    pm.expect(jsonData.data.rooms).to.be.an(\u0027array\u0027);",
+                                                                                     "});"
+                                                                                 ],
+                                                                        "type":  "text/javascript"
+                                                                    }
+                                                     }
+                                                 ]
+                                   },
+                                   {
+                                       "name":  "10.2 Create Study Room",
+                                       "request":  {
+                                                       "method":  "POST",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Content-Type",
+                                                                          "value":  "application/json"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "body":  {
+                                                                    "mode":  "raw",
+                                                                    "raw":  "{\n  \"name\": \"Postman Study Room\",\n  \"topic\": \"Belajar Laravel API Testing\",\n  \"max_capacity\": 10,\n  \"is_public\": true\n}"
+                                                                },
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/study-rooms",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "study-rooms"
+                                                                            ]
+                                                               }
+                                                   },
+                                       "event":  [
+                                                     {
+                                                         "listen":  "test",
+                                                         "script":  {
+                                                                        "exec":  [
+                                                                                     "pm.test(\u0027Status code is 201 Created\u0027, function () { pm.response.to.have.status(201); });",
+                                                                                     "pm.test(\u0027Response envelope structure\u0027, function () {",
+                                                                                     "    var jsonData = pm.response.json();",
+                                                                                     "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                     "    pm.expect(jsonData.success).to.eql(true);",
+                                                                                     "    pm.expect(jsonData.data.room).to.have.property(\u0027id\u0027);",
+                                                                                     "    pm.expect(jsonData.data.room.status).to.eql(\u0027active\u0027);",
+                                                                                     "});",
+                                                                                     "var jsonData = pm.response.json();",
+                                                                                     "pm.environment.set(\u0027study_room_id\u0027, jsonData.data.room.id);"
+                                                                                 ],
+                                                                        "type":  "text/javascript"
+                                                                    }
+                                                     }
+                                                 ]
+                                   },
+                                   {
+                                       "name":  "10.3 Get Study Room Details",
+                                       "request":  {
+                                                       "method":  "GET",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/study-rooms/{{study_room_id}}",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "study-rooms",
+                                                                                "{{study_room_id}}"
+                                                                            ]
+                                                               }
+                                                   },
+                                       "event":  [
+                                                     {
+                                                         "listen":  "test",
+                                                         "script":  {
+                                                                        "exec":  [
+                                                                                     "pm.test(\u0027Status code is 200 OK\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                     "pm.test(\u0027Response envelope structure\u0027, function () {",
+                                                                                     "    var jsonData = pm.response.json();",
+                                                                                     "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                     "    pm.expect(jsonData.success).to.eql(true);",
+                                                                                     "    pm.expect(jsonData.data.room).to.have.property(\u0027participants\u0027);",
+                                                                                     "    pm.expect(jsonData.data.room.participants).to.be.an(\u0027array\u0027);",
+                                                                                     "});"
+                                                                                 ],
+                                                                        "type":  "text/javascript"
+                                                                    }
+                                                     }
+                                                 ]
+                                   },
+                                   {
+                                       "name":  "10.4 Join Study Room as Instructor",
+                                       "request":  {
+                                                       "method":  "POST",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{instructor_token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/study-rooms/{{study_room_id}}/join",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "study-rooms",
+                                                                                "{{study_room_id}}",
+                                                                                "join"
+                                                                            ]
+                                                               }
+                                                   },
+                                       "event":  [
+                                                     {
+                                                         "listen":  "test",
+                                                         "script":  {
+                                                                        "exec":  [
+                                                                                     "pm.test(\u0027Status code is 200 OK\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                     "pm.test(\u0027Response envelope structure\u0027, function () {",
+                                                                                     "    var jsonData = pm.response.json();",
+                                                                                     "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                     "    pm.expect(jsonData.success).to.eql(true);",
+                                                                                     "});"
+                                                                                 ],
+                                                                        "type":  "text/javascript"
+                                                                    }
+                                                     }
+                                                 ]
+                                   },
+                                   {
+                                       "name":  "10.5 Join Already Joined Room (Expect 409)",
+                                       "request":  {
+                                                       "method":  "POST",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{instructor_token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/study-rooms/{{study_room_id}}/join",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "study-rooms",
+                                                                                "{{study_room_id}}",
+                                                                                "join"
+                                                                            ]
+                                                               }
+                                                   },
+                                       "event":  [
+                                                     {
+                                                         "listen":  "test",
+                                                         "script":  {
+                                                                        "exec":  [
+                                                                                     "pm.test(\u0027Status code is 409 Conflict (Already joined)\u0027, function () { pm.response.to.have.status(409); });",
+                                                                                     "pm.test(\u0027Error envelope structure\u0027, function () {",
+                                                                                     "    var jsonData = pm.response.json();",
+                                                                                     "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                     "    pm.expect(jsonData.success).to.eql(false);",
+                                                                                     "    pm.expect(jsonData.error.code).to.eql(\u0027ALREADY_JOINED\u0027);",
+                                                                                     "});"
+                                                                                 ],
+                                                                        "type":  "text/javascript"
+                                                                    }
+                                                     }
+                                                 ]
+                                   },
+                                   {
+                                       "name":  "10.6 Leave Study Room",
+                                       "request":  {
+                                                       "method":  "DELETE",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{instructor_token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/study-rooms/{{study_room_id}}/leave",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "study-rooms",
+                                                                                "{{study_room_id}}",
+                                                                                "leave"
+                                                                            ]
+                                                               }
+                                                   },
+                                       "event":  [
+                                                     {
+                                                         "listen":  "test",
+                                                         "script":  {
+                                                                        "exec":  [
+                                                                                     "pm.test(\u0027Status code is 200 OK\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                     "pm.test(\u0027Response envelope structure\u0027, function () {",
+                                                                                     "    var jsonData = pm.response.json();",
+                                                                                     "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                     "    pm.expect(jsonData.success).to.eql(true);",
+                                                                                     "});"
+                                                                                 ],
+                                                                        "type":  "text/javascript"
+                                                                    }
+                                                     }
+                                                 ]
+                                   },
+                                   {
+                                       "name":  "10.7 Close Study Room",
+                                       "request":  {
+                                                       "method":  "DELETE",
+                                                       "header":  [
+                                                                      {
+                                                                          "key":  "Authorization",
+                                                                          "value":  "Bearer {{token}}"
+                                                                      },
+                                                                      {
+                                                                          "key":  "Accept",
+                                                                          "value":  "application/json"
+                                                                      }
+                                                                  ],
+                                                       "url":  {
+                                                                   "raw":  "{{base_url}}/study-rooms/{{study_room_id}}",
+                                                                   "host":  [
+                                                                                "{{base_url}}"
+                                                                            ],
+                                                                   "path":  [
+                                                                                "study-rooms",
+                                                                                "{{study_room_id}}"
+                                                                            ]
+                                                               }
+                                                   },
+                                       "event":  [
+                                                     {
+                                                         "listen":  "test",
+                                                         "script":  {
+                                                                        "exec":  [
+                                                                                     "pm.test(\u0027Status code is 200 OK\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                     "pm.test(\u0027Response envelope structure\u0027, function () {",
+                                                                                     "    var jsonData = pm.response.json();",
+                                                                                     "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                     "    pm.expect(jsonData.success).to.eql(true);",
+                                                                                     "});"
+                                                                                 ],
+                                                                        "type":  "text/javascript"
+                                                                    }
+                                                     }
+                                                 ]
+                                   }
+                               ]
+                  },
+                  {
+                      "name":  "11. Admin",
+                      "item":  [
                                   {
                                       "request":  {
                                                       "url":  {

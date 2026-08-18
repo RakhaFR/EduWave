@@ -72,7 +72,7 @@ class AchievementController extends Controller
      *
      * Get authenticated user's earned achievements.
      */
-    public function userAchievements(Request $request): JsonResponse
+    public function myAchievements(Request $request): JsonResponse
     {
         $user = $request->user();
 
@@ -151,10 +151,10 @@ class AchievementController extends Controller
                 $current = $user->enrollments()->where('status', 'completed')->count();
                 break;
             case 'lesson_completion':
-                $current = $user->completedLessons()->count();
+                $current = $user->lessonProgress()->whereNotNull('completed_at')->count();
                 break;
             case 'exam_pass':
-                $current = $user->examAttempts()->where('passed', true)->distinct('exam_id')->count('exam_id');
+                $current = $user->attempts()->where('passed', true)->distinct('exam_id')->count('exam_id');
                 break;
             case 'xp_milestone':
                 $current = $user->xp;

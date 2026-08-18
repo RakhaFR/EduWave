@@ -19,7 +19,7 @@ class MascotController extends Controller
      *
      * List all available mascots in the catalog.
      */
-    public function catalog(Request $request): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $query = Mascot::query();
 
