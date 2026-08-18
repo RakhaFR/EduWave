@@ -41,7 +41,7 @@ class UserControllerTest extends TestCase
         ]);
     }
 
-    public function test_update_profile()
+    public function test_update_profile_bio_and_avatar_without_password()
     {
         $user = User::factory()->create([
             'full_name' => 'Old Name',
@@ -50,9 +50,8 @@ class UserControllerTest extends TestCase
 
         $response = $this->actingAs($user)->putJson('/api/v1/users/me', [
             'full_name' => 'New Name',
-            'username' => $user->username,
-            'email' => $user->email,
             'bio' => 'New bio',
+            'avatar_url' => 'https://example.com/avatar.jpg',
         ]);
 
         $response->assertStatus(200);
@@ -62,6 +61,7 @@ class UserControllerTest extends TestCase
                 'user' => [
                     'full_name' => 'New Name',
                     'bio' => 'New bio',
+                    'avatar_url' => 'https://example.com/avatar.jpg',
                 ],
             ],
         ]);
@@ -70,6 +70,83 @@ class UserControllerTest extends TestCase
             'id' => $user->id,
             'full_name' => 'New Name',
             'bio' => 'New bio',
+        ]);
+    }
+
+    public function test_update_profile_email_without_password_fails()
+    {
+        $user = User::factory()->create([
+            'email' => 'old@example.com',
+        ]);
+
+        $response = $this->actingAs($user)->putJson('/api/v1/users/me', [
+            'email' => 'new@example.com',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['current_password']);
+    }
+
+    public function test_update_profile_username_without_password_fails()
+    {
+        $user = User::factory()->create([
+            'username' => 'oldusername',
+        ]);
+
+        $response = $this->actingAs($user)->putJson('/api/v1/users/me', [
+            'username' => 'newusername',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['current_password']);
+    }
+
+    public function test_update_profile_email_with_correct_password_succeeds()
+    {
+        $user = User::factory()->create([
+            'email' => 'old@example.com',
+            'password' => bcrypt('correctpassword'),
+        ]);
+
+        $response = $this->actingAs($user)->putJson('/api/v1/users/me', [
+            'email' => 'new@example.com',
+            'current_password' => 'correctpassword',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'data' => [
+                'user' => [
+                    'email' => 'new@example.com',
+                ],
+            ],
+        ]);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'email' => 'new@example.com',
+        ]);
+    }
+
+    public function test_update_profile_email_with_wrong_password_fails()
+    {
+        $user = User::factory()->create([
+            'email' => 'old@example.com',
+            'password' => bcrypt('correctpassword'),
+        ]);
+
+        $response = $this->actingAs($user)->putJson('/api/v1/users/me', [
+            'email' => 'new@example.com',
+            'current_password' => 'wrongpassword',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['current_password']);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'email' => 'old@example.com',
         ]);
     }
 

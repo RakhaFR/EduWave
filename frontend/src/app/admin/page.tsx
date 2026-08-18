@@ -1,3 +1,609 @@
-export default function AdminPage() {
-  return <div>Admin Panel</div>;
+"use client";
+
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import {
+  Home,
+  BookOpen,
+  Users,
+  ClipboardList,
+  FolderOpen,
+  Settings,
+  X,
+  ExternalLink,
+  Check
+} from "lucide-react";
+
+// Components
+import FloatingBubbles from "@/components/ui/FloatingBubbles";
+import Sidebar from "@/components/adminDashboard/Sidebar";
+import Topbar from "@/components/adminDashboard/Topbar";
+import WelcomeBanner from "@/components/adminDashboard/WelcomeBanner";
+import StatsGrid from "@/components/adminDashboard/StatsGrid";
+import CourseTable from "@/components/adminDashboard/CourseTable";
+import UserTable from "@/components/adminDashboard/UserTable";
+import CategoryManagement from "@/components/adminDashboard/CategoryManagement";
+import RegistrationLog from "@/components/adminDashboard/RegistrationLog";
+import DashboardOverview from "@/components/adminDashboard/DashboardOverview";
+import Modals from "@/components/adminDashboard/Modals";
+
+// Types
+import { Course, UserType, Registration, Category, TabType } from "@/components/adminDashboard/types";
+
+// --- Mock Data ---
+const INITIAL_COURSES: Course[] = [
+  { id: "C-01", title: "Web Dev Dasar", category: "Teknologi", instructor: "Kapten Budi", students: 450, status: "Terbit" },
+  { id: "C-02", title: "UI/UX Bawah Laut", category: "Desain", instructor: "Kapten Siti", students: 320, status: "Terbit" },
+  { id: "C-03", title: "Biologi Samudra", category: "Sains", instructor: "Kapten Rina", students: 210, status: "Terbit" },
+  { id: "C-04", title: "JavaScript Arus Dalam", category: "Teknologi", instructor: "Kapten Andi", students: 180, status: "Draft" },
+  { id: "C-05", title: "React.js Kapal Induk", category: "Teknologi", instructor: "Kapten Budi", students: 95, status: "Terbit" },
+];
+
+const INITIAL_USERS: UserType[] = [
+  { id: "U-01", name: "Kapten Budi", email: "budi@eduwave.id", role: "Pengajar", status: "Aktif" },
+  { id: "U-02", name: "Kapten Siti", email: "siti@eduwave.id", role: "Pengajar", status: "Aktif" },
+  { id: "U-03", name: "Rasya Raya", email: "rasya@eduwave.id", role: "Siswa", status: "Aktif" },
+  { id: "U-04", name: "Kapten Andi", email: "andi@eduwave.id", role: "Pengajar", status: "Aktif" },
+  { id: "U-05", name: "Sarah Amalia", email: "sarah@eduwave.id", role: "Siswa", status: "Nonaktif" },
+];
+
+const INITIAL_CATEGORIES: Category[] = [
+  { id: "KAT-01", name: "Teknologi", description: "Pengembangan web, mobile app, dan software engineering", courseCount: 3, icon: "💻" },
+  { id: "KAT-02", name: "Desain", description: "UI/UX, desain grafis, dan ilustrasi digital", courseCount: 1, icon: "🎨" },
+  { id: "KAT-03", name: "Sains", description: "Biologi samudra, fisika laut, dan ilmu kelautan", courseCount: 1, icon: "🔬" },
+  { id: "KAT-04", name: "Bisnis", description: "Kewirausahaan digital dan manajemen proyek", courseCount: 0, icon: "💼" },
+];
+
+const INITIAL_REGISTRATIONS: Registration[] = [
+  { id: "LOG-101", user: "Dina Fitriani", email: "dina@mail.com", action: "Registrasi Akun Baru", ip: "180.252.12.44", device: "Chrome / Windows", timeAgo: "12 detik lalu", isSuspicious: false },
+  { id: "LOG-102", user: "Unknown", email: "guest@anon.org", action: "Percobaan Login Gagal (5x)", ip: "103.14.22.99", device: "Unknown / Linux", timeAgo: "2 menit lalu", isSuspicious: true },
+  { id: "LOG-103", user: "Ariel Saputra", email: "ariel@mail.com", action: "Pendaftaran Kursus UI/UX", ip: "180.252.15.10", device: "Safari / macOS", timeAgo: "15 menit lalu", isSuspicious: false },
+  { id: "LOG-104", user: "Sekar Ayu", email: "sekar@mail.com", action: "Pendaftaran Kursus Biologi", ip: "114.122.45.88", device: "Chrome / Android", timeAgo: "1 jam lalu", isSuspicious: false },
+  { id: "LOG-105", user: "Unknown", email: "admin@fake.com", action: "Injection Attempt Flagged", ip: "192.168.100.99", device: "Python Script", timeAgo: "3 jam lalu", isSuspicious: true },
+  { id: "LOG-106", user: "Raka Putra", email: "raka@mail.com", action: "Registrasi Akun Baru", ip: "180.252.20.01", device: "Edge / Windows", timeAgo: "5 jam lalu", isSuspicious: false },
+  { id: "LOG-107", user: "Maya Lestari", email: "maya@mail.com", action: "Pendaftaran Kursus React", ip: "114.122.90.12", device: "Firefox / macOS", timeAgo: "1 hari lalu", isSuspicious: false },
+  { id: "LOG-108", user: "Bimo Adi", email: "bimo@mail.com", action: "Registrasi Akun Baru", ip: "180.252.33.77", device: "Chrome / Android", timeAgo: "2 hari lalu", isSuspicious: false },
+];
+
+export default function AdminDashboard() {
+  const [courses, setCourses] = useState<Course[]>(INITIAL_COURSES);
+  const [users, setUsers] = useState<UserType[]>(INITIAL_USERS);
+  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
+  const registrations = INITIAL_REGISTRATIONS;
+
+  const [activeTab, setActiveTab] = useState<TabType>("dashboard");
+  const [searchGlobal, setSearchGlobal] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // --- Modals State ---
+  const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [courseForm, setCourseForm] = useState({ title: "", category: "Teknologi", instructor: "", students: 0, status: "Terbit" });
+
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserType | null>(null);
+  const [userForm, setUserForm] = useState({ name: "", email: "", role: "Siswa", status: "Aktif" });
+
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [categoryForm, setCategoryForm] = useState({ name: "", description: "", icon: "📁" });
+
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: "kursus" | "pengguna" | "kategori"; id: string } | null>(null);
+
+  // --- Toasts State ---
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // --- Course Operations ---
+  const handleOpenCourseAdd = () => {
+    setEditingCourse(null);
+    setCourseForm({ title: "", category: "Teknologi", instructor: "", students: 0, status: "Terbit" });
+    setIsCourseModalOpen(true);
+  };
+
+  const handleOpenCourseEdit = (course: Course) => {
+    setEditingCourse(course);
+    setCourseForm({
+      title: course.title,
+      category: course.category,
+      instructor: course.instructor,
+      students: course.students,
+      status: course.status,
+    });
+    setIsCourseModalOpen(true);
+  };
+
+  const handleSaveCourse = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!courseForm.title || !courseForm.instructor) {
+      showToast("Judul dan Pengajar tidak boleh kosong!", "error");
+      return;
+    }
+
+    if (editingCourse) {
+      setCourses(
+        courses.map((c) =>
+          c.id === editingCourse.id ? { ...c, ...courseForm } : c
+        )
+      );
+      showToast("Kursus berhasil diperbarui!");
+    } else {
+      const newId = `C-0${courses.length + 1}`;
+      const newCourse: Course = {
+        id: newId,
+        ...courseForm,
+      };
+      setCourses([...courses, newCourse]);
+      showToast("Kursus baru berhasil ditambahkan!");
+    }
+    setIsCourseModalOpen(false);
+  };
+
+  const handleDeleteCourseClick = (id: string) => {
+    setDeleteConfirm({ type: "kursus", id });
+  };
+
+  // --- User Operations ---
+  const handleOpenUserAdd = () => {
+    setEditingUser(null);
+    setUserForm({ name: "", email: "", role: "Siswa", status: "Aktif" });
+    setIsUserModalOpen(true);
+  };
+
+  const handleOpenUserEdit = (user: UserType) => {
+    setEditingUser(user);
+    setUserForm({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+    });
+    setIsUserModalOpen(true);
+  };
+
+  const handleSaveUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userForm.name || !userForm.email) {
+      showToast("Nama dan Email tidak boleh kosong!", "error");
+      return;
+    }
+
+    if (editingUser) {
+      setUsers(
+        users.map((u) =>
+          u.id === editingUser.id ? { ...u, ...userForm } : u
+        )
+      );
+      showToast("Pengguna berhasil diperbarui!");
+    } else {
+      const newId = `U-0${users.length + 1}`;
+      const newUser: UserType = {
+        id: newId,
+        ...userForm,
+      };
+      setUsers([...users, newUser]);
+      showToast("Pengguna baru berhasil ditambahkan!");
+    }
+    setIsUserModalOpen(false);
+  };
+
+  const handleDeleteUserClick = (id: string) => {
+    setDeleteConfirm({ type: "pengguna", id });
+  };
+
+  // --- Category Operations ---
+  const handleOpenCategoryAdd = () => {
+    setEditingCategory(null);
+    setCategoryForm({ name: "", description: "", icon: "📁" });
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleOpenCategoryEdit = (cat: Category) => {
+    setEditingCategory(cat);
+    setCategoryForm({
+      name: cat.name,
+      description: cat.description,
+      icon: cat.icon,
+    });
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleSaveCategory = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!categoryForm.name || !categoryForm.description) {
+      showToast("Nama dan Deskripsi Kategori tidak boleh kosong!", "error");
+      return;
+    }
+
+    if (editingCategory) {
+      setCategories(
+        categories.map((c) =>
+          c.id === editingCategory.id ? { ...c, ...categoryForm } : c
+        )
+      );
+      showToast("Kategori berhasil diperbarui!");
+    } else {
+      const newId = `KAT-0${categories.length + 1}`;
+      const newCat: Category = {
+        id: newId,
+        ...categoryForm,
+        courseCount: 0,
+      };
+      setCategories([...categories, newCat]);
+      showToast("Kategori baru berhasil ditambahkan!");
+    }
+    setIsCategoryModalOpen(false);
+  };
+
+  const handleDeleteCategoryClick = (id: string) => {
+    setDeleteConfirm({ type: "kategori", id });
+  };
+
+  // --- Global Delete Confirmation Handler ---
+  const handleConfirmDelete = () => {
+    if (!deleteConfirm) return;
+    const { type, id } = deleteConfirm;
+    if (type === "kursus") {
+      setCourses(courses.filter((c) => c.id !== id));
+      showToast("Kursus berhasil dihapus!");
+    } else if (type === "pengguna") {
+      setUsers(users.filter((u) => u.id !== id));
+      showToast("Pengguna berhasil dihapus!");
+    } else if (type === "kategori") {
+      setCategories(categories.filter((c) => c.id !== id));
+      showToast("Kategori berhasil dihapus!");
+    }
+    setDeleteConfirm(null);
+  };
+
+  return (
+    <div className="min-h-screen font-sans flex flex-col md:flex-row bg-[#0073e6] text-[#00172e] relative overflow-x-hidden select-none items-stretch">
+      {/* Background Animated Bubbles */}
+      <FloatingBubbles count={15} className="z-0 opacity-40 animate-float-bubble" />
+
+      {/* --- SIDEBAR DESKTOP --- */}
+      <aside className="hidden md:block w-72 shrink-0 p-4 z-10">
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          showToast={(msg) => showToast(msg)}
+        />
+      </aside>
+
+      {/* --- CONTENT AREA & HEADER --- */}
+      <div className="flex-1 flex flex-col p-4 z-10 min-w-0 md:pl-0">
+        {/* Topbar */}
+        <Topbar
+          searchGlobal={searchGlobal}
+          setSearchGlobal={setSearchGlobal}
+          setMobileMenuOpen={setMobileMenuOpen}
+          showToast={(msg) => showToast(msg)}
+        />
+
+        {/* --- MAIN CARD CONTAINER --- */}
+        <main className="bg-white rounded-[32px] shadow-2xl flex-1 p-6 md:p-8 flex flex-col gap-6 overflow-y-auto">
+          {/* Welcome Banner */}
+          <WelcomeBanner />
+
+          {/* Stats Cards Grid (Shown on Kursus, Pengguna, and Kategori tabs) */}
+          {activeTab !== "dashboard" && <StatsGrid totalCourses={courses.length} />}
+
+          {/* Navigation Tabs Panel */}
+          <div className="bg-[#f8fafd] rounded-2xl p-2 border border-slate-100 flex items-center gap-2 shrink-0 flex-wrap">
+            <button
+              onClick={() => setActiveTab("dashboard")}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                activeTab === "dashboard"
+                  ? "bg-white text-[#0073e6] shadow-sm border-b-2 border-[#0073e6]"
+                  : "text-slate-500 hover:text-[#0073e6] hover:bg-white/50"
+              }`}
+            >
+              <Home className="w-4 h-4 shrink-0" />
+              <span>Dashboard Overview</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("kursus")}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                activeTab === "kursus"
+                  ? "bg-white text-[#0073e6] shadow-sm border-b-2 border-[#0073e6]"
+                  : "text-slate-500 hover:text-[#0073e6] hover:bg-white/50"
+              }`}
+            >
+              <ExternalLink className="w-4 h-4 shrink-0" />
+              <span>Manajemen Kursus</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("pengguna")}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                activeTab === "pengguna"
+                  ? "bg-white text-[#0073e6] shadow-sm border-b-2 border-[#0073e6]"
+                  : "text-slate-500 hover:text-[#0073e6] hover:bg-white/50"
+              }`}
+            >
+              <Users className="w-4 h-4 shrink-0" />
+              <span>Manajemen Pengguna</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("kategori")}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                activeTab === "kategori"
+                  ? "bg-white text-[#0073e6] shadow-sm border-b-2 border-[#0073e6]"
+                  : "text-slate-500 hover:text-[#0073e6] hover:bg-white/50"
+              }`}
+            >
+              <FolderOpen className="w-4 h-4 shrink-0" />
+              <span>Kategori</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("pendaftaran")}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                activeTab === "pendaftaran"
+                  ? "bg-white text-[#0073e6] shadow-sm border-b-2 border-[#0073e6]"
+                  : "text-slate-500 hover:text-[#0073e6] hover:bg-white/50"
+              }`}
+            >
+              <ClipboardList className="w-4 h-4 shrink-0" />
+              <span>Log Aktivitas</span>
+            </button>
+          </div>
+
+          {/* Tab Content Section */}
+          <div className="flex-1 min-h-0">
+            {activeTab === "dashboard" && (
+              <DashboardOverview
+                courses={courses}
+                users={users}
+                registrations={registrations}
+                searchGlobal={searchGlobal}
+              />
+            )}
+            {activeTab === "kursus" && (
+              <CourseTable
+                courses={courses}
+                onAddClick={handleOpenCourseAdd}
+                onEditClick={handleOpenCourseEdit}
+                onDeleteClick={handleDeleteCourseClick}
+                searchGlobal={searchGlobal}
+              />
+            )}
+            {activeTab === "pengguna" && (
+              <UserTable
+                users={users}
+                onAddClick={handleOpenUserAdd}
+                onEditClick={handleOpenUserEdit}
+                onDeleteClick={handleDeleteUserClick}
+                searchGlobal={searchGlobal}
+              />
+            )}
+            {activeTab === "kategori" && (
+              <CategoryManagement
+                categories={categories}
+                onAddClick={handleOpenCategoryAdd}
+                onEditClick={handleOpenCategoryEdit}
+                onDeleteClick={handleDeleteCategoryClick}
+                searchGlobal={searchGlobal}
+              />
+            )}
+            {activeTab === "pendaftaran" && (
+              <RegistrationLog
+                registrations={registrations}
+                searchGlobal={searchGlobal}
+              />
+            )}
+          </div>
+        </main>
+      </div>
+
+      {/* --- MOBILE SIDEBAR DRAWER --- */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          {/* Backdrop */}
+          <div
+            onClick={() => setMobileMenuOpen(false)}
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+          />
+
+          {/* Drawer container */}
+          <div className="relative w-72 bg-white flex flex-col p-6 shadow-2xl h-full transform transition-transform animate-slide-in">
+            {/* Close Button & Brand */}
+            <div className="flex items-center justify-between mb-6 shrink-0">
+              <Link
+                href="/admin"
+                className="flex items-center gap-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Image
+                  src="/logo-eduwave.webp"
+                  alt="EduWave Logo"
+                  width={34}
+                  height={34}
+                  className="h-8 w-auto shrink-0 drop-shadow-md"
+                />
+                <span className="text-xl font-black tracking-tight text-[#00172e]">
+                  Edu<span className="text-[#0073e6]">Wave</span>
+                </span>
+              </Link>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="border-b border-slate-100 mb-5 shrink-0" />
+
+            {/* Menu Items inside Drawer */}
+            <div className="flex-1 flex flex-col gap-6 overflow-y-auto">
+              <div>
+                <p className="text-[9px] font-bold text-slate-400 tracking-widest uppercase mb-3 px-3">
+                  Menu Utama
+                </p>
+                <nav className="flex flex-col gap-1">
+                  <button
+                    onClick={() => {
+                      setActiveTab("dashboard");
+                      setMobileMenuOpen(false);
+                      showToast("Kembali ke Dashboard Overview");
+                    }}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all text-left w-full cursor-pointer ${
+                      activeTab === "dashboard"
+                        ? "bg-[#e6f3ff] text-[#0073e6]"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-[#0073e6]"
+                    }`}
+                  >
+                    <Home className="w-5 h-5 shrink-0" />
+                    <span>Dashboard</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveTab("kursus");
+                      setMobileMenuOpen(false);
+                      showToast("Navigasi ke Manajemen Kursus");
+                    }}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all text-left w-full cursor-pointer ${
+                      activeTab === "kursus"
+                        ? "bg-[#e6f3ff] text-[#0073e6] font-semibold"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-[#0073e6]"
+                    }`}
+                  >
+                    <BookOpen className="w-5 h-5 shrink-0" />
+                    <span>Kursus</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveTab("pengguna");
+                      setMobileMenuOpen(false);
+                      showToast("Navigasi ke Manajemen Pengguna");
+                    }}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all text-left w-full cursor-pointer ${
+                      activeTab === "pengguna"
+                        ? "bg-[#e6f3ff] text-[#0073e6] font-semibold"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-[#0073e6]"
+                    }`}
+                  >
+                    <Users className="w-5 h-5 shrink-0" />
+                    <span>Pengguna</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveTab("pendaftaran");
+                      setMobileMenuOpen(false);
+                      showToast("Navigasi ke Log Aktivitas");
+                    }}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all text-left w-full cursor-pointer ${
+                      activeTab === "pendaftaran"
+                        ? "bg-[#e6f3ff] text-[#0073e6] font-semibold"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-[#0073e6]"
+                    }`}
+                  >
+                    <ClipboardList className="w-5 h-5 shrink-0" />
+                    <span>Pendaftaran</span>
+                  </button>
+                </nav>
+              </div>
+
+              <div>
+                <p className="text-[9px] font-bold text-slate-400 tracking-widest uppercase mb-3 px-3">
+                  Manajemen
+                </p>
+                <nav className="flex flex-col gap-1">
+                  <button
+                    onClick={() => {
+                      setActiveTab("kategori");
+                      setMobileMenuOpen(false);
+                      showToast("Navigasi ke Manajemen Kategori");
+                    }}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all text-left w-full cursor-pointer ${
+                      activeTab === "kategori"
+                        ? "bg-[#e6f3ff] text-[#0073e6] font-semibold"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-[#0073e6]"
+                    }`}
+                  >
+                    <FolderOpen className="w-5 h-5 shrink-0" />
+                    <span>Kategori</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      showToast("Fitur Pengaturan segera hadir!");
+                    }}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-[#0073e6] transition-all text-left w-full cursor-pointer"
+                  >
+                    <Settings className="w-5 h-5 shrink-0" />
+                    <span>Pengaturan</span>
+                  </button>
+                </nav>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 pt-4 mt-auto shrink-0">
+              <Link
+                href="/auth/login"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-red-500 hover:bg-red-50 transition-colors"
+              >
+                <X className="w-5 h-5" />
+                <span>Keluar</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- ALL MODALS --- */}
+      <Modals
+        // Course Form Modal
+        isCourseModalOpen={isCourseModalOpen}
+        setIsCourseModalOpen={setIsCourseModalOpen}
+        editingCourse={editingCourse}
+        courseForm={courseForm}
+        setCourseForm={setCourseForm}
+        handleSaveCourse={handleSaveCourse}
+
+        // User Form Modal
+        isUserModalOpen={isUserModalOpen}
+        setIsUserModalOpen={setIsUserModalOpen}
+        editingUser={editingUser}
+        userForm={userForm}
+        setUserForm={setUserForm}
+        handleSaveUser={handleSaveUser}
+
+        // Category Form Modal
+        isCategoryModalOpen={isCategoryModalOpen}
+        setIsCategoryModalOpen={setIsCategoryModalOpen}
+        editingCategory={editingCategory}
+        categoryForm={categoryForm}
+        setCategoryForm={setCategoryForm}
+        handleSaveCategory={handleSaveCategory}
+
+        // Delete Confirm Modal
+        deleteConfirm={deleteConfirm}
+        setDeleteConfirm={setDeleteConfirm}
+        handleConfirmDelete={handleConfirmDelete}
+      />
+
+      {/* --- TOAST FEEDBACK --- */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-white border border-slate-100 rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3 animate-fade-in text-sm font-semibold max-w-xs sm:max-w-sm">
+          <div
+            className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs shrink-0 ${
+              toast.type === "success" ? "bg-green-500" : "bg-red-[#0073e6]"
+            }`}
+          >
+            <Check className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-slate-700 flex-1">{toast.message}</span>
+        </div>
+      )}
+    </div>
+  );
 }
