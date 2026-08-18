@@ -41,7 +41,7 @@ export default function ProfileComponent() {
                 <h2 className="font-bold text-xl text-slate-800">{user?.full_name || "Pelajar EduWave"}</h2>
                 <p className="text-xs text-cyan-600 font-semibold">@{user?.username || "student"}</p>
                 <div className="inline-block mt-2 px-3 py-1 bg-cyan-50 border border-cyan-200 rounded-full text-xs font-medium text-cyan-700">
-                  Role DB: {user?.role || "student"} (Pelajar)
+                  Peran: Penjelajah (Pelajar)
                 </div>
               </div>
 

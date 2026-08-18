@@ -39,7 +39,7 @@ export default function AdminProfileComponent() {
               <h2 className="font-bold text-xl text-slate-800">{user?.full_name || "Admin EduWave"}</h2>
               <p className="text-xs text-blue-600 font-semibold">@{user?.username || "admin"}</p>
               <div className="inline-block mt-2 px-3 py-1 bg-indigo-50 border border-indigo-200 rounded-full text-xs font-medium text-indigo-700">
-                Role DB: {user?.role || "admin"} (Administrator)
+                Peran: Administrator
               </div>
             </div>
 

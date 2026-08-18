@@ -91,7 +91,7 @@ export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#03152e] text-white">
         <Loader2 className="w-10 h-10 text-cyan-400 animate-spin mb-3" />
-        <p className="text-sm font-medium text-slate-300">Memeriksa hak akses...</p>
+        <p className="text-sm font-medium text-slate-300">Silakan tunggu...</p>
       </div>
     );
   }

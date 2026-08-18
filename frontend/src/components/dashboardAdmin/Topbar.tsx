@@ -27,6 +27,7 @@ export default function Topbar({
   showToast
 }: TopbarProps) {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const { user } = useCurrentUser();
 
   const handleLogout = () => {
@@ -84,15 +85,20 @@ export default function Topbar({
             className="flex items-center gap-2.5 pl-1.5 pr-3 py-1 bg-white/15 border border-white/25 rounded-full text-white hover:bg-white/25 transition-all shadow-md focus:outline-none cursor-pointer"
           >
             <div className="w-7 h-7 rounded-full overflow-hidden border border-white/50 bg-[#e6f3ff] flex items-center justify-center text-[#0073e6] font-bold text-sm shrink-0">
-              {user?.avatar_url ? (
-                <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+              {user?.avatar_url && !imgError ? (
+                <img
+                  src={user.avatar_url}
+                  alt="Profile"
+                  onError={() => setImgError(true)}
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 initial
               )}
             </div>
             <div className="hidden lg:flex flex-col text-left">
               <span className="text-xs font-bold leading-tight">{user?.full_name || "Admin EduWave"}</span>
-              <span className="text-[9px] text-white/70 leading-none">{user?.role || "admin"} (Administrator)</span>
+              <span className="text-[9px] text-white/70 leading-none">Administrator</span>
             </div>
             <ChevronDown className={`w-4 h-4 text-white/70 transition-transform duration-200 ${profileDropdownOpen ? "rotate-180" : ""}`} />
           </button>
@@ -101,7 +107,7 @@ export default function Topbar({
             <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-50 overflow-hidden text-sm">
               <div className="px-4 py-2 border-b border-slate-100 lg:hidden">
                 <p className="font-bold text-slate-700">{user?.full_name || "Admin EduWave"}</p>
-                <p className="text-[10px] text-slate-400">{user?.role || "admin"} (Administrator)</p>
+                <p className="text-[10px] text-slate-400">Administrator</p>
               </div>
               <Link
                 href="/admin/profile"

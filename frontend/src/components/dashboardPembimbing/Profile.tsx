@@ -39,7 +39,7 @@ export default function PembimbingProfileComponent() {
               <h2 className="font-bold text-xl text-slate-800">{user?.full_name || "Pembimbing EduWave"}</h2>
               <p className="text-xs text-blue-600 font-semibold">@{user?.username || "instructor"}</p>
               <div className="inline-block mt-2 px-3 py-1 bg-blue-50 border border-blue-200 rounded-full text-xs font-medium text-blue-700">
-                Role DB: {user?.role || "instructor"} (Pengajar)
+                Peran: Pembimbing (Pengajar)
               </div>
             </div>
 
