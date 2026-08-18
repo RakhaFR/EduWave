@@ -112,8 +112,8 @@ All other exercised endpoints (32 of 36 requests, 62 of 66 assertions) passed cl
 | **Auth** | `POST` | `/api/v1/auth/reset-password` | No | Reset password using reset token | ☐ |
 | **Auth** | `POST` | `/api/v1/auth/logout` | Yes | Revoke current authenticated token | ☐ |
 | **Auth** | `GET` | `/api/v1/auth/me` | Yes | Fetch basic auth user state | ✓ |
-| **User** | `GET` | `/api/v1/users/me` | Yes | Get detailed authenticated user profile | ✓ |
-| **User** | `PUT` | `/api/v1/users/me` | Yes | Update user profile details | ✓ |
+| **User** | `GET` | `/api/v1/users/me` | Yes | Get detailed authenticated user profile | ☐ |
+| **User** | `PUT` | `/api/v1/users/me` | Yes | Update user profile details | ⚠️ |
 | **User** | `PUT` | `/api/v1/users/me/password` | Yes | Change user password (revokes tokens) | ✓ |
 | **User** | `GET` | `/api/v1/users/me/stats` | Yes | Get gamification stats (pearls, xp, level, streak) | ☐ |
 | **User** | `PUT` | `/api/v1/users/me/mascot` | Yes | Equip mascot and update custom accessories | ☐ |
@@ -143,6 +143,21 @@ All other exercised endpoints (32 of 36 requests, 62 of 66 assertions) passed cl
 | **Leaderboard** | `GET` | `/api/v1/leaderboard` | Yes | Get global all-time leaderboard rankings | ☐ |
 | **Leaderboard** | `GET` | `/api/v1/leaderboard/weekly` | Yes | Get current week leaderboard rankings | ☐ |
 | **Leaderboard** | `GET` | `/api/v1/leaderboard/me` | Yes | Get authenticated user's rank and neighboring users | ☐ |
+| **Study Room** | `GET` | `/api/v1/study-rooms` | Yes | List all active study rooms | ☐ |
+| **Study Room** | `POST` | `/api/v1/study-rooms` | Yes | Create a new study room | ☐ |
+| **Study Room** | `GET` | `/api/v1/study-rooms/{room}` | Yes | Get study room details with participants | ☐ |
+| **Study Room** | `POST` | `/api/v1/study-rooms/{room}/join` | Yes | Join a study room | ☐ |
+| **Study Room** | `DELETE` | `/api/v1/study-rooms/{room}/leave` | Yes | Leave a study room | ☐ |
+| **Study Room** | `DELETE` | `/api/v1/study-rooms/{room}` | Yes | Close a study room (host/admin only) | ☐ |
+| **Study Room** | `GET` | `/api/v1/study-rooms/{room}/messages` | Yes | Get message history for a study room | ☐ |
+| **Study Room** | `POST` | `/api/v1/study-rooms/{room}/messages` | Yes | Send a message to a study room | ☐ |
+| **Mascot** | `GET` | `/api/v1/mascots` | Yes | List all available mascots in catalog | ☐ |
+| **Mascot** | `GET` | `/api/v1/mascots/inventory` | Yes | Get authenticated user's owned mascots | ☐ |
+| **Mascot** | `POST` | `/api/v1/mascots/{mascot}/purchase` | Yes | Purchase a mascot using pearls | ☐ |
+| **Mascot** | `PUT` | `/api/v1/mascots/equip` | Yes | Equip a mascot and customize accessories | ☐ |
+| **Achievement** | `GET` | `/api/v1/achievements` | Yes | List all available achievements | ☐ |
+| **Achievement** | `GET` | `/api/v1/achievements/me` | Yes | Get authenticated user's earned achievements | ☐ |
+| **Achievement** | `GET` | `/api/v1/achievements/{achievement}` | Yes | Get achievement details with progress | ☐ |
 
 ---
 
@@ -1098,3 +1113,644 @@ Get authenticated user's rank and neighboring users (context leaderboard). Retur
 ```
 
 > **Implementation Note**: Leaderboard rankings are calculated using **Redis Sorted Sets** (`ZREVRANK`, `ZREVRANGE`) for O(log N) performance. XP awards automatically update both global and weekly leaderboards via the `XpAwarded` event and `UpdateLeaderboardOnXpAwarded` listener.
+
+---
+
+### 8. Study Room Endpoints (`/api/v1/study-rooms`)
+
+Real-time collaborative study rooms with WebSocket support via Laravel Reverb.
+
+#### `GET /api/v1/study-rooms`
+List all active study rooms with filtering options.
+
+* **Request Query Parameters:**
+  - `status` (optional): Filter by status (`active` or `closed`). Default: `active`
+  - `is_public` (optional): Filter by visibility (`true` or `false`)
+
+* **Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "rooms": [
+      {
+        "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "name": "Laravel Study Group",
+        "topic": "Building REST APIs with Laravel",
+        "host": {
+          "id": "uuid",
+          "username": "john_doe",
+          "avatar_url": "https://example.com/avatar.jpg"
+        },
+        "max_capacity": 10,
+        "current_capacity": 3,
+        "is_public": true,
+        "status": "active",
+        "created_at": "2026-08-18T05:00:00.000000Z"
+      }
+    ]
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `POST /api/v1/study-rooms`
+Create a new study room. The authenticated user becomes the host and is automatically joined as the first participant.
+
+* **Request Body:**
+```json
+{
+  "name": "Laravel Study Group",
+  "topic": "Building REST APIs with Laravel",
+  "max_capacity": 10,
+  "is_public": true
+}
+```
+
+* **Validation:**
+  - `name`: Required, string, max 100 characters
+  - `topic`: Optional, string
+  - `max_capacity`: Optional, integer, min 2, max 100 (default: 20)
+  - `is_public`: Optional, boolean (default: true)
+
+* **Response (`201 Created`):**
+```json
+{
+  "success": true,
+  "data": {
+    "room": {
+      "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "name": "Laravel Study Group",
+      "topic": "Building REST APIs with Laravel",
+      "host": {
+        "id": "uuid",
+        "username": "john_doe",
+        "avatar_url": "https://example.com/avatar.jpg"
+      },
+      "max_capacity": 10,
+      "current_capacity": 1,
+      "is_public": true,
+      "status": "active",
+      "created_at": "2026-08-18T05:00:00.000000Z"
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `GET /api/v1/study-rooms/{room}`
+Get detailed information about a study room, including full participant list.
+
+* **Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "room": {
+      "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "name": "Laravel Study Group",
+      "topic": "Building REST APIs with Laravel",
+      "host": {
+        "id": "uuid",
+        "username": "john_doe",
+        "full_name": "John Doe",
+        "avatar_url": "https://example.com/avatar.jpg"
+      },
+      "max_capacity": 10,
+      "current_capacity": 3,
+      "is_public": true,
+      "status": "active",
+      "participants": [
+        {
+          "id": "uuid",
+          "username": "john_doe",
+          "avatar_url": "https://example.com/avatar.jpg"
+        },
+        {
+          "id": "uuid",
+          "username": "jane_smith",
+          "avatar_url": "https://example.com/avatar2.jpg"
+        },
+        {
+          "id": "uuid",
+          "username": "bob_jones",
+          "avatar_url": null
+        }
+      ],
+      "created_at": "2026-08-18T05:00:00.000000Z",
+      "updated_at": "2026-08-18T05:00:00.000000Z"
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `POST /api/v1/study-rooms/{room}/join`
+Join a study room. Enforces capacity limits and room status via `StudyRoomPolicy`.
+
+* **Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "room_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+    "user": {
+      "id": "uuid",
+      "username": "jane_smith",
+      "avatar_url": "https://example.com/avatar2.jpg"
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+* **Error Responses:**
+  - `409 Conflict` - Already joined: `ALREADY_JOINED`
+  - `403 Forbidden` - Room full: `ROOM_FULL`
+  - `403 Forbidden` - Room closed: `ROOM_CLOSED`
+
+* **WebSocket Event Broadcast:**
+  - Event: `user_joined` on channel `private-study-room.{room_id}`
+  - Sent to all participants except the joining user
+
+---
+
+#### `DELETE /api/v1/study-rooms/{room}/leave`
+Leave a study room. If the host leaves, the room is automatically closed.
+
+* **Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": null,
+  "error": null,
+  "meta": null
+}
+```
+
+* **Error Response:**
+  - `404 Not Found` - Not a participant: `NOT_A_PARTICIPANT`
+
+* **WebSocket Event Broadcast:**
+  - Event: `user_left` on channel `private-study-room.{room_id}`
+  - If host leaves, also broadcasts `room_closed` event
+
+---
+
+#### `DELETE /api/v1/study-rooms/{room}`
+Close a study room (host or admin only). This is a soft-close that preserves message history.
+
+* **Authorization:** Host or admin only (enforced via `StudyRoomPolicy`)
+
+* **Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": null,
+  "error": null,
+  "meta": null
+}
+```
+
+* **Error Response:**
+  - `403 Forbidden` - Not authorized: `FORBIDDEN`
+
+* **WebSocket Event Broadcast:**
+  - Event: `room_closed` on channel `private-study-room.{room_id}`
+
+---
+
+#### `GET /api/v1/study-rooms/{room}/messages`
+Get message history for a study room with cursor-based pagination.
+
+* **Authorization:** Must be a participant of the room
+
+* **Request Query Parameters:**
+  - `limit` (optional): Number of messages to fetch (10-100, default: 50)
+  - `before` (optional): Timestamp cursor for pagination (ISO 8601 format)
+
+* **Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "messages": [
+      {
+        "id": "uuid",
+        "content": "Hello everyone! Ready to learn?",
+        "type": "text",
+        "user": {
+          "id": "uuid",
+          "username": "john_doe",
+          "avatar_url": "https://example.com/avatar.jpg"
+        },
+        "sent_at": "2026-08-18T05:02:00.000000Z"
+      },
+      {
+        "id": "uuid",
+        "content": "Yes, let's start with controllers!",
+        "type": "text",
+        "user": {
+          "id": "uuid",
+          "username": "jane_smith",
+          "avatar_url": "https://example.com/avatar2.jpg"
+        },
+        "sent_at": "2026-08-18T05:01:30.000000Z"
+      }
+    ]
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+* **Error Response:**
+  - `403 Forbidden` - Not a participant: `NOT_A_PARTICIPANT`
+
+---
+
+#### `POST /api/v1/study-rooms/{room}/messages`
+Send a message to a study room. This endpoint serves as an HTTP fallback; in production, messages are typically sent via WebSocket client events.
+
+* **Authorization:** Must be a participant of the room
+
+* **Request Body:**
+```json
+{
+  "content": "Hello everyone! Ready to learn?",
+  "type": "text"
+}
+```
+
+* **Validation:**
+  - `content`: Required, string, max 2000 characters
+  - `type`: Optional, enum (`text`, `file`, `ai`), default: `text`
+
+* **Response (`201 Created`):**
+```json
+{
+  "success": true,
+  "data": {
+    "message": {
+      "id": "uuid",
+      "content": "Hello everyone! Ready to learn?",
+      "type": "text",
+      "user": {
+        "id": "uuid",
+        "username": "john_doe",
+        "avatar_url": "https://example.com/avatar.jpg"
+      },
+      "sent_at": "2026-08-18T05:02:00.000000Z"
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+* **Error Responses:**
+  - `403 Forbidden` - Not a participant: `NOT_A_PARTICIPANT`
+  - `403 Forbidden` - Room closed: `ROOM_CLOSED`
+
+* **WebSocket Event Broadcast:**
+  - Event: `message` on channel `private-study-room.{room_id}`
+  - Sent to all participants except the sender
+
+---
+
+### WebSocket (Laravel Reverb) Configuration
+
+**Channel Authorization:** `routes/channels.php`
+```php
+Broadcast::channel('study-room.{roomId}', function ($user, $roomId) {
+    $room = StudyRoom::find($roomId);
+    return $room && $room->participants()->where('user_id', $user->id)->exists();
+});
+```
+
+**Events Broadcast:**
+- `message` - New message sent (`StudyRoomMessageSent`)
+- `user_joined` - User joined room (`StudyRoomUserJoined`)
+- `user_left` - User left room (`StudyRoomUserLeft`)
+- `room_closed` - Room closed (`StudyRoomClosed`)
+
+**Frontend Setup Example:**
+```javascript
+Echo.private(`study-room.${roomId}`)
+    .listen('.message', (e) => console.log('New message:', e))
+    .listen('.user_joined', (e) => console.log('User joined:', e.user))
+    .listen('.user_left', (e) => console.log('User left:', e.user))
+    .listen('.room_closed', (e) => console.log('Room closed'));
+```
+
+> **Implementation Note**: Study rooms use Laravel Reverb for real-time WebSocket communication. Install with `composer require laravel/reverb` and configure `.env` with Reverb credentials. Start the server with `php artisan reverb:start`.
+
+---
+
+### 9. Mascot Endpoints (`/api/v1/mascots`)
+
+Mascots are collectible companions that users can purchase with pearls and customize with accessories.
+
+#### `GET /api/v1/mascots`
+List all available mascots in the catalog.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Query Parameters:**
+  - `rarity` (optional): Filter by rarity (`common`, `rare`, `epic`, `legendary`)
+  - `category` (optional): Filter by category
+  - `sort` (optional): Sort order by unlock_cost (`asc` or `desc`, default: `asc`)
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "mascots": [
+      {
+        "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "name": "Kapten Lumba-Lumba",
+        "avatar_url": "https://example.com/mascots/dolphin.png",
+        "description": "Lumba-lumba pemberani yang siap menemani petualangan belajar Anda!",
+        "unlock_cost": 500,
+        "rarity": "rare",
+        "category": "marine",
+        "is_owned": false
+      }
+    ],
+    "count": 15
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `GET /api/v1/mascots/inventory`
+Get authenticated user's owned mascots.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "mascots": [
+      {
+        "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "name": "Kapten Lumba-Lumba",
+        "avatar_url": "https://example.com/mascots/dolphin.png",
+        "description": "Lumba-lumba pemberani yang siap menemani petualangan belajar Anda!",
+        "rarity": "rare",
+        "category": "marine",
+        "is_active": true,
+        "accessories": {
+          "hat": "captain-hat",
+          "glasses": "sunglasses"
+        },
+        "unlocked_at": "2026-08-15T10:30:00.000000Z"
+      }
+    ],
+    "count": 3
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `POST /api/v1/mascots/{mascot}/purchase`
+Purchase a mascot using pearls.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Success Response (`201 Created`):**
+```json
+{
+  "success": true,
+  "data": {
+    "mascot": {
+      "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "name": "Kapten Lumba-Lumba",
+      "avatar_url": "https://example.com/mascots/dolphin.png",
+      "description": "Lumba-lumba pemberani yang siap menemani petualangan belajar Anda!",
+      "rarity": "rare",
+      "category": "marine",
+      "unlocked_at": "2026-08-18T05:57:00.000000Z"
+    },
+    "pearls_spent": 500,
+    "pearls_remaining": 1200
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+* **Error Response (`403 Forbidden` - Insufficient pearls):**
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "INSUFFICIENT_PEARLS",
+    "message": "Mutiara Anda tidak cukup untuk membeli maskot ini.",
+    "details": {
+      "required": 500,
+      "available": 300,
+      "shortage": 200
+    }
+  },
+  "meta": null
+}
+```
+
+* **Error Response (`409 Conflict` - Already owned):**
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "MASCOT_ALREADY_OWNED",
+    "message": "Anda sudah memiliki maskot ini.",
+    "details": null
+  },
+  "meta": null
+}
+```
+
+---
+
+#### `PUT /api/v1/mascots/equip`
+Equip a mascot and customize accessories. Automatically deactivates other mascots.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Request Body:**
+```json
+{
+  "mascot_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+  "accessories": {
+    "hat": "captain-hat",
+    "glasses": "sunglasses",
+    "outfit": "navy-uniform",
+    "background": "ocean-blue"
+  }
+}
+```
+
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "mascot_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+    "name": "Kapten Lumba-Lumba",
+    "avatar_url": "https://example.com/mascots/dolphin.png",
+    "accessories": {
+      "hat": "captain-hat",
+      "glasses": "sunglasses",
+      "outfit": "navy-uniform",
+      "background": "ocean-blue"
+    },
+    "is_active": true
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+* **Error Response (`403 Forbidden` - Not owned):**
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "MASCOT_NOT_OWNED",
+    "message": "Anda tidak memiliki maskot ini.",
+    "details": null
+  },
+  "meta": null
+}
+```
+
+---
+
+### 10. Achievement Endpoints (`/api/v1/achievements`)
+
+Achievements are milestones that users can unlock by completing various tasks. Each achievement awards pearls upon completion.
+
+#### `GET /api/v1/achievements`
+List all available achievements.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Query Parameters:**
+  - `type` (optional): Filter by condition type (`course_completion`, `lesson_completion`, `exam_pass`, `xp_milestone`, `streak_days`)
+  - `sort` (optional): Sort by field (`pearls_reward`, `created_at`, `condition_value`, default: `created_at`)
+  - `order` (optional): Sort order (`asc` or `desc`, default: `asc`)
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "achievements": [
+      {
+        "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "name": "Pelaut Pemula",
+        "description": "Selesaikan kursus pertama Anda",
+        "icon_url": "https://example.com/badges/first-course.png",
+        "condition_type": "course_completion",
+        "condition_value": 1,
+        "pearls_reward": 50,
+        "is_earned": true,
+        "earned_at": "2026-08-10T12:00:00.000000Z"
+      },
+      {
+        "id": "8a2cdb3c-2b6c-3cad-8bcc-1a0c6b2cb5c",
+        "name": "Navigator Ulung",
+        "description": "Selesaikan 10 kursus",
+        "icon_url": "https://example.com/badges/ten-courses.png",
+        "condition_type": "course_completion",
+        "condition_value": 10,
+        "pearls_reward": 500,
+        "is_earned": false,
+        "earned_at": null
+      }
+    ],
+    "count": 25
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `GET /api/v1/achievements/me`
+Get authenticated user's earned achievements.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "achievements": [
+      {
+        "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "name": "Pelaut Pemula",
+        "description": "Selesaikan kursus pertama Anda",
+        "icon_url": "https://example.com/badges/first-course.png",
+        "condition_type": "course_completion",
+        "condition_value": 1,
+        "pearls_reward": 50,
+        "earned_at": "2026-08-10T12:00:00.000000Z"
+      }
+    ],
+    "count": 5,
+    "total_pearls_earned": 350
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `GET /api/v1/achievements/{achievement}`
+Get achievement details with user's current progress.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "8a2cdb3c-2b6c-3cad-8bcc-1a0c6b2cb5c",
+    "name": "Navigator Ulung",
+    "description": "Selesaikan 10 kursus",
+    "icon_url": "https://example.com/badges/ten-courses.png",
+    "condition_type": "course_completion",
+    "condition_value": 10,
+    "pearls_reward": 500,
+    "is_earned": false,
+    "earned_at": null,
+    "progress": {
+      "current": 3,
+      "target": 10,
+      "percentage": 30.0
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
