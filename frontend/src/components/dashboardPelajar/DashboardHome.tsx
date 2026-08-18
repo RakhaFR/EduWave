@@ -55,7 +55,7 @@ export default function DashboardHome() {
             <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#00172e] mb-4 md:mb-5">
               Halo, <span className="text-[#008be3]">{displayName}</span>
             </h1>
-            <Link href="/course"
+            <Link href="/pelajar/course"
               className="inline-flex items-center gap-2 rounded-xl bg-[#008be3] px-5 py-2 md:px-6 md:py-2.5 text-sm font-bold text-white hover:bg-[#0078c8] transition-colors shadow-md shadow-[#008be3]/30">
               Mulai Belajar <ChevronRight className="w-4 h-4" />
             </Link>
