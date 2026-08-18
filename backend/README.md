@@ -92,11 +92,11 @@ Base URL: `/api/v1`
 | Group | Method | Endpoint | Auth | Description | Tested? |
 |---|---|---|---|---|---|
 | **Auth** | `POST` | `/api/v1/auth/register` | No | Register a new user account | ✓ |
-| **Auth** | `POST` | `/api/v1/auth/login` | No | Authenticate user & issue Bearer token | ☐ |
+| **Auth** | `POST` | `/api/v1/auth/login` | No | Authenticate user & issue Bearer token | ✓ |
 | **Auth** | `POST` | `/api/v1/auth/forgot-password` | No | Request password reset link | ☐ |
 | **Auth** | `POST` | `/api/v1/auth/reset-password` | No | Reset password using reset token | ☐ |
 | **Auth** | `POST` | `/api/v1/auth/logout` | Yes | Revoke current authenticated token | ☐ |
-| **Auth** | `GET` | `/api/v1/auth/me` | Yes | Fetch basic auth user state | ☐ |
+| **Auth** | `GET` | `/api/v1/auth/me` | Yes | Fetch basic auth user state | ✓ |
 | **User** | `GET` | `/api/v1/users/me` | Yes | Get detailed authenticated user profile | ☐ |
 | **User** | `PUT` | `/api/v1/users/me` | Yes | Update user profile details | ☐ |
 | **User** | `PUT` | `/api/v1/users/me/password` | Yes | Change user password (revokes tokens) | ☐ |
@@ -349,9 +349,13 @@ Update user profile information.
   "username": "penjelajah_baru",
   "email": "user@example.com",
   "bio": "New bio content",
-  "avatar_url": "https://example.com/new_avatar.jpg"
+  "avatar_url": "https://example.com/new_avatar.jpg",
+  "current_password": "password123"
 }
 ```
+
+**Note:** `current_password` is **required** when changing `email` or `username`. It is not required when only updating `full_name`, `bio`, or `avatar_url`.
+
 * **Success Response (`200 OK`):**
 ```json
 {
