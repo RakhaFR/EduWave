@@ -13,10 +13,10 @@ import FloatingBubbles from "@/components/ui/FloatingBubbles";
 
 const NAV_ITEMS = [
   { icon: <Home className="w-5 h-5" />,           label: "Home",        href: "/pelajar" },
-  { icon: <BookOpen className="w-5 h-5" />,       label: "Course",      href: "/course" },
+  { icon: <BookOpen className="w-5 h-5" />,       label: "Course",      href: "/pelajar/course" },
   { icon: <Play className="w-5 h-5" />,           label: "Live Class",  href: "/pelajar/liveClass" },
   { icon: <Users2 className="w-5 h-5" />,         label: "Study Room",  href: "/pelajar/study-room" },
-  { icon: <Trophy className="w-5 h-5" />,         label: "Leaderboard", href: "/leaderboard" },
+  { icon: <Trophy className="w-5 h-5" />,         label: "Leaderboard", href: "/pelajar/leaderboard" },
   { icon: <GraduationCap className="w-5 h-5" />,  label: "Pembimbing",  href: "/pelajar/pembimbing" },
   { icon: <BarChart2 className="w-5 h-5" />,      label: "Report",      href: "/pelajar/report" },
 ];
@@ -24,8 +24,8 @@ const NAV_ITEMS = [
 // Bottom nav mobile — item utama (tanpa admin items)
 const BOTTOM_NAV = [
   { icon: <Home className="w-5 h-5" />,          label: "Home",   href: "/pelajar" },
-  { icon: <BookOpen className="w-5 h-5" />,      label: "Course", href: "/course" },
-  { icon: <Trophy className="w-5 h-5" />,        label: "Rank",   href: "/leaderboard" },
+  { icon: <BookOpen className="w-5 h-5" />,      label: "Course", href: "/pelajar/course" },
+  { icon: <Trophy className="w-5 h-5" />,        label: "Rank",   href: "/pelajar/leaderboard" },
   { icon: <Users2 className="w-5 h-5" />,        label: "Room",   href: "/pelajar/study-room" },
   { icon: <BarChart2 className="w-5 h-5" />,     label: "Report", href: "/pelajar/report" },
 ];
