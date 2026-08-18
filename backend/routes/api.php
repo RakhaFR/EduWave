@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\CourseController as AdminCourseController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AttemptController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseController;
@@ -95,6 +98,18 @@ Route::prefix('v1')->group(function () {
             Route::post('exams', [ExamController::class, 'store']);
             Route::put('exams/{exam}', [ExamController::class, 'update']);
             Route::delete('exams/{exam}', [ExamController::class, 'destroy']);
+        });
+
+        // Admin only — user management, course moderation, analytics
+        Route::middleware('role:admin')->prefix('admin')->group(function () {
+            Route::get('users', [AdminUserController::class, 'index']);
+            Route::put('users/{user}/role', [AdminUserController::class, 'updateRole']);
+            Route::delete('users/{user}', [AdminUserController::class, 'destroy']);
+
+            Route::get('courses', [AdminCourseController::class, 'index']);
+            Route::put('courses/{course}/status', [AdminCourseController::class, 'updateStatus']);
+
+            Route::get('analytics/overview', [AnalyticsController::class, 'overview']);
         });
     });
 

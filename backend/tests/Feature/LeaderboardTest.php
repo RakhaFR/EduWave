@@ -29,7 +29,7 @@ class LeaderboardTest extends TestCase
         // Clear all leaderboard keys from Redis before each test
         $connection = Redis::connection();
         $keys = $connection->keys('leaderboard:*');
-        if (!empty($keys)) {
+        if (! empty($keys)) {
             foreach ($keys as $key) {
                 $connection->del($key);
             }

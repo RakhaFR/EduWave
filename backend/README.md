@@ -158,6 +158,12 @@ All other exercised endpoints (32 of 36 requests, 62 of 66 assertions) passed cl
 | **Achievement** | `GET` | `/api/v1/achievements` | Yes | List all available achievements | ☐ |
 | **Achievement** | `GET` | `/api/v1/achievements/me` | Yes | Get authenticated user's earned achievements | ☐ |
 | **Achievement** | `GET` | `/api/v1/achievements/{achievement}` | Yes | Get achievement details with progress | ☐ |
+| **Admin** | `GET` | `/api/v1/admin/users` | Admin | List all users with filters and pagination | ✓ |
+| **Admin** | `PUT` | `/api/v1/admin/users/{user}/role` | Admin | Update user role | ✓ |
+| **Admin** | `DELETE` | `/api/v1/admin/users/{user}` | Admin | Soft-delete a user (except admins) | ✓ |
+| **Admin** | `GET` | `/api/v1/admin/courses` | Admin | List all courses with moderation filters | ✓ |
+| **Admin** | `PUT` | `/api/v1/admin/courses/{course}/status` | Admin | Update course status (draft/published/archived) | ✓ |
+| **Admin** | `GET` | `/api/v1/admin/analytics/overview` | Admin | Get platform analytics and statistics | ✓ |
 
 ---
 
@@ -1637,6 +1643,242 @@ Equip a mascot and customize accessories. Automatically deactivates other mascot
     "message": "Anda tidak memiliki maskot ini.",
     "details": null
   },
+  "meta": null
+}
+```
+
+---
+
+### 11. Admin Endpoints (`/api/v1/admin`)
+
+Admin-only endpoints for user management, course moderation, and platform analytics. All endpoints require `admin` role.
+
+#### `GET /api/v1/admin/users`
+List all users with filtering and pagination.
+
+* **Headers:** `Authorization: Bearer <token>` (admin only)
+* **Query Parameters:**
+  - `page` (optional): Page number (default: `1`)
+  - `per_page` (optional): Items per page (default: `20`, max: `100`)
+  - `role` (optional): Filter by role (`student`, `instructor`, `admin`)
+  - `search` (optional): Search username, email, or full_name
+  - `is_active` (optional): Filter by active status (`true` or `false`)
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "username": "penjelajah_baru",
+      "email": "user@example.com",
+      "full_name": "Budi Santoso",
+      "role": "student",
+      "avatar_url": "https://example.com/avatar.jpg",
+      "pearls": 250,
+      "xp": 1200,
+      "level": 5,
+      "is_active": true,
+      "created_at": "2026-08-13T12:00:00.000000Z"
+    }
+  ],
+  "error": null,
+  "meta": {
+    "current_page": 1,
+    "per_page": 20,
+    "total": 50,
+    "last_page": 3
+  }
+}
+```
+
+---
+
+#### `PUT /api/v1/admin/users/{user}/role`
+Update a user's role.
+
+* **Headers:** `Authorization: Bearer <token>` (admin only)
+* **Request Body:**
+```json
+{
+  "role": "instructor"
+}
+```
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "username": "penjelajah_baru",
+      "email": "user@example.com",
+      "full_name": "Budi Santoso",
+      "role": "instructor"
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `DELETE /api/v1/admin/users/{user}`
+Soft-delete a user. Admin accounts cannot be deleted.
+
+* **Headers:** `Authorization: Bearer <token>` (admin only)
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": null,
+  "error": null,
+  "meta": null
+}
+```
+* **Error Response (`403 Forbidden` - Cannot delete admin):**
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "CANNOT_DELETE_ADMIN",
+    "message": "Akun admin tidak dapat dihapus."
+  },
+  "meta": null
+}
+```
+
+---
+
+#### `GET /api/v1/admin/courses`
+List all courses with moderation filters. Includes instructor info and enrollment/lesson counts.
+
+* **Headers:** `Authorization: Bearer <token>` (admin only)
+* **Query Parameters:**
+  - `page` (optional): Page number (default: `1`)
+  - `per_page` (optional): Items per page (default: `20`, max: `100`)
+  - `status` (optional): Filter by status (`draft`, `published`, `archived`)
+  - `category` (optional): Filter by category
+  - `instructor_id` (optional): Filter by instructor
+  - `search` (optional): Search title or description
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "c1f2e3d4-5678-90ab-cdef-1234567890ab",
+      "title": "Pengenalan Oceanografi",
+      "description": "Pelajari dasar-dasar ilmu kelautan.",
+      "instructor": {
+        "id": "uuid",
+        "full_name": "Dr. Aris Ocean",
+        "email": "aris@eduwave.id"
+      },
+      "category": "marine",
+      "difficulty": "beginner",
+      "status": "published",
+      "thumbnail_url": "https://example.com/thumb.jpg",
+      "duration_minutes": 120,
+      "pearls_reward": 50,
+      "enrollments_count": 42,
+      "lessons_count": 5,
+      "created_at": "2026-08-13T12:00:00.000000Z",
+      "updated_at": "2026-08-13T12:00:00.000000Z"
+    }
+  ],
+  "error": null,
+  "meta": {
+    "current_page": 1,
+    "per_page": 20,
+    "total": 15,
+    "last_page": 1
+  }
+}
+```
+
+---
+
+#### `PUT /api/v1/admin/courses/{course}/status`
+Update a course's publication status.
+
+* **Headers:** `Authorization: Bearer <token>` (admin only)
+* **Request Body:**
+```json
+{
+  "status": "published"
+}
+```
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "course": {
+      "id": "c1f2e3d4-5678-90ab-cdef-1234567890ab",
+      "title": "Pengenalan Oceanografi",
+      "status": "published",
+      "updated_at": "2026-08-18T06:00:00.000000Z"
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `GET /api/v1/admin/analytics/overview`
+Get platform-wide analytics including user, course, enrollment, and exam statistics.
+
+* **Headers:** `Authorization: Bearer <token>` (admin only)
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "users": {
+      "total": 150,
+      "active": 140,
+      "students": 120,
+      "instructors": 25
+    },
+    "courses": {
+      "total": 30,
+      "published": 20,
+      "draft": 10
+    },
+    "enrollments": {
+      "total": 500,
+      "active": 350,
+      "completed": 150
+    },
+    "exams": {
+      "total_attempts": 300,
+      "passed_attempts": 240,
+      "average_score": 78.50
+    },
+    "recent_users": [
+      {
+        "id": "uuid",
+        "username": "new_user",
+        "email": "new@example.com",
+        "role": "student",
+        "created_at": "2026-08-18T05:00:00.000000Z"
+      }
+    ],
+    "top_courses": [
+      {
+        "id": "uuid",
+        "title": "Pengenalan Oceanografi",
+        "category": "marine",
+        "enrollments_count": 42
+      }
+    ]
+  },
+  "error": null,
   "meta": null
 }
 ```
