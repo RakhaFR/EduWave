@@ -103,15 +103,13 @@ export default function Topbar({
                 <p className="font-bold text-slate-700">{user?.full_name || "Admin EduWave"}</p>
                 <p className="text-[10px] text-slate-400">{user?.role || "admin"} (Administrator)</p>
               </div>
-              <button
-                onClick={() => {
-                  setProfileDropdownOpen(false);
-                  showToast(`Profil: ${user?.full_name} (${user?.email})`);
-                }}
+              <Link
+                href="/admin/profile"
+                onClick={() => setProfileDropdownOpen(false)}
                 className="w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-600 transition-colors flex items-center gap-2 cursor-pointer"
               >
                 <User className="w-4 h-4" /> Profil Saya
-              </button>
+              </Link>
               <button
                 onClick={() => {
                   setProfileDropdownOpen(false);

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { authService } from "@/services/authService";
+import { formatErrorMessage } from "@/lib/utils";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -39,10 +40,10 @@ export default function LoginPage() {
           router.push("/pelajar");
         }
       } else {
-        setErrorMsg(res.error?.message || "Login gagal. Silakan periksa kembali email & password anda.");
+        setErrorMsg(res.error?.message || "Email/username atau password salah.");
       }
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.error?.message || err.message || "Gagal terhubung ke server backend.");
+      setErrorMsg(formatErrorMessage(err, "Login gagal. Silakan periksa kembali email & password anda."));
     } finally {
       setLoading(false);
     }

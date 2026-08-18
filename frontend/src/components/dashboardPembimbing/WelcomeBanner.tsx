@@ -1,15 +1,19 @@
 "use client";
 
 import Image from "next/image";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function WelcomeBanner() {
+  const { user } = useCurrentUser();
+  const name = user?.full_name || user?.username || "Pembimbing";
+
   return (
     <div className="relative rounded-2xl bg-gradient-to-r from-[#eef7ff] to-[#f4f9ff] px-6 py-6 md:py-8 flex items-center justify-between border border-[#e1efff] overflow-hidden min-h-[140px] shrink-0">
       <div className="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(circle_at_bottom_left,#0073e6_0%,transparent_50%)]" />
 
       <div className="flex-1 z-10 pr-4">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#00172e] flex items-center gap-2">
-          Selamat datang, Pembimbing! <span className="animate-bounce">👋</span>
+          Selamat datang, {name}! <span className="animate-bounce">👋</span>
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-2 font-medium leading-relaxed max-w-[50ch]">
           Kelola kursus dan ujian Anda dengan mudah di sini.

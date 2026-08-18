@@ -11,7 +11,7 @@ export function useCurrentUser() {
     setLoading(true);
     setError(null);
     try {
-      // Endpoint 4: GET /api/v1/users/me
+      // 1. Panggil GET /api/v1/users/me (Tested: ☐)
       const res = await authService.getUserMe();
       if (res.success && res.data?.user) {
         setUser(res.data.user);
@@ -19,16 +19,18 @@ export function useCurrentUser() {
           localStorage.setItem('user', JSON.stringify(res.data.user));
         }
       } else {
-        // Fallback endpoint 3: GET /api/v1/auth/me
+        // 2. Fallback GET /api/v1/auth/me (Tested: ✓)
         const authRes = await authService.getAuthMe();
         if (authRes.success && authRes.data?.user) {
           setUser(authRes.data.user);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('user', JSON.stringify(authRes.data.user));
+          }
         } else {
           setError(res.error?.message || 'Gagal memuat profil');
         }
       }
     } catch (err: any) {
-      // Fallback try auth/me if users/me fails
       try {
         const authRes = await authService.getAuthMe();
         if (authRes.success && authRes.data?.user) {
@@ -45,17 +47,6 @@ export function useCurrentUser() {
   };
 
   useEffect(() => {
-    // Check cached user in localStorage first for instant initial render
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('user');
-      if (cached) {
-        try {
-          setUser(JSON.parse(cached));
-        } catch (e) {
-          // ignore
-        }
-      }
-    }
     fetchUser();
   }, []);
 

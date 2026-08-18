@@ -8,6 +8,7 @@ import {
   Flame, Target, Calendar, ChevronDown, Users, LogOut,
 } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 const MY_COURSES = [
   { id: 1, title: "Dasar-Dasar Pemrograman Web Bawah Laut", instructor: "Kak Ariel", progress: 75,  img: "/ocean-bg.jpg"   },
@@ -34,6 +35,9 @@ const formatNumber = (num: number) => {
 };
 
 export default function DashboardHome() {
+  const { user } = useCurrentUser();
+  const displayName = user?.full_name || user?.username || "Penyelam EduWave";
+
   return (
     <DashboardLayout searchPlaceholder="Search...">
       <main className="px-4 md:px-8 py-4 md:py-6 flex flex-col gap-6">
@@ -49,7 +53,7 @@ export default function DashboardHome() {
               <p className="text-xs font-semibold tracking-widest text-[#008be3] uppercase">Selamat Datang</p>
             </div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#00172e] mb-4 md:mb-5">
-              Halo, <span className="text-[#008be3]">Rasya Raya Agung</span>
+              Halo, <span className="text-[#008be3]">{displayName}</span>
             </h1>
             <Link href="/course"
               className="inline-flex items-center gap-2 rounded-xl bg-[#008be3] px-5 py-2 md:px-6 md:py-2.5 text-sm font-bold text-white hover:bg-[#0078c8] transition-colors shadow-md shadow-[#008be3]/30">
@@ -106,21 +110,23 @@ export default function DashboardHome() {
             <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">XP Kamu</p>
-                <span className="text-[10px] font-bold bg-[#008be3]/10 text-[#008be3] px-2 py-0.5 rounded-full">Lv.12 · Penyelam Mahir</span>
+                <span className="text-[10px] font-bold bg-[#008be3]/10 text-[#008be3] px-2 py-0.5 rounded-full">
+                  Lv.{user?.level ?? 1} · Penyelam
+                </span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 shrink-0 flex items-center justify-center">
                   <img src="/pearl.webp" alt="Mutiara" className="w-full h-full object-contain drop-shadow-md" />
                 </div>
                 <div>
-                  <p className="text-2xl font-extrabold text-[#008be3] leading-none">3.200</p>
+                  <p className="text-2xl font-extrabold text-[#008be3] leading-none">{formatNumber(user?.pearls ?? 0)}</p>
                   <p className="text-[10px] text-slate-400 mt-0.5">Mutiara terkumpul</p>
                 </div>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] text-slate-400">Menuju Lv.13</span>
-                  <span className="text-[10px] font-semibold text-[#008be3]">3.200 / 5.000 XP</span>
+                  <span className="text-[10px] text-slate-400">XP Selesai</span>
+                  <span className="text-[10px] font-semibold text-[#008be3]">{formatNumber(user?.xp ?? 0)} XP</span>
                 </div>
                 <div className="h-2 rounded-full bg-slate-100">
                   <div className="h-2 rounded-full bg-gradient-to-r from-[#008be3] to-cyan-400 w-[64%]" />
@@ -129,7 +135,7 @@ export default function DashboardHome() {
               <div className="flex items-center gap-2 rounded-xl bg-orange-50 border border-orange-100 px-3 py-2">
                 <Flame className="w-4 h-4 text-orange-500 shrink-0" />
                 <div>
-                  <p className="text-xs font-bold text-orange-500">5 Hari Berturut-turut</p>
+                  <p className="text-xs font-bold text-orange-500">{user?.streak_days ?? 0} Hari Berturut-turut</p>
                   <p className="text-[10px] text-orange-400">Pertahankan streak belajarmu!</p>
                 </div>
               </div>

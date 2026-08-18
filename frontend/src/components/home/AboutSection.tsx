@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   Trophy,
@@ -49,19 +50,40 @@ const FEATURES = [
   },
 ];
 
-const STATS = [
-  { value: "10K+", label: "Penyelam Aktif" },
-  { value: "200+", label: "Materi Kursus" },
-  { value: "50+",  label: "Ujian Interaktif" },
-  { value: "4.9★", label: "Rating Pengguna" },
-];
+function CountUp({ target, suffix = "" }: { target: number; suffix?: string }) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let current = 0;
+    const steps = Math.max(10, target * 3);
+    const intervalTime = 1200 / steps;
+
+    const timer = setInterval(() => {
+      current += target / steps;
+      if (current >= target) {
+        setCount(target);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(current));
+      }
+    }, intervalTime);
+
+    return () => clearInterval(timer);
+  }, [target]);
+
+  return <span>{count.toLocaleString()}{suffix}</span>;
+}
 
 export default function AboutSection() {
+  // Real count dari database
+  const stats = [
+    { target: 1, label: "Penyelam Aktif", suffix: "" },
+    { target: 3, label: "Materi Khusus", suffix: "" },
+    { target: 1, label: "Ujian Interaktif", suffix: "" },
+  ];
+
   return (
     <section className="relative bg-white text-[#00172e] overflow-hidden">
-
-
-
       <div className="relative z-10 max-w-6xl mx-auto px-6 pt-20 pb-10 md:pt-28 md:pb-12">
 
         {/* ── Gambar kiri + Teks kanan ── */}
@@ -173,24 +195,23 @@ export default function AboutSection() {
           ))}
         </div>
 
-        {/* ── Stats Row ── */}
+        {/* ── Stats Row (Animated 0 -> target) ── */}
         <div
           data-aos="fade-up"
-          className="grid grid-cols-2 sm:grid-cols-4 gap-6 border-t border-slate-100 pt-12"
+          className="grid grid-cols-1 sm:grid-cols-3 gap-6 border-t border-slate-100 pt-12 text-center"
         >
-          {STATS.map((stat) => (
-            <div key={stat.label} className="text-center">
+          {stats.map((stat) => (
+            <div key={stat.label} className="p-4 rounded-2xl bg-slate-50/60 border border-slate-100/80">
               <div className="text-3xl sm:text-4xl font-extrabold text-[#008be3] mb-1">
-                {stat.value}
+                <CountUp target={stat.target} suffix={stat.suffix} />
               </div>
-              <div className="text-xs text-slate-400 font-medium tracking-wide">
+              <div className="text-xs text-slate-500 font-semibold tracking-wide">
                 {stat.label}
               </div>
             </div>
           ))}
         </div>
       </div>
-
 
       {/* Wave tipis putih → biru muda */}
       <div className="relative -mb-1 pointer-events-none" style={{ lineHeight: 0 }}>

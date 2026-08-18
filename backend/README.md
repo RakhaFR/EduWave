@@ -112,8 +112,8 @@ All other exercised endpoints (32 of 36 requests, 62 of 66 assertions) passed cl
 | **Auth** | `POST` | `/api/v1/auth/reset-password` | No | Reset password using reset token | ☐ |
 | **Auth** | `POST` | `/api/v1/auth/logout` | Yes | Revoke current authenticated token | ☐ |
 | **Auth** | `GET` | `/api/v1/auth/me` | Yes | Fetch basic auth user state | ✓ |
-| **User** | `GET` | `/api/v1/users/me` | Yes | Get detailed authenticated user profile | ☐ |
-| **User** | `PUT` | `/api/v1/users/me` | Yes | Update user profile details | ⚠️ |
+| **User** | `GET` | `/api/v1/users/me` | Yes | Get detailed authenticated user profile | ✓ |
+| **User** | `PUT` | `/api/v1/users/me` | Yes | Update user profile details | ✓ |
 | **User** | `PUT` | `/api/v1/users/me/password` | Yes | Change user password (revokes tokens) | ✓ |
 | **User** | `GET` | `/api/v1/users/me/stats` | Yes | Get gamification stats (pearls, xp, level, streak) | ☐ |
 | **User** | `PUT` | `/api/v1/users/me/mascot` | Yes | Equip mascot and update custom accessories | ☐ |

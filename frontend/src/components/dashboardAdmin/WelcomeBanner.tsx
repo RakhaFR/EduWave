@@ -1,8 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function WelcomeBanner() {
+  const { user } = useCurrentUser();
+  const name = user?.full_name || user?.username || "Admin";
+
   return (
     <div className="relative rounded-2xl bg-gradient-to-r from-[#eef7ff] to-[#f4f9ff] px-6 py-6 md:py-8 flex items-center justify-between border border-[#e1efff] overflow-hidden min-h-[140px] shrink-0">
       {/* Ocean coral decorative lines */}
@@ -10,7 +14,7 @@ export default function WelcomeBanner() {
 
       <div className="flex-1 z-10 pr-4">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#00172e] flex items-center gap-2">
-          Selamat datang kembali, Admin! <span className="animate-bounce">👋</span>
+          Selamat datang kembali, {name}! <span className="animate-bounce">👋</span>
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-2 font-medium leading-relaxed max-w-[50ch]">
           Kelola platform EduWave dengan mudah dan efisien.

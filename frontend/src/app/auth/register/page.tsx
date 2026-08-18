@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { User, Mail, GraduationCap, Presentation, ArrowLeft, Anchor, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { authService } from "@/services/authService";
+import { formatErrorMessage } from "@/lib/utils";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -63,7 +64,7 @@ export default function RegisterPage() {
         setErrorMsg(res.error?.message || "Pendaftaran gagal. Silakan periksa kembali data anda.");
       }
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.error?.message || err.message || "Gagal terhubung ke server backend.");
+      setErrorMsg(formatErrorMessage(err, "Pendaftaran akun gagal. Silakan coba lagi."));
     } finally {
       setLoading(false);
     }

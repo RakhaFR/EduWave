@@ -1,11 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { User, Mail, Shield, Award, Zap, Flame, Loader2 } from "lucide-react";
 
 export default function ProfileComponent() {
   const { user, loading } = useCurrentUser();
+  const [imgError, setImgError] = useState(false);
+
+  const initial = (user?.full_name || user?.username || "P").charAt(0).toUpperCase();
 
   return (
     <DashboardLayout searchPlaceholder="Cari riwayat...">
@@ -23,10 +27,15 @@ export default function ProfileComponent() {
               {/* Header Avatar & Name */}
               <div className="text-center">
                 <div className="w-24 h-24 mx-auto mb-3 bg-gradient-to-tr from-[#0052a3] to-[#008be3] text-white text-3xl font-extrabold rounded-full flex items-center justify-center shadow-lg border-4 border-white overflow-hidden">
-                  {user?.avatar_url ? (
-                    <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
+                  {user?.avatar_url && !imgError ? (
+                    <img
+                      src={user.avatar_url}
+                      alt={user.full_name}
+                      onError={() => setImgError(true)}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
-                    (user?.full_name || user?.username || "P").charAt(0).toUpperCase()
+                    initial
                   )}
                 </div>
                 <h2 className="font-bold text-xl text-slate-800">{user?.full_name || "Pelajar EduWave"}</h2>
