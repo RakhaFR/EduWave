@@ -46,6 +46,7 @@ Route::prefix('v1')->group(function () {
         Route::get('users/me/stats', [UserController::class, 'stats']);
         Route::put('users/me/mascot', [UserController::class, 'updateMascot']);
         Route::get('users/me/achievements', [UserController::class, 'achievements']);
+        Route::get('users/me/courses', [UserController::class, 'courses']);
     });
 
     // ──────────────────────────────────────────────────────

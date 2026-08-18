@@ -106,6 +106,39 @@ class UserController extends ApiController
         ]);
     }
 
+    public function courses(Request $request): JsonResponse
+    {
+        $enrollments = $request->user()->enrollments()
+            ->whereIn('status', ['enrolled', 'completed'])
+            ->with(['course.instructor:id,full_name,avatar_url'])
+            ->orderByDesc('enrolled_at')
+            ->get()
+            ->map(fn ($enrollment) => [
+                'id' => $enrollment->id,
+                'progress_pct' => (float) $enrollment->progress_pct,
+                'status' => $enrollment->status,
+                'enrolled_at' => $enrollment->enrolled_at,
+                'completed_at' => $enrollment->completed_at,
+                'course' => $enrollment->course ? [
+                    'id' => $enrollment->course->id,
+                    'title' => $enrollment->course->title,
+                    'description' => $enrollment->course->description,
+                    'category' => $enrollment->course->category,
+                    'difficulty' => $enrollment->course->difficulty,
+                    'thumbnail_url' => $enrollment->course->thumbnail_url,
+                    'duration_minutes' => $enrollment->course->duration_minutes,
+                    'pearls_reward' => $enrollment->course->pearls_reward,
+                    'instructor' => $enrollment->course->instructor ? [
+                        'id' => $enrollment->course->instructor->id,
+                        'full_name' => $enrollment->course->instructor->full_name,
+                        'avatar_url' => $enrollment->course->instructor->avatar_url,
+                    ] : null,
+                ] : null,
+            ]);
+
+        return $this->success(['courses' => $enrollments]);
+    }
+
     /**
      * Update user's equipped mascot and accessories.
      */

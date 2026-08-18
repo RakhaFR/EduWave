@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
-  Home, BookOpen, Users, Users2, Trophy, BarChart2, GraduationCap,
+  Home, BookOpen, Bookmark, Users, Users2, Trophy, BarChart2, GraduationCap,
   Play, Bell, Search, ChevronRight,
   LogOut, ChevronDown, Menu, X,
 } from "lucide-react";
@@ -14,7 +14,8 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 const NAV_ITEMS = [
   { icon: <Home className="w-5 h-5" />,           label: "Home",        href: "/pelajar" },
-  { icon: <BookOpen className="w-5 h-5" />,       label: "Course",      href: "/pelajar/course" },
+  { icon: <BookOpen className="w-5 h-5" />,       label: "All Course",  href: "/pelajar/all-course" },
+  { icon: <Bookmark className="w-5 h-5" />,       label: "My Courses",  href: "/pelajar/my-courses" },
   { icon: <Play className="w-5 h-5" />,           label: "Live Class",  href: "/pelajar/liveClass" },
   { icon: <Users2 className="w-5 h-5" />,         label: "Study Room",  href: "/pelajar/study-room" },
   { icon: <Trophy className="w-5 h-5" />,         label: "Leaderboard", href: "/pelajar/leaderboard" },
@@ -24,11 +25,11 @@ const NAV_ITEMS = [
 
 // Bottom nav mobile — item utama (tanpa admin items)
 const BOTTOM_NAV = [
-  { icon: <Home className="w-5 h-5" />,          label: "Home",   href: "/pelajar" },
-  { icon: <BookOpen className="w-5 h-5" />,      label: "Course", href: "/pelajar/course" },
-  { icon: <Trophy className="w-5 h-5" />,        label: "Rank",   href: "/pelajar/leaderboard" },
-  { icon: <Users2 className="w-5 h-5" />,        label: "Room",   href: "/pelajar/study-room" },
-  { icon: <BarChart2 className="w-5 h-5" />,     label: "Report", href: "/pelajar/report" },
+  { icon: <Home className="w-5 h-5" />,          label: "Home",       href: "/pelajar" },
+  { icon: <BookOpen className="w-5 h-5" />,      label: "All Course", href: "/pelajar/all-course" },
+  { icon: <Bookmark className="w-5 h-5" />,      label: "My Courses", href: "/pelajar/my-courses" },
+  { icon: <Trophy className="w-5 h-5" />,        label: "Rank",       href: "/pelajar/leaderboard" },
+  { icon: <BarChart2 className="w-5 h-5" />,     label: "Report",     href: "/pelajar/report" },
 ];
 
 interface DashboardLayoutProps {
