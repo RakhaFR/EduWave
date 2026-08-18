@@ -8,7 +8,6 @@ class DatabaseSeeder extends Seeder
 {
     /**
      * Seed the application's database.
-     * FOR LOCAL/TESTING USE ONLY.
      */
     public function run(): void
     {
@@ -19,6 +18,9 @@ class DatabaseSeeder extends Seeder
             CourseSeeder::class,
             LessonSeeder::class,
             ExamSeeder::class,
+            StudyRoomSeeder::class,
+            EnrollmentAndActivitySeeder::class,
+            LeaderboardSeeder::class,
         ]);
     }
 }
