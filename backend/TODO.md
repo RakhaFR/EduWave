@@ -162,20 +162,15 @@
 - [x] Phase 4.9: Controllers — Admin
 - [x] Phase 5: API routes and authentication boundaries
 - [x] Phase 6: Feature testing for key flows
-- [ ] Phase 7: API documentation and frontend contract review
+- [x] Phase 7: API documentation and frontend contract review
 
-## Phase 6 — Feature Testing
+## Phase 7 — API Documentation & Contract Review
 
-- [x] Verify public, authenticated, instructor, and admin route boundaries.
-- [x] Verify email and username authentication, logout token revocation, and profile security flows.
-- [x] Verify published/draft course visibility and prevent instructor ownership-transfer bypasses.
-- [x] Verify enrollment, lesson access, XP idempotency, course completion rewards, and safe reenrollment.
-- [x] Verify exam enrollment requirements, answer-key suppression, scoring, reward idempotency, attempt limits, expiration, ownership, and empty-exam handling.
-- [x] Verify leaderboard Redis behavior and XP event integration.
-- [x] Verify study-room membership, messaging, broadcast events, and private-channel authorization.
-- [x] Verify mascot purchase/equip and achievement/gamification behavior.
-- [x] Verify admin user, course moderation, analytics, pagination, and role boundaries.
-- [x] Run the complete automated suite successfully: 144 tests, 667 assertions.
+- [x] Updated `README.md` framework metadata to Laravel 12.
+- [x] Verified base route `/api/v1` and Sanctum Bearer authentication contract.
+- [x] Audit confirmed matching endpoints and controller actions for Auth, User, Course, Lesson, Enrollment, Exam, Attempt, Leaderboard, Study Room, Mascot, Achievement, and Admin endpoints.
+- [x] Documented standard envelope structure (`success`, `data`, `error`, `meta`) across all endpoints.
+- [x] Verified full automated suite status (144 tests, 667 assertions passing).
 
 ## Phase 4.1 — Authorization Policies (RBAC)
 

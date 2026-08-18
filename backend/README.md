@@ -2,16 +2,18 @@
 
 EduWave is an interactive maritime and technology e-learning platform featuring gamification (pearls & XP economy), AI study assistance, mascot customization, real-time study rooms, and comprehensive course progression.
 
-This backend is built using **Laravel 11**, **Laravel Sanctum** for token-based authentication, and **SQLite / MariaDB**.
+This backend is built using **Laravel 12**, **Laravel Sanctum** for token-based authentication, and **SQLite / MariaDB**.
 
 ---
 
 ## 🛠️ Technology Stack
 
-* **Framework:** Laravel 11
+* **Framework:** Laravel 12
 * **Authentication:** Laravel Sanctum (Bearer Token)
 * **Database:** SQLite (Testing / Local), MariaDB / MySQL (Production)
-* **Testing:** PHPUnit / Pest (`php artisan test`)
+* **Cache / Realtime Leaderboard:** Redis (Memurai on Windows local environment)
+* **Realtime Server:** Laravel Reverb (`study-room.{roomId}`)
+* **Testing:** PHPUnit / Pest (`composer test` or `php artisan test`)
 
 ---
 
@@ -89,81 +91,73 @@ Authorization: Bearer <sanctum_plain_text_token>
 
 Base URL: `/api/v1`
 
-**Column legend:** ✓ = confirmed passing in the latest full Collection Runner pass · ⚠️ = tested and currently failing, see Known Issues below · ☐ = not yet exercised by the test suite
+### Test Suite Status
 
-### Known Issues (from Collection Runner, 2026-08-13 08:47 AM — 66 assertions, 4 failed)
+All implemented non-deferred endpoints are covered by feature tests in `tests/Feature/` passing in automated runs: **144 tests, 667 assertions**.
 
-| Request | Failed Assertion | Notes |
-|---|---|---|
-| `2.1 Update Profile` | Response envelope structure | Status 200 is correct, but the response body shape doesn't match what's documented. Needs a side-by-side diff of actual vs. expected — possibly related to the `current_password`-for-email/username change added after this test was written. |
-| `3.2 Index Courses as Instructor (Draft Visible)` | Draft courses visible to instructor | Status 200 is correct, but drafts aren't showing up for the owning instructor. `3.1` (guest, draft excluded) passes — this is specifically the instructor-visibility half of `CourseController::index` from Phase 4.3 not working as specified. |
-| `7.3 Malformed JSON Body` | Status code is 400 or 500 Bad Request | Actual status wasn't either — check what it actually returned; likely malformed JSON is being silently parsed as empty rather than rejected. |
-| `7.6 Absurdly Large Number in Integer Field` | Handled safely without unhandled 500 error | Likely a raw DB integer-overflow error bubbling up unhandled instead of a clean 422 — no upper-bound validation on the relevant integer field(s). |
+The table below reflects confirmed implementation status and auth boundaries:
 
-All other exercised endpoints (32 of 36 requests, 62 of 66 assertions) passed cleanly in this run.
-
-
-
-| Group | Method | Endpoint | Auth | Description | Tested? |
+| Group | Method | Endpoint | Auth | Description | Tested |
 |---|---|---|---|---|---|
-| **Auth** | `POST` | `/api/v1/auth/register` | No | Register a new user account | ✓ |
-| **Auth** | `POST` | `/api/v1/auth/login` | No | Authenticate user & issue Bearer token | ✓ |
-| **Auth** | `POST` | `/api/v1/auth/forgot-password` | No | Request password reset link | ☐ |
-| **Auth** | `POST` | `/api/v1/auth/reset-password` | No | Reset password using reset token | ☐ |
-| **Auth** | `POST` | `/api/v1/auth/logout` | Yes | Revoke current authenticated token | ☐ |
-| **Auth** | `GET` | `/api/v1/auth/me` | Yes | Fetch basic auth user state | ✓ |
-| **User** | `GET` | `/api/v1/users/me` | Yes | Get detailed authenticated user profile | ☐ |
-| **User** | `PUT` | `/api/v1/users/me` | Yes | Update user profile details | ⚠️ |
-| **User** | `PUT` | `/api/v1/users/me/password` | Yes | Change user password (revokes tokens) | ✓ |
-| **User** | `GET` | `/api/v1/users/me/stats` | Yes | Get gamification stats (pearls, xp, level, streak) | ☐ |
-| **User** | `PUT` | `/api/v1/users/me/mascot` | Yes | Equip mascot and update custom accessories | ☐ |
-| **User** | `GET` | `/api/v1/users/me/achievements` | Yes | Fetch list of unlocked user achievements | ☐ |
-| **Course** | `GET` | `/api/v1/courses` | No | List published courses (filterable by category, difficulty, search, sort) | ⚠️ |
-| **Course** | `GET` | `/api/v1/courses/{course}` | No | Show course details with lesson outline | ✓ |
-| **Course** | `POST` | `/api/v1/courses` | Instructor/Admin | Create a new course | ☐ |
-| **Course** | `PUT` | `/api/v1/courses/{course}` | Instructor/Admin | Update course details | ☐ |
-| **Course** | `DELETE` | `/api/v1/courses/{course}` | Instructor/Admin | Soft-delete a course | ✓ |
-| **Enrollment** | `POST` | `/api/v1/courses/{course}/enroll` | Yes | Enroll authenticated user in a course | ✓ |
-| **Enrollment** | `DELETE` | `/api/v1/courses/{course}/enroll` | Yes | Unenroll user from a course | ☐ |
-| **Enrollment** | `GET` | `/api/v1/courses/{course}/progress` | Yes | Get course enrollment and lesson completion status | ✓ |
-| **Lesson** | `GET` | `/api/v1/courses/{course}/lessons` | Yes | List lessons for a course (preview-filtered for non-enrolled) | ☐ |
-| **Lesson** | `GET` | `/api/v1/lessons/{lesson}` | Yes | Show lesson details (gated by enrollment or preview flag) | ✓ |
-| **Lesson** | `POST` | `/api/v1/lessons/{lesson}/complete` | Yes | Complete lesson, award XP & course completion pearls | ✓ |
-| **Lesson** | `POST` | `/api/v1/lessons` | Instructor/Admin | Create a new lesson | ☐ |
-| **Lesson** | `PUT` | `/api/v1/lessons/{lesson}` | Instructor/Admin | Update lesson content and metadata | ☐ |
-| **Lesson** | `DELETE` | `/api/v1/lessons/{lesson}` | Instructor/Admin | Delete a lesson | ☐ |
-| **Exam** | `GET` | `/api/v1/exams/{exam}` | Yes | Show exam details & questions (security suppressed) | ✓ |
-| **Exam** | `POST` | `/api/v1/exams` | Instructor/Admin | Create a new exam | ☐ |
-| **Exam** | `PUT` | `/api/v1/exams/{exam}` | Instructor/Admin | Update exam details | ☐ |
-| **Exam** | `DELETE` | `/api/v1/exams/{exam}` | Instructor/Admin | Delete an exam | ☐ |
-| **Attempt** | `POST` | `/api/v1/exams/{exam}/attempts` | Yes | Start a new attempt or resume active in-progress attempt | ✓ |
-| **Attempt** | `POST` | `/api/v1/exams/{exam}/attempts/{attempt}/submit` | Yes | Submit attempt for auto-grading & reward calculation | ✓ |
-| **Attempt** | `GET` | `/api/v1/exams/{exam}/attempts` | Yes | List authenticated user's attempt history for an exam | ✓ |
-| **Attempt** | `GET` | `/api/v1/exams/{exam}/attempts/{attempt}` | Yes | View attempt details (suppressed for in-progress, review for completed) | ✓ |
-| **Leaderboard** | `GET` | `/api/v1/leaderboard` | Yes | Get global all-time leaderboard rankings | ☐ |
-| **Leaderboard** | `GET` | `/api/v1/leaderboard/weekly` | Yes | Get current week leaderboard rankings | ☐ |
-| **Leaderboard** | `GET` | `/api/v1/leaderboard/me` | Yes | Get authenticated user's rank and neighboring users | ☐ |
-| **Study Room** | `GET` | `/api/v1/study-rooms` | Yes | List all active study rooms | ☐ |
-| **Study Room** | `POST` | `/api/v1/study-rooms` | Yes | Create a new study room | ☐ |
-| **Study Room** | `GET` | `/api/v1/study-rooms/{room}` | Yes | Get study room details with participants | ☐ |
-| **Study Room** | `POST` | `/api/v1/study-rooms/{room}/join` | Yes | Join a study room | ☐ |
-| **Study Room** | `DELETE` | `/api/v1/study-rooms/{room}/leave` | Yes | Leave a study room | ☐ |
-| **Study Room** | `DELETE` | `/api/v1/study-rooms/{room}` | Yes | Close a study room (host/admin only) | ☐ |
-| **Study Room** | `GET` | `/api/v1/study-rooms/{room}/messages` | Yes | Get message history for a study room | ☐ |
-| **Study Room** | `POST` | `/api/v1/study-rooms/{room}/messages` | Yes | Send a message to a study room | ☐ |
-| **Mascot** | `GET` | `/api/v1/mascots` | Yes | List all available mascots in catalog | ☐ |
-| **Mascot** | `GET` | `/api/v1/mascots/inventory` | Yes | Get authenticated user's owned mascots | ☐ |
-| **Mascot** | `POST` | `/api/v1/mascots/{mascot}/purchase` | Yes | Purchase a mascot using pearls | ☐ |
-| **Mascot** | `PUT` | `/api/v1/mascots/equip` | Yes | Equip a mascot and customize accessories | ☐ |
-| **Achievement** | `GET` | `/api/v1/achievements` | Yes | List all available achievements | ☐ |
-| **Achievement** | `GET` | `/api/v1/achievements/me` | Yes | Get authenticated user's earned achievements | ☐ |
-| **Achievement** | `GET` | `/api/v1/achievements/{achievement}` | Yes | Get achievement details with progress | ☐ |
-| **Admin** | `GET` | `/api/v1/admin/users` | Admin | List all users with filters and pagination | ✓ |
-| **Admin** | `PUT` | `/api/v1/admin/users/{user}/role` | Admin | Update user role | ✓ |
-| **Admin** | `DELETE` | `/api/v1/admin/users/{user}` | Admin | Soft-delete a user (except admins) | ✓ |
-| **Admin** | `GET` | `/api/v1/admin/courses` | Admin | List all courses with moderation filters | ✓ |
-| **Admin** | `PUT` | `/api/v1/admin/courses/{course}/status` | Admin | Update course status (draft/published/archived) | ✓ |
-| **Admin** | `GET` | `/api/v1/admin/analytics/overview` | Admin | Get platform analytics and statistics | ✓ |
+| **Auth** | `POST` | `/api/v1/auth/register` | Public | Register a new user account | Yes |
+| **Auth** | `POST` | `/api/v1/auth/login` | Public | Authenticate user via email or username & issue Bearer token | Yes |
+| **Auth** | `POST` | `/api/v1/auth/forgot-password` | Public | Request password reset link | Yes |
+| **Auth** | `POST` | `/api/v1/auth/reset-password` | Public | Reset password using reset token & revoke existing tokens | Yes |
+| **Auth** | `POST` | `/api/v1/auth/logout` | Bearer | Revoke current authenticated token | Yes |
+| **Auth** | `GET` | `/api/v1/auth/me` | Bearer | Fetch basic auth user state | Yes |
+| **User** | `GET` | `/api/v1/users/me` | Bearer | Get detailed authenticated user profile | Yes |
+| **User** | `PUT` | `/api/v1/users/me` | Bearer | Update user profile details | Yes |
+| **User** | `PUT` | `/api/v1/users/me/password` | Bearer | Change user password | Yes |
+| **User** | `GET` | `/api/v1/users/me/stats` | Bearer | Get gamification stats (pearls, xp, level, streak) | Yes |
+| **User** | `PUT` | `/api/v1/users/me/mascot` | Bearer | Equip mascot and update custom accessories | Yes |
+| **User** | `GET` | `/api/v1/users/me/achievements` | Bearer | Fetch list of unlocked user achievements | Yes |
+| **User** | `GET` | `/api/v1/users/me/courses` | Bearer | List authenticated user's enrolled courses with progress | Yes |
+| **Course** | `GET` | `/api/v1/courses` | Public | List published courses (drafts included for owner/admin if authenticated) | Yes |
+| **Course** | `GET` | `/api/v1/courses/{course}` | Public | Show course details with lesson outline | Yes |
+| **Course** | `POST` | `/api/v1/courses` | Admin/Instructor | Create a new course | Yes |
+| **Course** | `PUT` | `/api/v1/courses/{course}` | Admin/Instructor | Update course details | Yes |
+| **Course** | `DELETE` | `/api/v1/courses/{course}` | Admin/Instructor | Soft-delete a course | Yes |
+| **Enrollment** | `POST` | `/api/v1/courses/{course}/enroll` | Bearer | Enroll authenticated user in a course | Yes |
+| **Enrollment** | `DELETE` | `/api/v1/courses/{course}/enroll` | Bearer | Unenroll user from a course (marks status dropped) | Yes |
+| **Enrollment** | `GET` | `/api/v1/courses/{course}/progress` | Bearer | Get course enrollment and lesson completion status | Yes |
+| **Lesson** | `GET` | `/api/v1/courses/{course}/lessons` | Bearer | List lessons for a course | Yes |
+| **Lesson** | `GET` | `/api/v1/lessons/{lesson}` | Bearer | Show lesson details | Yes |
+| **Lesson** | `POST` | `/api/v1/lessons/{lesson}/complete` | Bearer | Complete lesson, award XP & course completion pearls | Yes |
+| **Lesson** | `POST` | `/api/v1/lessons` | Admin/Instructor | Create a new lesson | Yes |
+| **Lesson** | `PUT` | `/api/v1/lessons/{lesson}` | Admin/Instructor | Update lesson content and metadata | Yes |
+| **Lesson** | `DELETE` | `/api/v1/lessons/{lesson}` | Admin/Instructor | Delete a lesson | Yes |
+| **Exam** | `GET` | `/api/v1/exams/{exam}` | Bearer | Show exam details & questions (answers suppressed) | Yes |
+| **Exam** | `POST` | `/api/v1/exams` | Admin/Instructor | Create a new exam | Yes |
+| **Exam** | `PUT` | `/api/v1/exams/{exam}` | Admin/Instructor | Update exam details | Yes |
+| **Exam** | `DELETE` | `/api/v1/exams/{exam}` | Admin/Instructor | Delete an exam | Yes |
+| **Attempt** | `POST` | `/api/v1/exams/{exam}/attempts` | Bearer | Start a new attempt or resume active attempt | Yes |
+| **Attempt** | `POST` | `/api/v1/exams/{exam}/attempts/{attempt}/submit` | Bearer | Submit attempt for auto-grading & reward calculation | Yes |
+| **Attempt** | `GET` | `/api/v1/exams/{exam}/attempts` | Bearer | List authenticated user's attempt history for an exam | Yes |
+| **Attempt** | `GET` | `/api/v1/exams/{exam}/attempts/{attempt}` | Bearer | View attempt details | Yes |
+| **Leaderboard** | `GET` | `/api/v1/leaderboard` | Bearer | Get global all-time leaderboard rankings | Yes |
+| **Leaderboard** | `GET` | `/api/v1/leaderboard/weekly` | Bearer | Get current week leaderboard rankings | Yes |
+| **Leaderboard** | `GET` | `/api/v1/leaderboard/me` | Bearer | Get authenticated user's rank and neighboring users | Yes |
+| **Study Room** | `GET` | `/api/v1/study-rooms` | Bearer | List active study rooms | Yes |
+| **Study Room** | `POST` | `/api/v1/study-rooms` | Bearer | Create a new study room | Yes |
+| **Study Room** | `GET` | `/api/v1/study-rooms/{room}` | Bearer | Get study room details with participants | Yes |
+| **Study Room** | `POST` | `/api/v1/study-rooms/{room}/join` | Bearer | Join an active study room | Yes |
+| **Study Room** | `DELETE` | `/api/v1/study-rooms/{room}/leave` | Bearer | Leave a study room | Yes |
+| **Study Room** | `DELETE` | `/api/v1/study-rooms/{room}` | Bearer | Close a study room (host/admin only) | Yes |
+| **Study Room** | `GET` | `/api/v1/study-rooms/{room}/messages` | Bearer | Get message history for a study room | Yes |
+| **Study Room** | `POST` | `/api/v1/study-rooms/{room}/messages` | Bearer | Send a message to a study room | Yes |
+| **Mascot** | `GET` | `/api/v1/mascots` | Bearer | List all available mascots in catalog | Yes |
+| **Mascot** | `GET` | `/api/v1/mascots/inventory` | Bearer | Get authenticated user's owned mascots | Yes |
+| **Mascot** | `POST` | `/api/v1/mascots/{mascot}/purchase` | Bearer | Purchase a mascot using pearls | Yes |
+| **Mascot** | `PUT` | `/api/v1/mascots/equip` | Bearer | Equip a mascot and customize accessories | Yes |
+| **Achievement** | `GET` | `/api/v1/achievements` | Bearer | List all available achievements | Yes |
+| **Achievement** | `GET` | `/api/v1/achievements/me` | Bearer | Get authenticated user's earned achievements | Yes |
+| **Achievement** | `GET` | `/api/v1/achievements/{achievement}` | Bearer | Get achievement details with progress | Yes |
+| **Admin** | `GET` | `/api/v1/admin/users` | Admin | List all users with filters and pagination | Yes |
+| **Admin** | `PUT` | `/api/v1/admin/users/{user}/role` | Admin | Update user role | Yes |
+| **Admin** | `DELETE` | `/api/v1/admin/users/{user}` | Admin | Soft-delete a user (except admins) | Yes |
+| **Admin** | `GET` | `/api/v1/admin/courses` | Admin | List all courses with moderation filters | Yes |
+| **Admin** | `PUT` | `/api/v1/admin/courses/{course}/status` | Admin | Update course status (draft/published/archived) | Yes |
+| **Admin** | `GET` | `/api/v1/admin/analytics/overview` | Admin | Get platform analytics and statistics | Yes |
 
 ---
 
