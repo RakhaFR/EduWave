@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Services\LeaderboardService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Models\User;
 
 class LeaderboardController extends ApiController
 {
@@ -81,7 +81,7 @@ class LeaderboardController extends ApiController
         $neighbors = min(10, max(1, (int) $request->query('neighbors', 3)));
 
         $data = $this->leaderboardService->getUserWithNeighbors($user, $scope, $neighbors, $neighbors);
-        
+
         if ($data['user_rank'] === null) {
             return $this->success([
                 'user_rank' => null,
@@ -110,7 +110,7 @@ class LeaderboardController extends ApiController
      * Enrich leaderboard rankings with user data.
      *
      * @param  array  $rankings  [{user_id, score, rank}, ...]
-     * @return array  [{rank, user: {...}, xp, ...}, ...]
+     * @return array [{rank, user: {...}, xp, ...}, ...]
      */
     private function enrichWithUserData(array $rankings): array
     {
@@ -126,7 +126,7 @@ class LeaderboardController extends ApiController
         return collect($rankings)->map(function ($entry) use ($users) {
             $user = $users->get($entry['user_id']);
 
-            if (!$user) {
+            if (! $user) {
                 return null;
             }
 

@@ -16,8 +16,9 @@ class ExamAttemptPolicy
     public function create(User $user, Exam $exam): bool
     {
         $attemptCount = ExamAttempt::where('user_id', $user->id)
-                                   ->where('exam_id', $exam->id)
-                                   ->count();
+            ->where('exam_id', $exam->id)
+            ->count();
+
         return $attemptCount < $exam->max_attempts;
     }
 

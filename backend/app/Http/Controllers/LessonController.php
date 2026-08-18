@@ -18,7 +18,7 @@ class LessonController extends ApiController
      */
     public function index(Request $request, Course $course): JsonResponse
     {
-        $user    = $request->user();
+        $user = $request->user();
         $isStaff = $user && in_array($user->role, ['admin', 'instructor']);
 
         $enrolled = $user && Enrollment::where('user_id', $user->id)
@@ -28,7 +28,7 @@ class LessonController extends ApiController
 
         $query = $course->lessons()->orderBy('order');
 
-        if (!$isStaff && !$enrolled) {
+        if (! $isStaff && ! $enrolled) {
             $query->where('is_preview', true);
         }
 
@@ -43,16 +43,16 @@ class LessonController extends ApiController
      */
     public function show(Request $request, Lesson $lesson): JsonResponse
     {
-        $user    = $request->user();
+        $user = $request->user();
         $isStaff = $user && in_array($user->role, ['admin', 'instructor']);
 
-        if (!$isStaff && !$lesson->is_preview) {
+        if (! $isStaff && ! $lesson->is_preview) {
             $enrolled = $user && Enrollment::where('user_id', $user->id)
                 ->where('course_id', $lesson->course_id)
                 ->whereIn('status', ['enrolled', 'completed'])
                 ->exists();
 
-            if (!$enrolled) {
+            if (! $enrolled) {
                 return $this->error(
                     'LESSON_ACCESS_DENIED',
                     'Anda harus mendaftar ke kursus ini untuk mengakses pelajaran ini.',
@@ -82,13 +82,17 @@ class LessonController extends ApiController
             ->whereIn('status', ['enrolled', 'completed'])
             ->first();
 
-        if (!$isStaff && !$enrollment) {
+        if (! $isStaff && ! $enrollment) {
             return $this->error(
                 'NOT_ENROLLED',
                 'Anda harus mendaftar ke kursus ini untuk menyelesaikan pelajaran.',
                 403
             );
         }
+
+        $request->validate([
+            'watch_seconds' => ['nullable', 'integer', 'min:0', 'max:86400'],
+        ]);
 
         $watchSeconds = (int) $request->input('watch_seconds', 0);
 
@@ -103,18 +107,18 @@ class LessonController extends ApiController
         }
 
         return $this->success([
-            'lesson_id'           => $lesson->id,
+            'lesson_id' => $lesson->id,
             'is_first_completion' => $lessonResult['is_first_completion'],
-            'xp_awarded'          => $lessonResult['xp_awarded'],
-            'progress'            => [
+            'xp_awarded' => $lessonResult['xp_awarded'],
+            'progress' => [
                 'watch_seconds' => $lessonResult['progress']->watch_seconds,
-                'completed_at'  => $lessonResult['progress']->completed_at,
+                'completed_at' => $lessonResult['progress']->completed_at,
             ],
             'enrollment' => $enrollment ? [
-                'progress_pct'             => $progressResult['progress_pct'],
-                'status'                   => $progressResult['status'],
-                'transitioned_to_completed'=> $progressResult['transitioned_to_completed'],
-                'pearls_awarded'           => $progressResult['pearls_awarded'],
+                'progress_pct' => $progressResult['progress_pct'],
+                'status' => $progressResult['status'],
+                'transitioned_to_completed' => $progressResult['transitioned_to_completed'],
+                'pearls_awarded' => $progressResult['pearls_awarded'],
             ] : null,
         ]);
     }
@@ -174,20 +178,20 @@ class LessonController extends ApiController
     private function formatLesson(Lesson $lesson, bool $full = false): array
     {
         $data = [
-            'id'               => $lesson->id,
-            'course_id'        => $lesson->course_id,
-            'title'            => $lesson->title,
-            'type'             => $lesson->type,
+            'id' => $lesson->id,
+            'course_id' => $lesson->course_id,
+            'title' => $lesson->title,
+            'type' => $lesson->type,
             'duration_minutes' => $lesson->duration_minutes,
-            'order'            => $lesson->order,
-            'xp_reward'        => $lesson->xp_reward,
-            'is_preview'       => $lesson->is_preview,
-            'created_at'       => $lesson->created_at,
-            'updated_at'       => $lesson->updated_at,
+            'order' => $lesson->order,
+            'xp_reward' => $lesson->xp_reward,
+            'is_preview' => $lesson->is_preview,
+            'created_at' => $lesson->created_at,
+            'updated_at' => $lesson->updated_at,
         ];
 
         if ($full) {
-            $data['content']   = $lesson->content;
+            $data['content'] = $lesson->content;
             $data['video_url'] = $lesson->video_url;
         }
 

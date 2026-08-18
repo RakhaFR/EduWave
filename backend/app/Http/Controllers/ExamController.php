@@ -25,15 +25,15 @@ class ExamController extends ApiController
         });
 
         return $this->success([
-            'id'             => $exam->id,
-            'course_id'      => $exam->course_id,
-            'lesson_id'      => $exam->lesson_id,
-            'title'          => $exam->title,
+            'id' => $exam->id,
+            'course_id' => $exam->course_id,
+            'lesson_id' => $exam->lesson_id,
+            'title' => $exam->title,
             'time_limit_sec' => $exam->time_limit_sec,
-            'passing_score'  => $exam->passing_score,
-            'max_attempts'   => $exam->max_attempts,
-            'pearls_reward'  => $exam->pearls_reward,
-            'questions'      => $questions,
+            'passing_score' => $exam->passing_score,
+            'max_attempts' => $exam->max_attempts,
+            'pearls_reward' => $exam->pearls_reward,
+            'questions' => $questions,
         ]);
     }
 
@@ -55,14 +55,14 @@ class ExamController extends ApiController
         $exam = Exam::create($validated);
 
         return $this->success([
-            'id'             => $exam->id,
-            'course_id'      => $exam->course_id,
-            'lesson_id'      => $exam->lesson_id,
-            'title'          => $exam->title,
+            'id' => $exam->id,
+            'course_id' => $exam->course_id,
+            'lesson_id' => $exam->lesson_id,
+            'title' => $exam->title,
             'time_limit_sec' => $exam->time_limit_sec,
-            'passing_score'  => $exam->passing_score,
-            'max_attempts'   => $exam->max_attempts,
-            'pearls_reward'  => $exam->pearls_reward,
+            'passing_score' => $exam->passing_score,
+            'max_attempts' => $exam->max_attempts,
+            'pearls_reward' => $exam->pearls_reward,
         ], '', 201);
     }
 
@@ -76,14 +76,14 @@ class ExamController extends ApiController
         $exam->update($request->validated());
 
         return $this->success([
-            'id'             => $exam->id,
-            'course_id'      => $exam->course_id,
-            'lesson_id'      => $exam->lesson_id,
-            'title'          => $exam->title,
+            'id' => $exam->id,
+            'course_id' => $exam->course_id,
+            'lesson_id' => $exam->lesson_id,
+            'title' => $exam->title,
             'time_limit_sec' => $exam->time_limit_sec,
-            'passing_score'  => $exam->passing_score,
-            'max_attempts'   => $exam->max_attempts,
-            'pearls_reward'  => $exam->pearls_reward,
+            'passing_score' => $exam->passing_score,
+            'max_attempts' => $exam->max_attempts,
+            'pearls_reward' => $exam->pearls_reward,
         ]);
     }
 

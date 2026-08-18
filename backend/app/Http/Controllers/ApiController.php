@@ -9,6 +9,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class ApiController extends Controller
 {
     use AuthorizesRequests;
+
     /**
      * Return a successful response with data.
      */

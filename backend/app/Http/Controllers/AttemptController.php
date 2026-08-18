@@ -54,12 +54,12 @@ class AttemptController extends ApiController
             ->orderByDesc('started_at')
             ->get()
             ->map(fn ($attempt) => [
-                'id'           => $attempt->id,
-                'score'        => $attempt->score !== null ? (float) $attempt->score : null,
-                'passed'       => (bool) $attempt->passed,
-                'started_at'   => $attempt->started_at,
+                'id' => $attempt->id,
+                'score' => $attempt->score !== null ? (float) $attempt->score : null,
+                'passed' => (bool) $attempt->passed,
+                'started_at' => $attempt->started_at,
                 'submitted_at' => $attempt->submitted_at,
-                'expires_at'   => $attempt->expires_at,
+                'expires_at' => $attempt->expires_at,
             ]);
 
         return $this->success(['attempts' => $attempts]);

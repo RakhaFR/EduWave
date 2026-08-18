@@ -42,10 +42,10 @@ class EnrollmentController extends ApiController
         }
 
         $enrollment = Enrollment::create([
-            'user_id'     => $user->id,
-            'course_id'   => $course->id,
-            'progress_pct'=> 0,
-            'status'      => 'enrolled',
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+            'progress_pct' => 0,
+            'status' => 'enrolled',
             'enrolled_at' => now(),
         ]);
 
@@ -65,7 +65,7 @@ class EnrollmentController extends ApiController
             ->where('course_id', $course->id)
             ->first();
 
-        if (!$enrollment) {
+        if (! $enrollment) {
             return $this->error(
                 'NOT_ENROLLED',
                 'Anda tidak terdaftar di kursus ini.',
@@ -91,7 +91,7 @@ class EnrollmentController extends ApiController
             ->whereIn('status', ['enrolled', 'completed'])
             ->first();
 
-        if (!$enrollment) {
+        if (! $enrollment) {
             return $this->error(
                 'NOT_ENROLLED',
                 'Anda tidak terdaftar di kursus ini.',
@@ -109,14 +109,14 @@ class EnrollmentController extends ApiController
             ->all();
 
         $lessons = $course->lessons()->orderBy('order')->get()->map(fn ($lesson) => [
-            'id'           => $lesson->id,
-            'title'        => $lesson->title,
-            'order'        => $lesson->order,
+            'id' => $lesson->id,
+            'title' => $lesson->title,
+            'order' => $lesson->order,
             'is_completed' => in_array($lesson->id, $completedLessons),
         ]);
 
         return $this->success([
-            'enrollment'       => $this->formatEnrollment($enrollment, $course),
+            'enrollment' => $this->formatEnrollment($enrollment, $course),
             'lessons_progress' => $lessons,
         ]);
     }
@@ -128,13 +128,13 @@ class EnrollmentController extends ApiController
     private function formatEnrollment(Enrollment $enrollment, Course $course): array
     {
         return [
-            'id'           => $enrollment->id,
-            'course_id'    => $enrollment->course_id,
+            'id' => $enrollment->id,
+            'course_id' => $enrollment->course_id,
             'course_title' => $course->title,
-            'user_id'      => $enrollment->user_id,
+            'user_id' => $enrollment->user_id,
             'progress_pct' => (float) $enrollment->progress_pct,
-            'status'       => $enrollment->status,
-            'enrolled_at'  => $enrollment->enrolled_at,
+            'status' => $enrollment->status,
+            'enrolled_at' => $enrollment->enrolled_at,
             'completed_at' => $enrollment->completed_at,
         ];
     }

@@ -18,12 +18,12 @@ class EnsureRole
     {
         $user = $request->user();
 
-        if (!$user || !in_array($user->role, $roles)) {
+        if (! $user || ! in_array($user->role, $roles)) {
             return response()->json([
                 'success' => false,
-                'data'    => null,
-                'error'   => [
-                    'code'    => 'FORBIDDEN',
+                'data' => null,
+                'error' => [
+                    'code' => 'FORBIDDEN',
                     'message' => 'Anda tidak memiliki izin untuk mengakses sumber daya ini.',
                 ],
                 'meta' => null,

@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
-use App\Models\LessonProgress;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -34,7 +33,7 @@ class EnrollmentAndLessonTest extends TestCase
 
         return Course::factory()->create([
             'instructor_id' => $instructor->id,
-            'status'        => 'published',
+            'status' => 'published',
             'pearls_reward' => 50,
         ]);
     }
@@ -52,7 +51,7 @@ class EnrollmentAndLessonTest extends TestCase
     public function test_student_can_enroll_in_a_published_course(): void
     {
         $student = $this->student();
-        $course  = $this->publishedCourse();
+        $course = $this->publishedCourse();
 
         $response = $this->actingAs($student)
             ->postJson("/api/v1/courses/{$course->id}/enroll");
@@ -63,22 +62,22 @@ class EnrollmentAndLessonTest extends TestCase
             ->assertJsonPath('data.enrollment.status', 'enrolled');
 
         $this->assertDatabaseHas('enrollments', [
-            'user_id'   => $student->id,
+            'user_id' => $student->id,
             'course_id' => $course->id,
-            'status'    => 'enrolled',
+            'status' => 'enrolled',
         ]);
     }
 
     public function test_enrolling_twice_returns_409_conflict(): void
     {
         $student = $this->student();
-        $course  = $this->publishedCourse();
+        $course = $this->publishedCourse();
 
         // First enroll
         Enrollment::factory()->create([
-            'user_id'   => $student->id,
+            'user_id' => $student->id,
             'course_id' => $course->id,
-            'status'    => 'enrolled',
+            'status' => 'enrolled',
         ]);
 
         // Second enroll attempt
@@ -93,9 +92,9 @@ class EnrollmentAndLessonTest extends TestCase
     public function test_cannot_enroll_in_a_draft_course(): void
     {
         $instructor = User::factory()->create(['role' => 'instructor']);
-        $course     = Course::factory()->create([
+        $course = Course::factory()->create([
             'instructor_id' => $instructor->id,
-            'status'        => 'draft',
+            'status' => 'draft',
         ]);
         $student = $this->student();
 
@@ -113,18 +112,18 @@ class EnrollmentAndLessonTest extends TestCase
     public function test_completing_a_lesson_awards_xp_once(): void
     {
         $student = $this->student();
-        $course  = $this->publishedCourse();
-        $lesson  = Lesson::factory()->create([
-            'course_id'  => $course->id,
-            'xp_reward'  => 30,
+        $course = $this->publishedCourse();
+        $lesson = Lesson::factory()->create([
+            'course_id' => $course->id,
+            'xp_reward' => 30,
             'is_preview' => false,
-            'order'      => 1,
+            'order' => 1,
         ]);
 
         Enrollment::factory()->create([
-            'user_id'   => $student->id,
+            'user_id' => $student->id,
             'course_id' => $course->id,
-            'status'    => 'enrolled',
+            'status' => 'enrolled',
         ]);
 
         // First completion
@@ -132,8 +131,8 @@ class EnrollmentAndLessonTest extends TestCase
             ->postJson("/api/v1/lessons/{$lesson->id}/complete");
 
         $r1->assertStatus(200)
-           ->assertJsonPath('data.is_first_completion', true)
-           ->assertJsonPath('data.xp_awarded', 30);
+            ->assertJsonPath('data.is_first_completion', true)
+            ->assertJsonPath('data.xp_awarded', 30);
 
         $this->assertDatabaseHas('users', ['id' => $student->id, 'xp' => 30]);
 
@@ -142,8 +141,8 @@ class EnrollmentAndLessonTest extends TestCase
             ->postJson("/api/v1/lessons/{$lesson->id}/complete");
 
         $r2->assertStatus(200)
-           ->assertJsonPath('data.is_first_completion', false)
-           ->assertJsonPath('data.xp_awarded', 0);
+            ->assertJsonPath('data.is_first_completion', false)
+            ->assertJsonPath('data.xp_awarded', 0);
 
         $this->assertDatabaseHas('users', ['id' => $student->id, 'xp' => 30]);
     }
@@ -155,21 +154,21 @@ class EnrollmentAndLessonTest extends TestCase
     public function test_completing_all_lessons_awards_course_pearls_once(): void
     {
         $student = $this->student();
-        $course  = $this->publishedCourse(); // pearls_reward = 50
+        $course = $this->publishedCourse(); // pearls_reward = 50
 
         // Single lesson course so one completion = 100%
         $lesson = Lesson::factory()->create([
-            'course_id'  => $course->id,
-            'xp_reward'  => 10,
+            'course_id' => $course->id,
+            'xp_reward' => 10,
             'is_preview' => false,
-            'order'      => 1,
+            'order' => 1,
         ]);
 
         $enrollment = Enrollment::factory()->create([
-            'user_id'     => $student->id,
-            'course_id'   => $course->id,
-            'status'      => 'enrolled',
-            'progress_pct'=> 0,
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => 'enrolled',
+            'progress_pct' => 0,
         ]);
 
         // First completion triggers 100% → pearls awarded
@@ -177,9 +176,9 @@ class EnrollmentAndLessonTest extends TestCase
             ->postJson("/api/v1/lessons/{$lesson->id}/complete");
 
         $r1->assertStatus(200)
-           ->assertJsonPath('data.enrollment.transitioned_to_completed', true)
-           ->assertJsonPath('data.enrollment.pearls_awarded', 50)
-           ->assertJsonPath('data.enrollment.status', 'completed');
+            ->assertJsonPath('data.enrollment.transitioned_to_completed', true)
+            ->assertJsonPath('data.enrollment.pearls_awarded', 50)
+            ->assertJsonPath('data.enrollment.status', 'completed');
 
         $this->assertDatabaseHas('users', ['id' => $student->id, 'pearls' => 50]);
 
@@ -188,8 +187,8 @@ class EnrollmentAndLessonTest extends TestCase
             ->postJson("/api/v1/lessons/{$lesson->id}/complete");
 
         $r2->assertStatus(200)
-           ->assertJsonPath('data.enrollment.transitioned_to_completed', false)
-           ->assertJsonPath('data.enrollment.pearls_awarded', 0);
+            ->assertJsonPath('data.enrollment.transitioned_to_completed', false)
+            ->assertJsonPath('data.enrollment.pearls_awarded', 0);
 
         $this->assertDatabaseHas('users', ['id' => $student->id, 'pearls' => 50]);
     }
@@ -201,11 +200,11 @@ class EnrollmentAndLessonTest extends TestCase
     public function test_non_enrolled_student_cannot_access_non_preview_lesson(): void
     {
         $student = $this->student();
-        $course  = $this->publishedCourse();
-        $lesson  = Lesson::factory()->create([
-            'course_id'  => $course->id,
+        $course = $this->publishedCourse();
+        $lesson = Lesson::factory()->create([
+            'course_id' => $course->id,
             'is_preview' => false,
-            'order'      => 1,
+            'order' => 1,
         ]);
 
         $response = $this->actingAs($student)
@@ -218,11 +217,11 @@ class EnrollmentAndLessonTest extends TestCase
     public function test_non_enrolled_student_can_access_preview_lesson(): void
     {
         $student = $this->student();
-        $course  = $this->publishedCourse();
-        $lesson  = Lesson::factory()->create([
-            'course_id'  => $course->id,
+        $course = $this->publishedCourse();
+        $lesson = Lesson::factory()->create([
+            'course_id' => $course->id,
             'is_preview' => true,
-            'order'      => 1,
+            'order' => 1,
         ]);
 
         $response = $this->actingAs($student)
@@ -236,17 +235,17 @@ class EnrollmentAndLessonTest extends TestCase
     public function test_enrolled_student_can_access_non_preview_lesson(): void
     {
         $student = $this->student();
-        $course  = $this->publishedCourse();
-        $lesson  = Lesson::factory()->create([
-            'course_id'  => $course->id,
+        $course = $this->publishedCourse();
+        $lesson = Lesson::factory()->create([
+            'course_id' => $course->id,
             'is_preview' => false,
-            'order'      => 1,
+            'order' => 1,
         ]);
 
         Enrollment::factory()->create([
-            'user_id'   => $student->id,
+            'user_id' => $student->id,
             'course_id' => $course->id,
-            'status'    => 'enrolled',
+            'status' => 'enrolled',
         ]);
 
         $response = $this->actingAs($student)
@@ -263,12 +262,12 @@ class EnrollmentAndLessonTest extends TestCase
     public function test_student_can_unenroll_from_a_course(): void
     {
         $student = $this->student();
-        $course  = $this->publishedCourse();
+        $course = $this->publishedCourse();
 
         Enrollment::factory()->create([
-            'user_id'   => $student->id,
+            'user_id' => $student->id,
             'course_id' => $course->id,
-            'status'    => 'enrolled',
+            'status' => 'enrolled',
         ]);
 
         $response = $this->actingAs($student)
@@ -277,7 +276,7 @@ class EnrollmentAndLessonTest extends TestCase
         $response->assertStatus(200)->assertJsonPath('success', true);
 
         $this->assertDatabaseMissing('enrollments', [
-            'user_id'   => $student->id,
+            'user_id' => $student->id,
             'course_id' => $course->id,
         ]);
     }
@@ -285,7 +284,7 @@ class EnrollmentAndLessonTest extends TestCase
     public function test_unenrolling_when_not_enrolled_returns_404(): void
     {
         $student = $this->student();
-        $course  = $this->publishedCourse();
+        $course = $this->publishedCourse();
 
         $response = $this->actingAs($student)
             ->deleteJson("/api/v1/courses/{$course->id}/enroll");

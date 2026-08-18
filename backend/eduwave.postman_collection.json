@@ -1095,7 +1095,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status code is 400 or 500 Bad Request', function () { pm.expect([400, 500]).to.include(pm.response.code); });"
+                  "pm.test('Status code is 422 Unprocessable Entity', function () { pm.expect(pm.response.code).to.equal(422); });"
                 ],
                 "type": "text/javascript"
               }

@@ -17,4 +17,3 @@ abstract class TestCase extends BaseTestCase
         $this->artisan('migrate');
     }
 }
-

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Redis;
 class LeaderboardService
 {
     private const GLOBAL_KEY = 'leaderboard:global';
+
     private const WEEKLY_KEY_PREFIX = 'leaderboard:weekly:';
 
     /**
@@ -17,7 +18,7 @@ class LeaderboardService
     {
         // Reload user to ensure we have the latest XP value
         $user->refresh();
-        
+
         $score = (float) $user->xp;
         $userId = $user->id;
 
@@ -25,9 +26,9 @@ class LeaderboardService
         Redis::zadd(self::GLOBAL_KEY, $score, $userId);
 
         // Update weekly leaderboard (key format: leaderboard:weekly:2026-W33)
-        $weeklyKey = self::WEEKLY_KEY_PREFIX . now()->format('o-\WW');
+        $weeklyKey = self::WEEKLY_KEY_PREFIX.now()->format('o-\WW');
         Redis::zadd($weeklyKey, $score, $userId);
-        
+
         // Set expiry on weekly key (8 days to cover week transition overlap)
         Redis::expire($weeklyKey, 60 * 60 * 24 * 8);
     }
@@ -35,9 +36,8 @@ class LeaderboardService
     /**
      * Get user's rank in the specified scope.
      *
-     * @param  User  $user
      * @param  string  $scope  ('global' or 'weekly')
-     * @return int|null  Rank (0-indexed) or null if not found
+     * @return int|null Rank (0-indexed) or null if not found
      */
     public function getRank(User $user, string $scope = 'global'): ?int
     {
@@ -50,10 +50,7 @@ class LeaderboardService
     /**
      * Get top N users from leaderboard.
      *
-     * @param  string  $scope
-     * @param  int  $limit
-     * @param  int  $offset
-     * @return array  [{user_id, score, rank}, ...]
+     * @return array [{user_id, score, rank}, ...]
      */
     public function getTopN(string $scope = 'global', int $limit = 50, int $offset = 0): array
     {
@@ -69,11 +66,7 @@ class LeaderboardService
     /**
      * Get user's rank and neighboring users (context leaderboard).
      *
-     * @param  User  $user
-     * @param  string  $scope
-     * @param  int  $neighborsAbove
-     * @param  int  $neighborsBelow
-     * @return array  ['user_rank' => int, 'neighbors' => [...]]
+     * @return array ['user_rank' => int, 'neighbors' => [...]]
      */
     public function getUserWithNeighbors(
         User $user,
@@ -110,7 +103,7 @@ class LeaderboardService
     {
         return match ($scope) {
             'global' => self::GLOBAL_KEY,
-            'weekly' => self::WEEKLY_KEY_PREFIX . now()->format('o-\WW'),
+            'weekly' => self::WEEKLY_KEY_PREFIX.now()->format('o-\WW'),
             default => self::GLOBAL_KEY,
         };
     }
