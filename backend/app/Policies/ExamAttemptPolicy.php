@@ -15,6 +15,13 @@ class ExamAttemptPolicy
      */
     public function create(User $user, Exam $exam): bool
     {
+        if ($user->role === 'student' && (
+            $exam->course->status !== 'published'
+            || ! $exam->course->enrollments()->where('user_id', $user->id)->exists()
+        )) {
+            return false;
+        }
+
         $attemptCount = ExamAttempt::where('user_id', $user->id)
             ->where('exam_id', $exam->id)
             ->count();

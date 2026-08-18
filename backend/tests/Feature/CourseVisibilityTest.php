@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Course;
+use App\Models\Lesson;
 use App\Models\User;
 use Tests\TestCase;
 
@@ -64,5 +65,50 @@ class CourseVisibilityTest extends TestCase
         $this->assertContains('Published', $titles);
         $this->assertContains('Draft', $titles);
         $this->assertContains('Archived', $titles);
+    }
+
+    public function test_only_owner_instructor_or_admin_can_view_draft_course_details(): void
+    {
+        $owner = User::factory()->create(['role' => 'instructor']);
+        $otherInstructor = User::factory()->create(['role' => 'instructor']);
+        $admin = User::factory()->create(['role' => 'admin']);
+        $course = Course::factory()->create([
+            'instructor_id' => $owner->id,
+            'status' => 'draft',
+        ]);
+
+        $this->getJson("/api/v1/courses/{$course->id}")->assertNotFound();
+        $this->actingAs($otherInstructor)->getJson("/api/v1/courses/{$course->id}")->assertNotFound();
+        $this->actingAs($owner)->getJson("/api/v1/courses/{$course->id}")->assertOk();
+        $this->actingAs($admin)->getJson("/api/v1/courses/{$course->id}")->assertOk();
+    }
+
+    public function test_instructor_cannot_transfer_course_ownership(): void
+    {
+        $owner = User::factory()->create(['role' => 'instructor']);
+        $otherInstructor = User::factory()->create(['role' => 'instructor']);
+        $course = Course::factory()->create(['instructor_id' => $owner->id]);
+
+        $this->actingAs($owner)->putJson("/api/v1/courses/{$course->id}", [
+            'title' => 'Updated title',
+            'instructor_id' => $otherInstructor->id,
+        ])->assertOk();
+
+        $this->assertSame($owner->id, $course->fresh()->instructor_id);
+    }
+
+    public function test_instructor_cannot_move_lesson_to_another_instructors_course(): void
+    {
+        $owner = User::factory()->create(['role' => 'instructor']);
+        $otherInstructor = User::factory()->create(['role' => 'instructor']);
+        $sourceCourse = Course::factory()->create(['instructor_id' => $owner->id]);
+        $targetCourse = Course::factory()->create(['instructor_id' => $otherInstructor->id]);
+        $lesson = Lesson::factory()->create(['course_id' => $sourceCourse->id]);
+
+        $this->actingAs($owner)->putJson("/api/v1/lessons/{$lesson->id}", [
+            'course_id' => $targetCourse->id,
+        ])->assertForbidden();
+
+        $this->assertSame($sourceCourse->id, $lesson->fresh()->course_id);
     }
 }

@@ -70,10 +70,10 @@ class Enrollment extends Model
 
         if ($this->progress_pct >= 100.00 && $this->status !== 'completed') {
             $this->status = 'completed';
-            $this->completed_at = now();
-            $transitionedToCompleted = true;
+            $transitionedToCompleted = is_null($this->completed_at);
+            $this->completed_at ??= now();
 
-            if ($this->course->pearls_reward > 0) {
+            if ($transitionedToCompleted && $this->course->pearls_reward > 0) {
                 $this->user->increment('pearls', $this->course->pearls_reward);
                 $pearlsAwarded = $this->course->pearls_reward;
             }

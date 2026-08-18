@@ -18,7 +18,11 @@ class ExamController extends ApiController
      */
     public function show(Request $request, Exam $exam): JsonResponse
     {
-        $exam->load('course:id,title');
+        $exam->load('course:id,title,status');
+
+        if (! $this->canAccessExam($request, $exam)) {
+            return $this->error('EXAM_FORBIDDEN', 'Anda harus terdaftar pada kursus aktif untuk mengakses ujian ini.', 403);
+        }
 
         $questions = $exam->questions()->orderBy('order')->get()->map(function ($q) {
             return ExamService::formatQuestionWithoutAnswerKey($q);
@@ -73,7 +77,17 @@ class ExamController extends ApiController
     {
         $this->authorize('update', $exam);
 
-        $exam->update($request->validated());
+        $validated = $request->validated();
+
+        if (isset($validated['course_id']) && $request->user()->role === 'instructor') {
+            $targetCourse = Course::findOrFail($validated['course_id']);
+
+            if ($targetCourse->instructor_id !== $request->user()->id) {
+                return $this->error('EXAM_FORBIDDEN', 'Anda tidak memiliki izin untuk memindahkan ujian ke kursus ini.', 403);
+            }
+        }
+
+        $exam->update($validated);
 
         return $this->success([
             'id' => $exam->id,
@@ -97,5 +111,17 @@ class ExamController extends ApiController
         $exam->delete();
 
         return $this->success([], '', 200);
+    }
+
+    private function canAccessExam(Request $request, Exam $exam): bool
+    {
+        $user = $request->user();
+
+        if (in_array($user->role, ['admin', 'instructor'], true)) {
+            return true;
+        }
+
+        return $exam->course->status === 'published'
+            && $exam->course->enrollments()->where('user_id', $user->id)->exists();
     }
 }

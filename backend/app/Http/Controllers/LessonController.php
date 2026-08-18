@@ -154,7 +154,17 @@ class LessonController extends ApiController
     {
         $this->authorize('update', $lesson);
 
-        $lesson->update($request->validated());
+        $validated = $request->validated();
+
+        if (isset($validated['course_id']) && $request->user()->role === 'instructor') {
+            $targetCourse = Course::findOrFail($validated['course_id']);
+
+            if ($targetCourse->instructor_id !== $request->user()->id) {
+                return $this->error('LESSON_FORBIDDEN', 'Anda tidak memiliki izin untuk memindahkan pelajaran ke kursus ini.', 403);
+            }
+        }
+
+        $lesson->update($validated);
 
         return $this->success(['lesson' => $this->formatLesson($lesson)]);
     }

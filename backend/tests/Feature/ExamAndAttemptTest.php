@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Course;
+use App\Models\Enrollment;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\ExamQuestion;
@@ -45,6 +46,17 @@ class ExamAndAttemptTest extends TestCase
         ], $attributes));
     }
 
+    private function enroll(User $student, Exam $exam): void
+    {
+        Enrollment::factory()->create([
+            'user_id' => $student->id,
+            'course_id' => $exam->course_id,
+            'status' => 'enrolled',
+            'progress_pct' => 0,
+            'completed_at' => null,
+        ]);
+    }
+
     // ──────────────────────────────────────────────────────────────────────────
     // 1. SECURITY REQUIREMENT: No Answer Key Leakage for In-Progress Attempts
     // ──────────────────────────────────────────────────────────────────────────
@@ -53,6 +65,7 @@ class ExamAndAttemptTest extends TestCase
     {
         $student = $this->student();
         $exam = $this->createExam();
+        $this->enroll($student, $exam);
 
         ExamQuestion::factory()->create([
             'exam_id' => $exam->id,
@@ -86,6 +99,7 @@ class ExamAndAttemptTest extends TestCase
     {
         $student = $this->student();
         $exam = $this->createExam();
+        $this->enroll($student, $exam);
 
         ExamQuestion::factory()->create([
             'exam_id' => $exam->id,
@@ -112,6 +126,7 @@ class ExamAndAttemptTest extends TestCase
     {
         $student = $this->student();
         $exam = $this->createExam(['max_attempts' => 2]);
+        $this->enroll($student, $exam);
 
         // First start
         $r1 = $this->actingAs($student)
@@ -137,6 +152,7 @@ class ExamAndAttemptTest extends TestCase
     {
         $student = $this->student();
         $exam = $this->createExam(['max_attempts' => 2]);
+        $this->enroll($student, $exam);
 
         // Create 2 submitted attempts
         ExamAttempt::factory()->create([
@@ -165,6 +181,7 @@ class ExamAndAttemptTest extends TestCase
     {
         $student = $this->student();
         $exam = $this->createExam(['passing_score' => 70, 'pearls_reward' => 50]);
+        $this->enroll($student, $exam);
 
         $q1 = ExamQuestion::factory()->create([
             'exam_id' => $exam->id,
@@ -209,6 +226,7 @@ class ExamAndAttemptTest extends TestCase
     {
         $student = $this->student();
         $exam = $this->createExam(['passing_score' => 70, 'pearls_reward' => 50, 'max_attempts' => 3]);
+        $this->enroll($student, $exam);
 
         $q1 = ExamQuestion::factory()->create([
             'exam_id' => $exam->id,
@@ -268,6 +286,7 @@ class ExamAndAttemptTest extends TestCase
         $this->assertEquals(0, $initialXp, 'Student should start with 0 XP');
 
         $exam = $this->createExam(['passing_score' => 70]);
+        $this->enroll($student, $exam);
 
         $q1 = ExamQuestion::factory()->create([
             'exam_id' => $exam->id,
@@ -337,5 +356,97 @@ class ExamAndAttemptTest extends TestCase
 
         $upRes->assertStatus(200)
             ->assertJsonPath('data.title', 'Ujian Akhir Semester Updated');
+    }
+
+    public function test_student_must_be_enrolled_in_published_course_to_access_exam(): void
+    {
+        $student = $this->student();
+        $exam = $this->createExam();
+
+        $this->actingAs($student)->getJson("/api/v1/exams/{$exam->id}")->assertForbidden();
+        $this->actingAs($student)->postJson("/api/v1/exams/{$exam->id}/attempts")->assertForbidden();
+
+        $this->enroll($student, $exam);
+
+        $this->actingAs($student)->getJson("/api/v1/exams/{$exam->id}")->assertOk();
+        $this->actingAs($student)->postJson("/api/v1/exams/{$exam->id}/attempts")->assertCreated();
+    }
+
+    public function test_empty_exam_cannot_award_rewards(): void
+    {
+        $student = $this->student();
+        $exam = $this->createExam(['pearls_reward' => 100]);
+        $this->enroll($student, $exam);
+        $attemptId = $this->actingAs($student)
+            ->postJson("/api/v1/exams/{$exam->id}/attempts")
+            ->json('data.attempt_id');
+
+        $this->actingAs($student)
+            ->postJson("/api/v1/exams/{$exam->id}/attempts/{$attemptId}/submit", [
+                'answers' => [[
+                    'question_id' => fake()->uuid(),
+                    'selected_key' => 'A',
+                ]],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('exam');
+
+        $student->refresh();
+        $this->assertSame(0, $student->xp);
+        $this->assertSame(0, $student->pearls);
+    }
+
+    public function test_expired_attempt_cannot_be_submitted(): void
+    {
+        $student = $this->student();
+        $exam = $this->createExam();
+        $this->enroll($student, $exam);
+        $question = ExamQuestion::factory()->create(['exam_id' => $exam->id]);
+        $attempt = ExamAttempt::factory()->create([
+            'user_id' => $student->id,
+            'exam_id' => $exam->id,
+            'expires_at' => now()->subSecond(),
+            'submitted_at' => null,
+        ]);
+
+        $this->actingAs($student)->postJson("/api/v1/exams/{$exam->id}/attempts/{$attempt->id}/submit", [
+            'answers' => [['question_id' => $question->id, 'selected_key' => 'A']],
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('attempt');
+    }
+
+    public function test_student_cannot_submit_another_students_attempt(): void
+    {
+        $owner = $this->student();
+        $other = $this->student();
+        $exam = $this->createExam();
+        $this->enroll($owner, $exam);
+        $this->enroll($other, $exam);
+        $question = ExamQuestion::factory()->create(['exam_id' => $exam->id]);
+        $attempt = ExamAttempt::factory()->create([
+            'user_id' => $owner->id,
+            'exam_id' => $exam->id,
+            'expires_at' => now()->addHour(),
+            'submitted_at' => null,
+        ]);
+
+        $this->actingAs($other)->postJson("/api/v1/exams/{$exam->id}/attempts/{$attempt->id}/submit", [
+            'answers' => [['question_id' => $question->id, 'selected_key' => 'A']],
+        ])->assertForbidden();
+    }
+
+    public function test_instructor_cannot_move_exam_to_another_instructors_course(): void
+    {
+        $owner = $this->instructor();
+        $other = $this->instructor();
+        $sourceCourse = Course::factory()->create(['instructor_id' => $owner->id]);
+        $targetCourse = Course::factory()->create(['instructor_id' => $other->id]);
+        $exam = Exam::factory()->create(['course_id' => $sourceCourse->id]);
+
+        $this->actingAs($owner)->putJson("/api/v1/exams/{$exam->id}", [
+            'course_id' => $targetCourse->id,
+        ])->assertForbidden();
+
+        $this->assertSame($sourceCourse->id, $exam->fresh()->course_id);
     }
 }

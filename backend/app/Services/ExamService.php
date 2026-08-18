@@ -9,6 +9,7 @@ use App\Models\ExamQuestion;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 class ExamService
 {
@@ -23,8 +24,12 @@ class ExamService
             ->whereNull('submitted_at')
             ->first();
 
-        if ($existingAttempt) {
+        if ($existingAttempt && $existingAttempt->expires_at->isFuture()) {
             return $this->formatStartPayload($existingAttempt, $exam);
+        }
+
+        if ($existingAttempt) {
+            $existingAttempt->forceFill(['submitted_at' => $existingAttempt->expires_at])->save();
         }
 
         // Authorize new attempt creation via ExamAttemptPolicy (checks max_attempts)
@@ -50,7 +55,7 @@ class ExamService
     public function submit(User $user, ExamAttempt $attempt, array $answersInput): array
     {
         // Ensure attempt belongs to user
-        if ($attempt->user_id !== $user->id && $user->role !== 'admin') {
+        if ($attempt->user_id !== $user->id) {
             throw new AuthorizationException('Anda tidak memiliki akses ke percobaan ini.');
         }
 
@@ -61,8 +66,27 @@ class ExamService
             return $this->formatSubmittedPayload($attempt, $exam);
         }
 
-        // Note: If submit is called after expires_at, we still accept and score whatever was submitted.
+        if ($attempt->expires_at->isPast()) {
+            throw ValidationException::withMessages([
+                'attempt' => ['Waktu pengerjaan ujian telah berakhir.'],
+            ]);
+        }
+
         $questions = $exam->questions()->orderBy('order')->get();
+
+        if ($questions->isEmpty()) {
+            throw ValidationException::withMessages([
+                'exam' => ['Ujian belum memiliki pertanyaan.'],
+            ]);
+        }
+
+        $submittedIds = collect($answersInput)->pluck('question_id');
+        if ($submittedIds->duplicates()->isNotEmpty() || $submittedIds->diff($questions->pluck('id'))->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'answers' => ['Jawaban berisi pertanyaan yang tidak valid atau duplikat.'],
+            ]);
+        }
+
         $submittedMap = collect($answersInput)->keyBy('question_id');
 
         $totalPossiblePoints = (int) $questions->sum('points');
@@ -90,9 +114,7 @@ class ExamService
             ];
         }
 
-        $score = $totalPossiblePoints > 0
-            ? round(($earnedPoints / $totalPossiblePoints) * 100, 2)
-            : 100.00;
+        $score = round(($earnedPoints / $totalPossiblePoints) * 100, 2);
 
         $passed = $score >= $exam->passing_score;
         $pearlsEarned = 0;

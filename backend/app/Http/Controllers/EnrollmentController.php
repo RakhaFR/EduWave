@@ -34,6 +34,19 @@ class EnrollmentController extends ApiController
             ->first();
 
         if ($existing) {
+            if ($existing->status === 'dropped') {
+                $existing->update([
+                    'status' => 'enrolled',
+                    'enrolled_at' => now(),
+                ]);
+
+                $existing->recalculateProgress();
+
+                return $this->success([
+                    'enrollment' => $this->formatEnrollment($existing->fresh(), $course),
+                ], '', 201);
+            }
+
             return $this->error(
                 'ALREADY_ENROLLED',
                 'Anda sudah terdaftar di kursus ini.',
@@ -74,7 +87,6 @@ class EnrollmentController extends ApiController
         }
 
         $enrollment->update(['status' => 'dropped']);
-        $enrollment->delete();
 
         return $this->success([], '', 200);
     }

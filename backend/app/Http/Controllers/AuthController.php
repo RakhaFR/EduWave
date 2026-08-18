@@ -66,10 +66,8 @@ class AuthController extends ApiController
     {
         $validated = $request->validated();
 
-        // Find user by email or username
-        $user = User::where('email', $validated['email'])
-            ->orWhere('username', $validated['email'])
-            ->first();
+        $login = $validated['email'] ?? $validated['username'];
+        $user = User::where(isset($validated['email']) ? 'email' : 'username', $login)->first();
 
         if (! $user || ! Hash::check($validated['password'], $user->password)) {
             return $this->error('AUTH_INVALID_CREDENTIALS', 'Email atau password salah.', 401);
@@ -166,6 +164,8 @@ class AuthController extends ApiController
                 $user->forceFill([
                     'password' => Hash::make($password),
                 ])->save();
+
+                $user->tokens()->delete();
             }
         );
 

@@ -105,6 +105,20 @@ class AuthControllerTest extends TestCase
         ]);
     }
 
+    public function test_login_with_username(): void
+    {
+        $user = User::factory()->create([
+            'username' => 'ocean_student',
+            'password' => bcrypt('password123'),
+        ]);
+
+        $this->postJson('/api/v1/auth/login', [
+            'username' => 'ocean_student',
+            'password' => 'password123',
+        ])->assertOk()
+            ->assertJsonPath('data.user.id', $user->id);
+    }
+
     public function test_login_rejects_incorrect_password()
     {
         User::factory()->create([

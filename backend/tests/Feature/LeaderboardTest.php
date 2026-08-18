@@ -172,6 +172,8 @@ class LeaderboardTest extends TestCase
         Enrollment::factory()->create([
             'user_id' => $user->id,
             'course_id' => $course->id,
+            'status' => 'enrolled',
+            'completed_at' => null,
         ]);
 
         $this->actingAs($user);

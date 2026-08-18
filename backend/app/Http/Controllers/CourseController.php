@@ -66,9 +66,14 @@ class CourseController extends ApiController
      */
     public function show(Request $request, Course $course): JsonResponse
     {
-        // Non-admin/instructor can only see published courses
+        // Draft and archived courses are visible only to admins and their owner.
         $user = $request->user();
-        if ((! $user || ! in_array($user->role, ['admin', 'instructor'])) && $course->status !== 'published') {
+        $canViewUnpublished = $user && (
+            $user->role === 'admin'
+            || ($user->role === 'instructor' && $course->instructor_id === $user->id)
+        );
+
+        if ($course->status !== 'published' && ! $canViewUnpublished) {
             return $this->error('COURSE_NOT_FOUND', 'Kursus tidak ditemukan.', 404);
         }
 
@@ -116,7 +121,13 @@ class CourseController extends ApiController
     {
         $this->authorize('update', $course);
 
-        $course->update($request->validated());
+        $validated = $request->validated();
+
+        if ($request->user()->role === 'instructor') {
+            unset($validated['instructor_id']);
+        }
+
+        $course->update($validated);
         $course->load('instructor:id,full_name,avatar_url');
         $course->loadCount(['lessons', 'enrollments']);
 

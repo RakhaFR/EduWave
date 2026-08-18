@@ -169,6 +169,7 @@ class EnrollmentAndLessonTest extends TestCase
             'course_id' => $course->id,
             'status' => 'enrolled',
             'progress_pct' => 0,
+            'completed_at' => null,
         ]);
 
         // First completion triggers 100% → pearls awarded
@@ -275,10 +276,27 @@ class EnrollmentAndLessonTest extends TestCase
 
         $response->assertStatus(200)->assertJsonPath('success', true);
 
-        $this->assertDatabaseMissing('enrollments', [
+        $this->assertDatabaseHas('enrollments', [
             'user_id' => $student->id,
             'course_id' => $course->id,
+            'status' => 'dropped',
         ]);
+    }
+
+    public function test_reenrolling_does_not_award_course_completion_pearls_again(): void
+    {
+        $student = $this->student();
+        $course = $this->publishedCourse(['pearls_reward' => 50]);
+        $lesson = Lesson::factory()->create(['course_id' => $course->id, 'xp_reward' => 0]);
+
+        $this->actingAs($student)->postJson("/api/v1/courses/{$course->id}/enroll")->assertCreated();
+        $this->actingAs($student)->postJson("/api/v1/lessons/{$lesson->id}/complete")->assertOk();
+        $this->assertSame(50, $student->fresh()->pearls);
+
+        $this->actingAs($student)->deleteJson("/api/v1/courses/{$course->id}/enroll")->assertOk();
+        $this->actingAs($student)->postJson("/api/v1/courses/{$course->id}/enroll")->assertCreated();
+
+        $this->assertSame(50, $student->fresh()->pearls);
     }
 
     public function test_unenrolling_when_not_enrolled_returns_404(): void

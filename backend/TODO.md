@@ -161,8 +161,21 @@
 - [ ] Phase 4.8: Controllers — AI Assistant (deferred)
 - [x] Phase 4.9: Controllers — Admin
 - [x] Phase 5: API routes and authentication boundaries
-- [ ] Phase 6: Feature testing for key flows
+- [x] Phase 6: Feature testing for key flows
 - [ ] Phase 7: API documentation and frontend contract review
+
+## Phase 6 — Feature Testing
+
+- [x] Verify public, authenticated, instructor, and admin route boundaries.
+- [x] Verify email and username authentication, logout token revocation, and profile security flows.
+- [x] Verify published/draft course visibility and prevent instructor ownership-transfer bypasses.
+- [x] Verify enrollment, lesson access, XP idempotency, course completion rewards, and safe reenrollment.
+- [x] Verify exam enrollment requirements, answer-key suppression, scoring, reward idempotency, attempt limits, expiration, ownership, and empty-exam handling.
+- [x] Verify leaderboard Redis behavior and XP event integration.
+- [x] Verify study-room membership, messaging, broadcast events, and private-channel authorization.
+- [x] Verify mascot purchase/equip and achievement/gamification behavior.
+- [x] Verify admin user, course moderation, analytics, pagination, and role boundaries.
+- [x] Run the complete automated suite successfully: 144 tests, 667 assertions.
 
 ## Phase 4.1 — Authorization Policies (RBAC)
 
