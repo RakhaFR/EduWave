@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, ChevronLeft, Star, Clock, Users } from "lucide-react";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import PublicLayout from "@/components/home/PublicLayout";
+
 
 const ALL_COURSES = [
   { id: 1,  title: "Dasar-Dasar Pemrograman Web Bawah Laut",   instructor: "Kak Ariel", rating: 4.9, students: "2.3K", duration: "12 Jam", category: "Teknologi & Koding", img: "/ocean-bg.jpg",   progress: 75, enrolled: true  },
@@ -31,7 +32,7 @@ export default function CoursePage() {
   const goTo = (p: number) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
   return (
-    <DashboardLayout searchPlaceholder="Cari kursus...">
+    <PublicLayout>
       <main className="px-4 md:px-8 py-4 md:py-6 pb-8">
         <div className="mb-5">
           <h1 className="text-xl md:text-2xl font-extrabold text-white mb-1">Kursus Saya</h1>
@@ -113,6 +114,6 @@ export default function CoursePage() {
           Halaman {page} dari {totalPages} · {ALL_COURSES.length} kursus tersedia
         </p>
       </main>
-    </DashboardLayout>
+    </PublicLayout>
   );
 }

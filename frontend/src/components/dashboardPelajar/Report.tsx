@@ -5,7 +5,7 @@ import {
   BarChart2, Trophy, Flame, Target, Clock, BookOpen,
   Star, TrendingUp, Award, ChevronUp, CheckCircle2, XCircle, Minus,
 } from "lucide-react";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 
 type Tab = "ringkasan" | "kalkulasi" | "riwayat";
 
@@ -57,7 +57,7 @@ const XP_BREAKDOWN = [
   { label: "Jam Belajar", xp: 140, color: "bg-purple-400", pct: 4 },
 ];
 
-export default function ReportPage() {
+export default function ReportComponent() {
   const [tab, setTab] = useState<Tab>("ringkasan");
 
   const progressToNext = Math.round((STATS.totalXP / STATS.nextLevelXP) * 100);

@@ -14,7 +14,7 @@ export default function RegisterPage() {
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     // Setelah register → langsung ke dashboard (simulasi sudah login)
-    router.push("/dashboard");
+    router.push("/pelajar");
   };
 
   return (

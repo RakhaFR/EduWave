@@ -1,7 +1,7 @@
 "use client";
 
 import { Users, Bell, BookOpen, Clock, MessageSquare, Headphones } from "lucide-react";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 
 const FEATURES = [
   { icon: <Headphones className="w-5 h-5 text-purple-500" />, label: "Lo-fi Musik", desc: "Ambient musik belajar bersama", bg: "bg-purple-50" },
@@ -10,7 +10,7 @@ const FEATURES = [
   { icon: <BookOpen className="w-5 h-5 text-emerald-500" />, label: "Materi Bersama", desc: "Buka dan bahas materi bareng", bg: "bg-emerald-50" },
 ];
 
-export default function StudyRoomPage() {
+export default function StudyRoomComponent() {
   return (
     <DashboardLayout searchPlaceholder="Cari study room...">
       <main className="px-4 md:px-8 py-4 md:py-6 flex flex-col gap-6 max-w-2xl mx-auto">

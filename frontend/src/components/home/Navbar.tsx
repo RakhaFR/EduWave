@@ -18,8 +18,8 @@ interface NavbarProps {
 }
 
 const NAV_ITEMS = [
-  { href: "/auth/login",           icon: <BookOpen className="h-4 w-4" />, label: "Kursus" },
-  { href: "/auth/login",      icon: <Trophy className="h-4 w-4" />,   label: "Leaderboard" },
+  { href: "/course",           icon: <BookOpen className="h-4 w-4" />, label: "Kursus" },
+  { href: "/leaderboard",      icon: <Trophy className="h-4 w-4" />,   label: "Leaderboard" },
   { href: "/auth/login",       icon: <Users className="h-4 w-4" />,    label: "Study Room" },
   { href: "/auth/login", icon: <Smile className="h-4 w-4" />,    label: "Mascot" },
 ];

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { GraduationCap, Star, BookOpen, Users, Search, MessageCircle, ExternalLink } from "lucide-react";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 
 type Category = "semua" | "programming" | "design" | "bahasa";
 
@@ -119,7 +119,7 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-export default function PembimbingPage() {
+export default function PembimbingComponent() {
   const [category, setCategory] = useState<Category>("semua");
   const [search, setSearch] = useState("");
 

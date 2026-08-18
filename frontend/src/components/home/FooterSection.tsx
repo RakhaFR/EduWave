@@ -9,14 +9,14 @@ const NAV_LINKS = {
   Eksplorasi: [
     { label: "Semua Kursus",     href: "/course" },
     { label: "Leaderboard",      href: "/leaderboard" },
-    { label: "Study Room",       href: "/study-room" },
-    { label: "Kustomisasi Maskot", href: "/mascot-customize" },
+    { label: "Study Room",       href: "/pelajar/study-room" },
+    { label: "Kustomisasi Maskot", href: "/pelajar/mascot-customize" },
   ],
   Akun: [
-    { label: "Masuk",     href: "/login" },
-    { label: "Daftar",    href: "/register" },
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "Profil",    href: "/profile" },
+    { label: "Masuk",     href: "/auth/login" },
+    { label: "Daftar",    href: "/auth/register" },
+    { label: "Dashboard", href: "/pelajar" },
+    { label: "Profil",    href: "/pelajar/profile" },
   ],
   Lainnya: [
     { label: "Tentang Kami",       href: "/#about" },

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Trophy, Medal, Crown, Flame, Star, ChevronUp, ChevronDown, Minus } from "lucide-react";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import PublicLayout from "@/components/home/PublicLayout";
+
 
 type Period = "minggu" | "bulan" | "semua";
 
@@ -45,7 +46,7 @@ export default function LeaderboardPage() {
   const me = ALL_USERS.find(u => u.me)!;
 
   return (
-    <DashboardLayout searchPlaceholder="Cari penyelam...">
+    <PublicLayout>
       <main className="px-4 md:px-8 py-4 md:py-6 pb-8 max-w-4xl mx-auto">
 
         {/* Header */}
@@ -182,6 +183,6 @@ export default function LeaderboardPage() {
           ))}
         </div>
       </main>
-    </DashboardLayout>
+    </PublicLayout>
   );
 }

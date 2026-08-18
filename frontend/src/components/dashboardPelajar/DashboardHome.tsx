@@ -7,7 +7,7 @@ import {
   ChevronRight, Trash2, Trophy,
   Flame, Target, Calendar, ChevronDown, Users, LogOut,
 } from "lucide-react";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 
 const MY_COURSES = [
   { id: 1, title: "Dasar-Dasar Pemrograman Web Bawah Laut", instructor: "Kak Ariel", progress: 75,  img: "/ocean-bg.jpg"   },
@@ -29,7 +29,7 @@ const TOP3 = [
   { rank: 3, name: "Doni A",  color: "bg-orange-200", textColor: "text-orange-700", h: "h-8"  },
 ];
 
-export default function DashboardPage() {
+export default function DashboardHome() {
   return (
     <DashboardLayout searchPlaceholder="Search...">
       <main className="px-4 md:px-8 py-4 md:py-6 flex flex-col gap-6">
@@ -166,7 +166,7 @@ export default function DashboardPage() {
               <div className="flex flex-col gap-1.5">
                 {LEADERBOARD.map((item) => (
                   <div key={item.rank}
-                    className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs ${item.me ? "bg-[#f0f7ff] font-bold text-[#008be3]" : "text-slate-600"}`}>
+                    className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs ${item.me ? "bg-[#f0f7ff]" : "text-slate-600"}`}>
                     <span className="w-4 text-center font-semibold">{item.rank}.</span>
                     <span className="flex-1 truncate">{item.name}</span>
                     <span className="text-[10px] text-slate-400">{item.xp.toLocaleString()} XP</span>

@@ -12,22 +12,22 @@ import {
 import FloatingBubbles from "@/components/ui/FloatingBubbles";
 
 const NAV_ITEMS = [
-  { icon: <Home className="w-5 h-5" />,           label: "Home",        href: "/dashboard" },
+  { icon: <Home className="w-5 h-5" />,           label: "Home",        href: "/pelajar" },
   { icon: <BookOpen className="w-5 h-5" />,       label: "Course",      href: "/course" },
-  { icon: <Play className="w-5 h-5" />,           label: "Live Class",  href: "/liveClass" },
-  { icon: <Users2 className="w-5 h-5" />,         label: "Study Room",  href: "/study-room" },
+  { icon: <Play className="w-5 h-5" />,           label: "Live Class",  href: "/pelajar/liveClass" },
+  { icon: <Users2 className="w-5 h-5" />,         label: "Study Room",  href: "/pelajar/study-room" },
   { icon: <Trophy className="w-5 h-5" />,         label: "Leaderboard", href: "/leaderboard" },
-  { icon: <GraduationCap className="w-5 h-5" />,  label: "Pembimbing",  href: "/pembimbing" },
-  { icon: <BarChart2 className="w-5 h-5" />,      label: "Report",      href: "/report" },
+  { icon: <GraduationCap className="w-5 h-5" />,  label: "Pembimbing",  href: "/pelajar/pembimbing" },
+  { icon: <BarChart2 className="w-5 h-5" />,      label: "Report",      href: "/pelajar/report" },
 ];
 
 // Bottom nav mobile — item utama (tanpa admin items)
 const BOTTOM_NAV = [
-  { icon: <Home className="w-5 h-5" />,          label: "Home",   href: "/dashboard" },
+  { icon: <Home className="w-5 h-5" />,          label: "Home",   href: "/pelajar" },
   { icon: <BookOpen className="w-5 h-5" />,      label: "Course", href: "/course" },
   { icon: <Trophy className="w-5 h-5" />,        label: "Rank",   href: "/leaderboard" },
-  { icon: <Users2 className="w-5 h-5" />,        label: "Room",   href: "/study-room" },
-  { icon: <BarChart2 className="w-5 h-5" />,     label: "Report", href: "/report" },
+  { icon: <Users2 className="w-5 h-5" />,        label: "Room",   href: "/pelajar/study-room" },
+  { icon: <BarChart2 className="w-5 h-5" />,     label: "Report", href: "/pelajar/report" },
 ];
 
 interface DashboardLayoutProps {
@@ -58,7 +58,7 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
         <aside className="relative h-full rounded-3xl bg-white flex flex-col px-2 lg:px-5 py-6 shadow-xl">
 
           {/* Logo */}
-          <Link href="/dashboard" className="flex items-center gap-2 mb-2 justify-center lg:justify-start">
+          <Link href="/pelajar" className="flex items-center gap-2 mb-2 justify-center lg:justify-start">
             <Image src="/logo-eduwave.webp" alt="EduWave" width={32} height={32} className="h-8 w-auto shrink-0" />
             <span className="hidden lg:block text-lg font-bold text-[#00172e]">
               Edu<span className="text-[#008be3]">Wave</span>
@@ -71,7 +71,7 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
           {/* Nav */}
           <nav className="flex flex-col gap-0.5 flex-1">
             {NAV_ITEMS.map((item) => {
-              const active = pathname === item.href || (item.href !== "#" && pathname.startsWith(item.href) && item.href !== "/dashboard") || pathname === item.href;
+              const active = pathname === item.href || (item.href !== "#" && pathname.startsWith(item.href) && item.href !== "/pelajar") || pathname === item.href;
               return (
                 <Link key={item.label} href={item.href}
                   title={item.label}
@@ -129,7 +129,7 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
 
               {avatarOpen && (
                 <div className="absolute right-0 top-full mt-2 w-44 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50">
-                  <Link href="/profile" onClick={() => setAvatarOpen(false)}
+                  <Link href="/pelajar/profile" onClick={() => setAvatarOpen(false)}
                     className="flex items-center gap-2 px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
                     <Users className="w-4 h-4" />Profil
                   </Link>
@@ -159,7 +159,7 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
           {/* Drawer */}
           <div className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-2xl flex flex-col p-6">
             <div className="flex items-center justify-between mb-6">
-              <Link href="/dashboard" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/pelajar" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
                 <Image src="/logo-eduwave.webp" alt="EduWave" width={32} height={32} className="h-8 w-auto" />
                 <span className="text-lg font-bold text-[#00172e]">Edu<span className="text-[#008be3]">Wave</span></span>
               </Link>

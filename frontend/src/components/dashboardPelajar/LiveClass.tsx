@@ -1,7 +1,7 @@
 "use client";
 
 import { Play, Bell, Calendar, Clock, Wifi } from "lucide-react";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 
 const UPCOMING_CLASSES = [
   {
@@ -36,7 +36,7 @@ const UPCOMING_CLASSES = [
   },
 ];
 
-export default function LiveClassPage() {
+export default function LiveClassComponent() {
   return (
     <DashboardLayout searchPlaceholder="Cari live class...">
       <main className="px-4 md:px-8 py-4 md:py-6 flex flex-col gap-6 max-w-3xl mx-auto">
