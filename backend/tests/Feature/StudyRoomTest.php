@@ -2,10 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Events\StudyRoomClosed;
+use App\Events\StudyRoomMessageSent;
+use App\Events\StudyRoomUserJoined;
+use App\Events\StudyRoomUserLeft;
 use App\Models\RoomMessage;
 use App\Models\StudyRoom;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 /**
@@ -333,6 +338,36 @@ class StudyRoomTest extends TestCase
 
         $response->assertStatus(403)
             ->assertJsonPath('error.code', 'NOT_A_PARTICIPANT');
+    }
+
+    public function test_study_room_actions_dispatch_broadcast_events(): void
+    {
+        $host = $this->student();
+        $participant = $this->instructor();
+        $room = StudyRoom::factory()->create([
+            'host_user_id' => $host->id,
+            'status' => 'active',
+        ]);
+        $room->participants()->attach($host->id);
+
+        Event::fake([
+            StudyRoomClosed::class,
+            StudyRoomMessageSent::class,
+            StudyRoomUserJoined::class,
+            StudyRoomUserLeft::class,
+        ]);
+
+        $this->actingAs($participant)->postJson("/api/v1/study-rooms/{$room->id}/join")->assertOk();
+        $this->actingAs($participant)->postJson("/api/v1/study-rooms/{$room->id}/messages", [
+            'content' => 'Ready to study.',
+        ])->assertCreated();
+        $this->actingAs($participant)->deleteJson("/api/v1/study-rooms/{$room->id}/leave")->assertOk();
+        $this->actingAs($host)->deleteJson("/api/v1/study-rooms/{$room->id}")->assertOk();
+
+        Event::assertDispatched(StudyRoomUserJoined::class);
+        Event::assertDispatched(StudyRoomMessageSent::class);
+        Event::assertDispatched(StudyRoomUserLeft::class);
+        Event::assertDispatched(StudyRoomClosed::class);
     }
 
     // ──────────────────────────────────────────────────────────────────────────

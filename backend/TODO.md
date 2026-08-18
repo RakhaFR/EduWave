@@ -74,16 +74,16 @@
 ### Phase 4.6 — Study Rooms & Realtime
 - [x] StudyRoomController implemented: index, store, show, join, leave, destroy
 - [x] RoomMessageController implemented: index (fetch history), store (send message)
-- [ ] Broadcasting events + `routes/channels.php` auth for `private-study-room.{room_id}`
-- [ ] Document `study_room_participants` schema back into web-analysis.md (added ad-hoc in Phase 4.1, not yet in the spec doc)
+- [x] Broadcasting events + `routes/channels.php` auth for `private-study-room.{room_id}`
+- [x] Document `study_room_participants` schema back into web-analysis.md (added ad-hoc in Phase 4.1, not yet in the spec doc)
 
-> **Phase 4.6 audit (2026-08-18):** Controller methods, requests, models, migrations, policy, four broadcast events, the channel callback, README documentation, and 22 feature tests exist. Phase 4.6 is not operationally complete: no study-room routes are registered in `routes/api.php`, `routes/channels.php` is not loaded by `bootstrap/app.php`, and no `/broadcasting/auth` route is available. `php artisan test tests/Feature/StudyRoomTest.php` currently reports 22 failures because the endpoints return 404.
+> **Phase 4.6 completion (2026-08-18):** All eight study-room endpoints are registered under Sanctum, message routes use `RoomMessageController`, `/api/broadcasting/auth` supports Sanctum Bearer tokens, private-channel authorization is participant-only, and all 23 study-room feature tests pass.
 
-- [ ] Register all 8 study-room API routes under `auth:sanctum` and verify with `php artisan route:list --path=study-rooms`
-- [ ] Load `routes/channels.php` and register broadcast authentication compatible with Sanctum Bearer tokens
-- [ ] Resolve the `max_capacity` mismatch: request allows 1–1000, while README/tests expect 2–100
-- [ ] Add tests for broadcast event dispatch and participant/non-participant channel authorization
-- [ ] Run `php artisan test tests/Feature/StudyRoomTest.php` successfully
+- [x] Register all 8 study-room API routes under `auth:sanctum` and verify with `php artisan route:list --path=study-rooms`
+- [x] Load `routes/channels.php` and register broadcast authentication compatible with Sanctum Bearer tokens
+- [x] Resolve the `max_capacity` mismatch: request and documentation now enforce 2–100
+- [x] Add tests for broadcast event dispatch and participant/non-participant channel authorization
+- [x] Run `php artisan test tests/Feature/StudyRoomTest.php` successfully
 
 ### Phase 4.7 — Mascot & Achievements
 - [x] MascotController: catalog, inventory, purchase, equip
@@ -139,11 +139,11 @@
 - [x] Add exam show, attempt creation, submit, and attempt history routes for authenticated users.
 - [x] Add admin/instructor exam create, update, and delete routes.
 - [x] Add leaderboard endpoints for global and weekly rankings (monthly and course-specific dropped per Phase 4.5 notes).
-- [ ] Add authenticated study room routes for list, create, show, join, leave, destroy, message history retrieval, and message sending (8 routes total).
-- [ ] Register `routes/channels.php` authorization for the `private-study-room.{room_id}` Reverb channel — without this, WebSocket connections won't authorize.
+- [x] Add authenticated study room routes for list, create, show, join, leave, destroy, message history retrieval, and message sending (8 routes total).
+- [x] Register `routes/channels.php` authorization for the `private-study-room.{room_id}` Reverb channel — without this, WebSocket connections won't authorize.
 - [ ] Add AI Assistant routes: chat, chat/history (get + delete), recommendations, rate-limited via the `ai` throttle.
-- [ ] Ensure route names and controller mappings are consistent with the frontend API contract.
-- [ ] Validate route middleware groups for guest, auth, and role-based access control.
+- [x] Ensure route names and controller mappings are consistent with the frontend API contract.
+- [x] Validate route middleware groups for guest, auth, and role-based access control.
 - [x] Document the final route list and response contracts in the backend API reference as implementation progresses.
 
 ## Implementation Order
@@ -156,11 +156,11 @@
 - [x] Phase 4.3: Controllers — Courses, Lessons, Enrollment
 - [x] Phase 4.4: Controllers — Exams & Attempts
 - [x] Phase 4.5: Controllers — Leaderboard
-- [ ] Phase 4.6: Controllers — Study Rooms & Realtime
+- [x] Phase 4.6: Controllers — Study Rooms & Realtime
 - [x] Phase 4.7: Controllers — Mascot & Achievements
 - [ ] Phase 4.8: Controllers — AI Assistant (deferred)
 - [x] Phase 4.9: Controllers — Admin
-- [ ] Phase 5: API routes and authentication boundaries
+- [x] Phase 5: API routes and authentication boundaries
 - [ ] Phase 6: Feature testing for key flows
 - [ ] Phase 7: API documentation and frontend contract review
 

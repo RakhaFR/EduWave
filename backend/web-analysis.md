@@ -381,6 +381,7 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
     Route::delete('study-rooms/{room}/leave', [StudyRoomController::class, 'leave']);
     Route::delete('study-rooms/{room}',       [StudyRoomController::class, 'destroy']);
     Route::get   ('study-rooms/{room}/messages', [RoomMessageController::class, 'index']);
+    Route::post  ('study-rooms/{room}/messages', [RoomMessageController::class, 'store']);
 });
 ```
 
@@ -654,6 +655,16 @@ Schema::create('study_rooms', function (Blueprint $table) {
     $table->enum('status', ['active', 'closed'])->default('active');
     $table->foreign('host_user_id')->references('id')->on('users')->nullOnDelete();
     $table->timestamps();
+});
+
+// 0011_create_study_room_participants_table.php
+Schema::create('study_room_participants', function (Blueprint $table) {
+    $table->uuid('user_id');
+    $table->uuid('room_id');
+    $table->timestamp('joined_at')->useCurrent();
+    $table->primary(['user_id', 'room_id']);
+    $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+    $table->foreign('room_id')->references('id')->on('study_rooms')->cascadeOnDelete();
 });
 
 // 0012_create_room_messages_table.php

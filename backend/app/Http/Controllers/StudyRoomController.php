@@ -6,11 +6,9 @@ use App\Events\StudyRoomClosed;
 use App\Events\StudyRoomUserJoined;
 use App\Events\StudyRoomUserLeft;
 use App\Http\Requests\StudyRoom\StoreStudyRoomRequest;
-use App\Models\RoomMessage;
 use App\Models\StudyRoom;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Broadcast;
 
 class StudyRoomController extends ApiController
 {
@@ -215,95 +213,5 @@ class StudyRoomController extends ApiController
         broadcast(new StudyRoomClosed($room));
 
         return $this->success(null, 'Ruang belajar berhasil ditutup.');
-    }
-
-    /**
-     * Send a message to a study room.
-     * POST /api/v1/study-rooms/{room}/messages
-     */
-    public function sendMessage(Request $request, StudyRoom $room): JsonResponse
-    {
-        $request->validate([
-            'content' => ['required', 'string', 'max:2000'],
-            'type' => ['nullable', 'string', 'in:text,image,file'],
-        ]);
-
-        $user = $request->user();
-
-        // Must be a participant
-        if (! $room->participants()->where('user_id', $user->id)->exists()) {
-            return $this->error('NOT_A_PARTICIPANT', 'Anda bukan peserta ruang belajar ini.', 403);
-        }
-
-        // Room must be active
-        if ($room->status !== 'active') {
-            return $this->error('ROOM_CLOSED', 'Ruang belajar ini sudah ditutup.', 403);
-        }
-
-        $message = RoomMessage::create([
-            'room_id' => $room->id,
-            'user_id' => $user->id,
-            'content' => $request->content,
-            'type' => $request->type ?? 'text',
-            'sent_at' => now(),
-        ]);
-
-        $message->load('user:id,username,avatar_url');
-
-        return $this->success([
-            'message' => [
-                'id' => $message->id,
-                'content' => $message->content,
-                'type' => $message->type,
-                'sent_at' => $message->sent_at,
-                'user' => $message->user ? [
-                    'id' => $message->user->id,
-                    'username' => $message->user->username,
-                    'avatar_url' => $message->user->avatar_url,
-                ] : null,
-            ],
-        ], 'Pesan berhasil dikirim.', 201);
-    }
-
-    /**
-     * Get message history for a study room.
-     * GET /api/v1/study-rooms/{room}/messages
-     */
-    public function getMessages(Request $request, StudyRoom $room): JsonResponse
-    {
-        $user = $request->user();
-
-        // Must be a participant
-        if (! $room->participants()->where('user_id', $user->id)->exists()) {
-            return $this->error('NOT_A_PARTICIPANT', 'Anda bukan peserta ruang belajar ini.', 403);
-        }
-
-        $limit = min((int) $request->query('limit', 50), 100);
-        $before = $request->query('before'); // cursor: sent_at timestamp
-
-        $query = $room->messages()->with('user:id,username,avatar_url')
-            ->orderBy('sent_at', 'desc')
-            ->limit($limit);
-
-        if ($before) {
-            $query->where('sent_at', '<', $before);
-        }
-
-        $messages = $query->get()->reverse()->values()->map(fn ($msg) => [
-            'id' => $msg->id,
-            'content' => $msg->content,
-            'type' => $msg->type,
-            'sent_at' => $msg->sent_at,
-            'user' => $msg->user ? [
-                'id' => $msg->user->id,
-                'username' => $msg->user->username,
-                'avatar_url' => $msg->user->avatar_url,
-            ] : null,
-        ]);
-
-        return $this->success([
-            'messages' => $messages,
-            'count' => $messages->count(),
-        ]);
     }
 }
