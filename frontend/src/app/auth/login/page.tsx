@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { authService } from "@/services/authService";
 import { formatErrorMessage } from "@/lib/utils";
+import { sanitizeInput, validatePassword, authRateLimiter } from "@/lib/security";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,11 +36,34 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
+
+    const cleanEmail = sanitizeInput(email);
+    const cleanPassword = password.trim();
+
+    if (!cleanEmail) {
+      setErrorMsg("Email atau username tidak boleh kosong.");
+      return;
+    }
+
+    const passValidation = validatePassword(cleanPassword);
+    if (!passValidation.valid) {
+      setErrorMsg(passValidation.message || "Password tidak valid.");
+      return;
+    }
+
+    // Rate Limiter Brute Force Check
+    const rateCheck = authRateLimiter.isRateLimited("login_attempt", 5, 60000);
+    if (rateCheck.limited) {
+      setErrorMsg(`Terlalu banyak percobaan login gagal. Silakan tunggu ${rateCheck.remainingSec} detik.`);
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const res = await authService.login({ email, password });
+      const res = await authService.login({ email: cleanEmail, password: cleanPassword });
       if (res.success && res.data) {
+        authRateLimiter.resetAttempts("login_attempt");
         if (res.data.token) {
           localStorage.setItem("token", res.data.token);
         }
@@ -57,9 +81,11 @@ export default function LoginPage() {
           router.push("/pelajar");
         }
       } else {
+        authRateLimiter.recordAttempt("login_attempt");
         setErrorMsg(res.error?.message || "Email/username atau password salah.");
       }
     } catch (err: any) {
+      authRateLimiter.recordAttempt("login_attempt");
       setErrorMsg(formatErrorMessage(err, "Login gagal. Silakan periksa kembali email & password anda."));
     } finally {
       setLoading(false);

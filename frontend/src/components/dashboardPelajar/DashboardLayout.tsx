@@ -10,6 +10,7 @@ import {
   LogOut, ChevronDown, Menu, X,
 } from "lucide-react";
 import FloatingBubbles from "@/components/ui/FloatingBubbles";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 const NAV_ITEMS = [
   { icon: <Home className="w-5 h-5" />,           label: "Home",        href: "/pelajar" },
@@ -39,6 +40,17 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
   const pathname = usePathname();
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
+  const { user } = useCurrentUser();
+
+  const displayName = user?.full_name || user?.username || "Pelajar";
+  const initial = displayName.charAt(0).toUpperCase();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setAvatarOpen(false);
+  };
 
   return (
     <div
@@ -122,8 +134,19 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
                 onClick={() => setAvatarOpen(!avatarOpen)}
                 className="flex items-center gap-1.5 md:gap-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 pl-1 pr-2 md:pr-3 py-1 hover:bg-white/30 transition-colors"
               >
-                <div className="w-7 h-7 rounded-full bg-[#008be3] flex items-center justify-center text-white text-xs font-bold shrink-0">R</div>
-                <span className="hidden md:block text-sm font-semibold text-white">Rasya Raya Agung</span>
+                <div className="w-7 h-7 rounded-full bg-[#008be3] flex items-center justify-center text-white text-xs font-bold shrink-0 overflow-hidden">
+                  {user?.avatar_url && !imgError ? (
+                    <img
+                      src={user.avatar_url}
+                      alt={displayName}
+                      onError={() => setImgError(true)}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    initial
+                  )}
+                </div>
+                <span className="hidden md:block text-sm font-semibold text-white">{displayName}</span>
                 <ChevronDown className={`w-3.5 h-3.5 text-white/70 transition-transform ${avatarOpen ? "rotate-180" : ""}`} />
               </button>
 
@@ -134,7 +157,7 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
                     <Users className="w-4 h-4" />Profil
                   </Link>
                   <div className="border-t border-slate-100" />
-                  <Link href="/auth/login" onClick={() => setAvatarOpen(false)}
+                  <Link href="/auth/login" onClick={handleLogout}
                     className="flex items-center gap-2 px-4 py-3 text-sm text-red-400 hover:bg-red-50 transition-colors">
                     <LogOut className="w-4 h-4" />Keluar
                   </Link>

@@ -1,11 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { User, Mail, GraduationCap, Presentation, ArrowLeft, Anchor, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { authService } from "@/services/authService";
 import { formatErrorMessage } from "@/lib/utils";
+import { sanitizeInput, validateUsername, validateEmail, validatePassword, authRateLimiter } from "@/lib/security";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -23,12 +24,66 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  // Guard: Jika pengguna sudah login, alihkan ke dashboard role masing-masing
+  useEffect(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (token) {
+      authService.getUserMe().then((res) => {
+        if (res.success && res.data?.user) {
+          const userRole = res.data.user.role;
+          if (userRole === "admin") router.replace("/admin");
+          else if (userRole === "instructor") router.replace("/pembimbing");
+          else router.replace("/pelajar");
+        }
+      }).catch(() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      });
+    }
+  }, [router]);
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
-    if (password !== confirmPassword) {
+    const cleanFullName = sanitizeInput(fullName);
+    const cleanEmail = sanitizeInput(email);
+    const cleanUsername = sanitizeInput(username);
+    const cleanPassword = password.trim();
+    const cleanConfirmPassword = confirmPassword.trim();
+
+    if (!cleanFullName) {
+      setErrorMsg("Nama lengkap wajib diisi.");
+      return;
+    }
+
+    const emailCheck = validateEmail(cleanEmail);
+    if (!emailCheck.valid) {
+      setErrorMsg(emailCheck.message || "Email tidak valid.");
+      return;
+    }
+
+    const usernameCheck = validateUsername(cleanUsername);
+    if (!usernameCheck.valid) {
+      setErrorMsg(usernameCheck.message || "Username tidak valid.");
+      return;
+    }
+
+    const passCheck = validatePassword(cleanPassword);
+    if (!passCheck.valid) {
+      setErrorMsg(passCheck.message || "Password tidak valid.");
+      return;
+    }
+
+    if (cleanPassword !== cleanConfirmPassword) {
       setErrorMsg("Password dan konfirmasi password tidak cocok.");
+      return;
+    }
+
+    // Rate limiter check untuk pendaftaran
+    const rateCheck = authRateLimiter.isRateLimited("register_attempt", 5, 60000);
+    if (rateCheck.limited) {
+      setErrorMsg(`Terlalu banyak percobaan pendaftaran. Silakan tunggu ${rateCheck.remainingSec} detik.`);
       return;
     }
 
@@ -36,14 +91,15 @@ export default function RegisterPage() {
 
     try {
       const res = await authService.register({
-        username,
-        email,
-        password,
-        password_confirmation: confirmPassword,
-        full_name: fullName,
+        username: cleanUsername,
+        email: cleanEmail,
+        password: cleanPassword,
+        password_confirmation: cleanConfirmPassword,
+        full_name: cleanFullName,
       });
 
       if (res.success && res.data) {
+        authRateLimiter.resetAttempts("register_attempt");
         if (res.data.token) {
           localStorage.setItem("token", res.data.token);
         }
@@ -61,9 +117,11 @@ export default function RegisterPage() {
           router.push(role === "pengajar" ? "/pembimbing" : "/pelajar");
         }
       } else {
+        authRateLimiter.recordAttempt("register_attempt");
         setErrorMsg(res.error?.message || "Pendaftaran gagal. Silakan periksa kembali data anda.");
       }
     } catch (err: any) {
+      authRateLimiter.recordAttempt("register_attempt");
       setErrorMsg(formatErrorMessage(err, "Pendaftaran akun gagal. Silakan coba lagi."));
     } finally {
       setLoading(false);
