@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AchievementController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -10,6 +11,8 @@ use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\LessonController;
+use App\Http\Controllers\MascotController;
+use App\Http\Controllers\StudyRoomController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -78,6 +81,27 @@ Route::prefix('v1')->group(function () {
         Route::get('leaderboard', [LeaderboardController::class, 'global']);
         Route::get('leaderboard/weekly', [LeaderboardController::class, 'weekly']);
         Route::get('leaderboard/me', [LeaderboardController::class, 'me']);
+
+        // Mascots
+        Route::get('mascots', [MascotController::class, 'index']);
+        Route::get('mascots/inventory', [MascotController::class, 'inventory']);
+        Route::post('mascots/{mascot}/purchase', [MascotController::class, 'purchase']);
+        Route::put('mascots/equip', [MascotController::class, 'equip']);
+
+        // Achievements
+        Route::get('achievements', [AchievementController::class, 'index']);
+        Route::get('achievements/me', [AchievementController::class, 'myAchievements']);
+        Route::get('achievements/{achievement}', [AchievementController::class, 'show']);
+
+        // Study Rooms
+        Route::get('study-rooms', [StudyRoomController::class, 'index']);
+        Route::post('study-rooms', [StudyRoomController::class, 'store']);
+        Route::get('study-rooms/{room}', [StudyRoomController::class, 'show']);
+        Route::post('study-rooms/{room}/join', [StudyRoomController::class, 'join']);
+        Route::delete('study-rooms/{room}/leave', [StudyRoomController::class, 'leave']);
+        Route::delete('study-rooms/{room}', [StudyRoomController::class, 'destroy']);
+        Route::post('study-rooms/{room}/messages', [StudyRoomController::class, 'sendMessage']);
+        Route::get('study-rooms/{room}/messages', [StudyRoomController::class, 'getMessages']);
 
         // Admin / Instructor only — course management
         Route::middleware('role:admin,instructor')->group(function () {
