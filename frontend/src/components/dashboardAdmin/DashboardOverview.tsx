@@ -28,7 +28,6 @@ export default function DashboardOverview({
   registrations,
   searchGlobal
 }: DashboardOverviewProps) {
-  // Aggregate Course statistics
   const courseStats = useMemo(() => {
     const total = courses.length;
     const published = courses.filter((c) => c.status === "Terbit").length;
@@ -37,7 +36,6 @@ export default function DashboardOverview({
     return { total, published, draft, totalStudents };
   }, [courses]);
 
-  // Aggregate User statistics
   const userStats = useMemo(() => {
     const total = users.length;
     const teachers = users.filter((u) => u.role === "Pengajar").length;
@@ -46,7 +44,6 @@ export default function DashboardOverview({
     return { total, teachers, students, active };
   }, [users]);
 
-  // Aggregate Registration / Activity statistics
   const regStats = useMemo(() => {
     const total = registrations.length;
     const suspicious = registrations.filter((r) => r.isSuspicious).length;
@@ -56,23 +53,19 @@ export default function DashboardOverview({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Overview Cards Section Header */}
       <div className="flex items-center gap-2">
         <Sparkles className="w-5 h-5 text-[#0073e6]" />
         <h2 className="text-base font-extrabold text-[#00172e]">Ringkasan Statistik Utama</h2>
       </div>
 
-      {/* Grid of Extended Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Statistik Kursus */}
+        {/* Card 1: Kursus */}
         <div className="bg-gradient-to-br from-[#f0f7ff] to-white border border-blue-100 rounded-2xl p-5 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
           <div className="flex items-start justify-between">
             <div className="w-10 h-10 rounded-xl bg-[#0073e6] text-white flex items-center justify-center shadow-md shadow-blue-200 group-hover:scale-110 transition-transform">
               <BookOpen className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-bold bg-blue-50 text-[#0073e6] px-2.5 py-1 rounded-full">
-              Kursus
-            </span>
+            <span className="text-[10px] font-bold bg-blue-50 text-[#0073e6] px-2.5 py-1 rounded-full">Kursus</span>
           </div>
           <div className="mt-4">
             <p className="text-2xl font-black text-[#00172e]">{courseStats.total}</p>
@@ -84,15 +77,13 @@ export default function DashboardOverview({
           </div>
         </div>
 
-        {/* Card 2: Statistik Pengguna */}
+        {/* Card 2: Pengguna */}
         <div className="bg-gradient-to-br from-[#f5f3ff] to-white border border-purple-100 rounded-2xl p-5 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
           <div className="flex items-start justify-between">
             <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-md shadow-purple-200 group-hover:scale-110 transition-transform">
               <Users className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-bold bg-purple-50 text-purple-600 px-2.5 py-1 rounded-full">
-              Pengguna
-            </span>
+            <span className="text-[10px] font-bold bg-purple-50 text-purple-600 px-2.5 py-1 rounded-full">Pengguna</span>
           </div>
           <div className="mt-4">
             <p className="text-2xl font-black text-[#00172e]">{userStats.total}</p>
@@ -104,15 +95,13 @@ export default function DashboardOverview({
           </div>
         </div>
 
-        {/* Card 3: Statistik Siswa di Kursus */}
+        {/* Card 3: Keterlibatan */}
         <div className="bg-gradient-to-br from-[#ecfdf5] to-white border border-emerald-100 rounded-2xl p-5 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
           <div className="flex items-start justify-between">
             <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-200 group-hover:scale-110 transition-transform">
               <GraduationCap className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full">
-              Keterlibatan
-            </span>
+            <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full">Keterlibatan</span>
           </div>
           <div className="mt-4">
             <p className="text-2xl font-black text-[#00172e]">{formatNumber(courseStats.totalStudents)}</p>
@@ -123,15 +112,13 @@ export default function DashboardOverview({
           </div>
         </div>
 
-        {/* Card 4: Statistik Pendaftaran / Aktivitas */}
+        {/* Card 4: Keamanan Log */}
         <div className="bg-gradient-to-br from-[#fff7ed] to-white border border-amber-100 rounded-2xl p-5 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
           <div className="flex items-start justify-between">
             <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-200 group-hover:scale-110 transition-transform">
               <ClipboardList className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-bold bg-amber-50 text-amber-600 px-2.5 py-1 rounded-full">
-              Keamanan Log
-            </span>
+            <span className="text-[10px] font-bold bg-amber-50 text-amber-600 px-2.5 py-1 rounded-full">Keamanan Log</span>
           </div>
           <div className="mt-4">
             <p className="text-2xl font-black text-[#00172e]">{regStats.total}</p>
@@ -144,7 +131,7 @@ export default function DashboardOverview({
         </div>
       </div>
 
-      {/* Embedded Registration Log Table (Only table shown on Dashboard) */}
+      {/* Embedded Registration Log Table */}
       <div className="mt-2">
         <div className="flex items-center gap-2 mb-3">
           <ClipboardList className="w-5 h-5 text-[#0073e6]" />

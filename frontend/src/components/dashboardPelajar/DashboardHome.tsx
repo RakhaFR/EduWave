@@ -29,6 +29,10 @@ const TOP3 = [
   { rank: 3, name: "Doni A",  color: "bg-orange-200", textColor: "text-orange-700", h: "h-8"  },
 ];
 
+const formatNumber = (num: number) => {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+
 export default function DashboardHome() {
   return (
     <DashboardLayout searchPlaceholder="Search...">
@@ -169,7 +173,7 @@ export default function DashboardHome() {
                     className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs ${item.me ? "bg-[#f0f7ff]" : "text-slate-600"}`}>
                     <span className="w-4 text-center font-semibold">{item.rank}.</span>
                     <span className="flex-1 truncate">{item.name}</span>
-                    <span className="text-[10px] text-slate-400">{item.xp.toLocaleString()} XP</span>
+                    <span className="text-[10px] text-slate-400">{formatNumber(item.xp)} XP</span>
                   </div>
                 ))}
               </div>

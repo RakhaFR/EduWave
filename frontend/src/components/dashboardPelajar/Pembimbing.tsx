@@ -119,6 +119,10 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
+const formatNumber = (num: number) => {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+
 export default function PembimbingComponent() {
   const [category, setCategory] = useState<Category>("semua");
   const [search, setSearch] = useState("");
@@ -223,7 +227,7 @@ export default function PembimbingComponent() {
                     </div>
                     <div className="flex items-center gap-1 text-[11px] text-slate-400">
                       <Users className="w-3 h-3" />
-                      <span>{mentor.students.toLocaleString()} siswa</span>
+                      <span>{formatNumber(mentor.students)} siswa</span>
                     </div>
                     <div className="flex items-center gap-1 text-[11px] text-slate-400">
                       <BookOpen className="w-3 h-3" />

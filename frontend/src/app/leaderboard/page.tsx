@@ -28,6 +28,10 @@ function ChangeIcon({ change }: { change: number }) {
   return <Minus className="w-3 h-3 text-slate-300" />;
 }
 
+const formatNumber = (num: number) => {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+
 export default function LeaderboardPublicPage() {
   const top3 = ALL_USERS.slice(0, 3);
   // preview: show rank 4-7, blur rank 5-7
@@ -63,7 +67,7 @@ export default function LeaderboardPublicPage() {
                   </p>
                   <div className={`w-14 md:w-20 ${cfg.h} ${cfg.bar} rounded-t-2xl flex flex-col items-center justify-center gap-1 shadow-inner`}>
                     <span className={`text-base md:text-xl font-extrabold ${cfg.text}`}>{user.rank}</span>
-                    <span className={`text-[9px] font-semibold ${cfg.text} opacity-70 hidden md:block`}>{user.xp.toLocaleString()} XP</span>
+                    <span className={`text-[9px] font-semibold ${cfg.text} opacity-70 hidden md:block`}>{formatNumber(user.xp)} XP</span>
                   </div>
                 </div>
               );
@@ -103,7 +107,7 @@ export default function LeaderboardPublicPage() {
                     <p className="text-xs md:text-sm font-semibold text-[#00172e] truncate">{user.name}</p>
                   </div>
                   <div className="col-span-4 sm:col-span-3 text-right">
-                    <span className="text-xs md:text-sm font-extrabold text-[#00172e]">{user.xp.toLocaleString()}</span>
+                    <span className="text-xs md:text-sm font-extrabold text-[#00172e]">{formatNumber(user.xp)}</span>
                     <span className="text-[10px] text-slate-400 ml-0.5">XP</span>
                   </div>
                   <div className="col-span-2 hidden sm:flex justify-center">

@@ -100,7 +100,6 @@ export default function RegistrationLog({
     <div className="flex flex-col gap-5">
       {/* --- Mini Stats Row --- */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {/* Total Aktivitas */}
         <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-100 rounded-2xl p-4 flex items-center gap-3 group">
           <div className="w-10 h-10 rounded-xl bg-[#0073e6] text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-md shadow-blue-200">
             <Activity className="w-5 h-5" />
@@ -111,7 +110,6 @@ export default function RegistrationLog({
           </div>
         </div>
 
-        {/* Akses Normal */}
         <div className="bg-gradient-to-br from-emerald-50 to-teal-50/50 border border-emerald-100 rounded-2xl p-4 flex items-center gap-3 group">
           <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-md shadow-emerald-200">
             <ShieldCheck className="w-5 h-5" />
@@ -122,7 +120,6 @@ export default function RegistrationLog({
           </div>
         </div>
 
-        {/* Aktivitas Mencurigakan */}
         <div className="bg-gradient-to-br from-rose-50 to-red-50/50 border border-rose-100 rounded-2xl p-4 flex items-center gap-3 group">
           <div className="w-10 h-10 rounded-xl bg-rose-500 text-[#fff] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-md shadow-rose-200">
             <ShieldAlert className="w-5 h-5" />
@@ -138,13 +135,12 @@ export default function RegistrationLog({
       <div className="bg-amber-50/70 border border-amber-200/60 rounded-2xl p-3.5 flex items-center gap-3 text-xs text-amber-800 font-medium">
         <Clock className="w-4 h-4 text-amber-600 shrink-0" />
         <span>
-          Log ini melakukan <strong>tracking real-time</strong> aktivitas pendaftaran & akses. Catatan log akan secara otomatis terhapus bertahap setelah kurun waktu 30 hari.
+          Log ini melakukan <strong>tracking real-time</strong> aktivitas pendaftaran &amp; akses. Catatan log akan secara otomatis terhapus bertahap setelah kurun waktu 30 hari.
         </span>
       </div>
 
       {/* --- Controls Row --- */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Search */}
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -164,7 +160,6 @@ export default function RegistrationLog({
           )}
         </div>
 
-        {/* Filter Pills */}
         <div className="flex items-center gap-1.5 shrink-0">
           {(["Semua", "Normal", "Mencurigakan"] as const).map((type) => (
             <button
@@ -194,7 +189,7 @@ export default function RegistrationLog({
               <th className="py-4 px-5 w-20">ID</th>
               <th className="py-4 px-5">Pengguna / Email</th>
               <th className="py-4 px-5">Aktivitas</th>
-              <th className="py-4 px-5">IP & Perangkat</th>
+              <th className="py-4 px-5">IP &amp; Perangkat</th>
               <th className="py-4 px-5 w-28 text-center">Waktu</th>
               <th className="py-4 px-5 w-32 text-center">Status Keamanan</th>
             </tr>
@@ -238,13 +233,9 @@ export default function RegistrationLog({
                       }`}
                     >
                       {r.isSuspicious ? (
-                        <>
-                          <ShieldAlert className="w-3 h-3 text-rose-500" /> Mencurigakan
-                        </>
+                        <><ShieldAlert className="w-3 h-3 text-rose-500" /> Mencurigakan</>
                       ) : (
-                        <>
-                          <ShieldCheck className="w-3 h-3 text-emerald-500" /> Normal
-                        </>
+                        <><ShieldCheck className="w-3 h-3 text-emerald-500" /> Normal</>
                       )}
                     </span>
                   </td>

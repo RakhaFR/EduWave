@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import {
   Home,
   BookOpen,
@@ -10,15 +11,19 @@ import {
   FolderOpen,
   Settings
 } from "lucide-react";
-import { TabType } from "./types";
 
 interface SidebarProps {
-  activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
   showToast: (msg: string) => void;
 }
 
-export default function Sidebar({ activeTab, setActiveTab, showToast }: SidebarProps) {
+export default function Sidebar({ showToast }: SidebarProps) {
+  const pathname = usePathname();
+
+  const isActive = (href: string) => {
+    if (href === "/admin") return pathname === "/admin";
+    return pathname.startsWith(href);
+  };
+
   return (
     <div className="bg-white rounded-[24px] shadow-2xl flex flex-col p-6 h-full min-h-full">
       {/* Logo Brand */}
@@ -43,65 +48,53 @@ export default function Sidebar({ activeTab, setActiveTab, showToast }: SidebarP
             Menu Utama
           </p>
           <nav className="flex flex-col gap-1">
-            <button
-              onClick={() => {
-                setActiveTab("dashboard");
-                showToast("Kembali ke Dashboard Overview");
-              }}
+            <Link
+              href="/admin"
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left w-full cursor-pointer ${
-                activeTab === "dashboard"
+                isActive("/admin") && pathname === "/admin"
                   ? "bg-[#e6f3ff] text-[#0073e6]"
                   : "text-slate-500 hover:bg-slate-50 hover:text-[#0073e6]"
               }`}
             >
               <Home className="w-5 h-5 shrink-0" />
               <span>Dashboard</span>
-            </button>
+            </Link>
 
-            <button
-              onClick={() => {
-                setActiveTab("kursus");
-                showToast("Navigasi ke Manajemen Kursus");
-              }}
+            <Link
+              href="/admin/course"
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left w-full cursor-pointer ${
-                activeTab === "kursus"
+                isActive("/admin/course")
                   ? "bg-[#e6f3ff] text-[#0073e6] font-semibold"
                   : "text-slate-500 hover:bg-slate-50 hover:text-[#0073e6]"
               }`}
             >
               <BookOpen className="w-5 h-5 shrink-0" />
               <span>Kursus</span>
-            </button>
+            </Link>
 
-            <button
-              onClick={() => {
-                setActiveTab("pengguna");
-                showToast("Navigasi ke Manajemen Pengguna");
-              }}
+            <Link
+              href="/admin/pengguna"
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left w-full cursor-pointer ${
-                activeTab === "pengguna"
+                isActive("/admin/pengguna")
                   ? "bg-[#e6f3ff] text-[#0073e6] font-semibold"
                   : "text-slate-500 hover:bg-slate-50 hover:text-[#0073e6]"
               }`}
             >
               <Users className="w-5 h-5 shrink-0" />
               <span>Pengguna</span>
-            </button>
+            </Link>
 
-            <button
-              onClick={() => {
-                setActiveTab("pendaftaran");
-                showToast("Navigasi ke Log Pendaftaran");
-              }}
+            <Link
+              href="/admin/pendaftaran"
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left w-full cursor-pointer ${
-                activeTab === "pendaftaran"
+                isActive("/admin/pendaftaran")
                   ? "bg-[#e6f3ff] text-[#0073e6] font-semibold"
                   : "text-slate-500 hover:bg-slate-50 hover:text-[#0073e6]"
               }`}
             >
               <ClipboardList className="w-5 h-5 shrink-0" />
               <span>Pendaftaran</span>
-            </button>
+            </Link>
           </nav>
         </div>
 
@@ -111,20 +104,17 @@ export default function Sidebar({ activeTab, setActiveTab, showToast }: SidebarP
             Manajemen
           </p>
           <nav className="flex flex-col gap-1">
-            <button
-              onClick={() => {
-                setActiveTab("kategori");
-                showToast("Navigasi ke Manajemen Kategori");
-              }}
+            <Link
+              href="/admin/kategori"
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left w-full cursor-pointer ${
-                activeTab === "kategori"
+                isActive("/admin/kategori")
                   ? "bg-[#e6f3ff] text-[#0073e6] font-semibold"
                   : "text-slate-500 hover:bg-slate-50 hover:text-[#0073e6]"
               }`}
             >
               <FolderOpen className="w-5 h-5 shrink-0" />
               <span>Kategori</span>
-            </button>
+            </Link>
 
             <button
               onClick={() => showToast("Pengaturan sistem segera hadir!")}

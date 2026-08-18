@@ -38,6 +38,10 @@ function ChangeIcon({ change }: { change: number }) {
   return <Minus className="w-3 h-3 text-slate-300" />;
 }
 
+const formatNumber = (num: number) => {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+
 export default function PelajarLeaderboardPage() {
   const [period, setPeriod] = useState<Period>("minggu");
   const top3 = ALL_USERS.slice(0, 3);
@@ -82,7 +86,7 @@ export default function PelajarLeaderboardPage() {
           <div className="flex items-center gap-3 shrink-0">
             <div className="text-right">
               <p className="text-[10px] text-white/60">XP</p>
-              <p className="text-sm font-extrabold text-cyan-300">{me.xp.toLocaleString()}</p>
+              <p className="text-sm font-extrabold text-cyan-300">{formatNumber(me.xp)}</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md">
               <span className="text-sm font-extrabold text-[#008be3]">#{me.rank}</span>
@@ -106,7 +110,7 @@ export default function PelajarLeaderboardPage() {
                   </p>
                   <div className={`w-14 md:w-20 ${cfg.h} ${cfg.bar} rounded-t-2xl flex flex-col items-center justify-center gap-1 shadow-inner`}>
                     <span className={`text-base md:text-xl font-extrabold ${cfg.text}`}>{user.rank}</span>
-                    <span className={`text-[9px] font-semibold ${cfg.text} opacity-70 hidden md:block`}>{user.xp.toLocaleString()} XP</span>
+                    <span className={`text-[9px] font-semibold ${cfg.text} opacity-70 hidden md:block`}>{formatNumber(user.xp)} XP</span>
                   </div>
                 </div>
               );
@@ -165,7 +169,7 @@ export default function PelajarLeaderboardPage() {
 
               <div className="col-span-4 sm:col-span-3 md:col-span-2 text-right">
                 <span className={`text-xs md:text-sm font-extrabold ${user.me ? "text-[#008be3]" : "text-[#00172e]"}`}>
-                  {user.xp.toLocaleString()}
+                  {formatNumber(user.xp)}
                 </span>
                 <span className="text-[10px] text-slate-400 ml-0.5">XP</span>
               </div>

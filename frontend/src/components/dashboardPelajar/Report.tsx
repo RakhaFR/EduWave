@@ -57,6 +57,10 @@ const XP_BREAKDOWN = [
   { label: "Jam Belajar", xp: 140, color: "bg-purple-400", pct: 4 },
 ];
 
+const formatNumber = (num: number) => {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+
 export default function ReportComponent() {
   const [tab, setTab] = useState<Tab>("ringkasan");
 
@@ -102,7 +106,7 @@ export default function ReportComponent() {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total XP Kamu</p>
-                  <p className="text-4xl font-extrabold text-[#008be3] leading-none">{STATS.totalXP.toLocaleString()}</p>
+                  <p className="text-4xl font-extrabold text-[#008be3] leading-none">{formatNumber(STATS.totalXP)}</p>
                   <p className="text-xs text-slate-400 mt-1">Mutiara terkumpul</p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
@@ -124,7 +128,7 @@ export default function ReportComponent() {
               <div className="mb-2">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs font-bold text-[#00172e]">Lv.{STATS.level} · {STATS.levelTitle}</span>
-                  <span className="text-xs font-semibold text-[#008be3]">{STATS.totalXP.toLocaleString()} / {STATS.nextLevelXP.toLocaleString()} XP</span>
+                  <span className="text-xs font-semibold text-[#008be3]">{formatNumber(STATS.totalXP)} / {formatNumber(STATS.nextLevelXP)} XP</span>
                 </div>
                 <div className="h-3 rounded-full bg-slate-100 overflow-hidden">
                   <div
@@ -132,7 +136,7 @@ export default function ReportComponent() {
                     style={{ width: `${progressToNext}%` }}
                   />
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1 text-right">Butuh {(STATS.nextLevelXP - STATS.totalXP).toLocaleString()} XP lagi ke Lv.{STATS.level + 1}</p>
+                <p className="text-[10px] text-slate-400 mt-1 text-right">Butuh {formatNumber(STATS.nextLevelXP - STATS.totalXP)} XP lagi ke Lv.{STATS.level + 1}</p>
               </div>
             </div>
 
@@ -167,7 +171,7 @@ export default function ReportComponent() {
                       />
                     </div>
                     <div className="flex items-center gap-2 w-24 justify-end">
-                      <span className="text-[11px] font-bold text-[#00172e]">{item.xp.toLocaleString()} XP</span>
+                      <span className="text-[11px] font-bold text-[#00172e]">{formatNumber(item.xp)} XP</span>
                       <span className="text-[10px] text-slate-400">({item.pct}%)</span>
                     </div>
                   </div>
@@ -182,7 +186,7 @@ export default function ReportComponent() {
               </div>
               <div className="flex-1">
                 <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wide">XP Minggu Ini</p>
-                <p className="text-2xl font-extrabold text-[#008be3]">{STATS.weeklyXP.toLocaleString()} <span className="text-sm font-semibold text-slate-400">XP</span></p>
+                <p className="text-2xl font-extrabold text-[#008be3]">{formatNumber(STATS.weeklyXP)} <span className="text-sm font-semibold text-slate-400">XP</span></p>
               </div>
               <div className="text-right">
                 <span className="text-[10px] font-bold bg-green-50 text-green-600 border border-green-100 px-2.5 py-1 rounded-full">
@@ -252,13 +256,13 @@ export default function ReportComponent() {
                     {row.icon}
                     <span className="text-xs text-slate-600 flex-1">{row.label}</span>
                     <span className="text-[11px] text-slate-400 font-mono">{row.calc}</span>
-                    <span className="text-xs font-bold text-[#008be3] w-16 text-right">+{row.result.toLocaleString()} XP</span>
+                    <span className="text-xs font-bold text-[#008be3] w-16 text-right">+{formatNumber(row.result)} XP</span>
                   </div>
                 ))}
               </div>
               <div className="border-t border-slate-100 pt-3 flex items-center justify-between">
                 <p className="text-sm font-bold text-[#00172e]">Total XP</p>
-                <p className="text-xl font-extrabold text-[#008be3]">{STATS.totalXP.toLocaleString()} XP</p>
+                <p className="text-xl font-extrabold text-[#008be3]">{formatNumber(STATS.totalXP)} XP</p>
               </div>
             </div>
 
