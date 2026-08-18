@@ -5,29 +5,29 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
-  Home, Users, GraduationCap, BookOpen, Library,
-  BarChart2, Play, Bell, Search, ChevronRight,
+  Home, BookOpen, Users, Users2, Trophy, BarChart2, GraduationCap,
+  Play, Bell, Search, ChevronRight,
   LogOut, ChevronDown, Menu, X,
 } from "lucide-react";
 import FloatingBubbles from "@/components/ui/FloatingBubbles";
 
 const NAV_ITEMS = [
-  { icon: <Home className="w-5 h-5" />,          label: "Home",       href: "/dashboard" },
-  { icon: <Users className="w-5 h-5" />,         label: "Students",   href: "#" },
-  { icon: <GraduationCap className="w-5 h-5" />, label: "Teacher",    href: "#" },
-  { icon: <BookOpen className="w-5 h-5" />,      label: "Course",     href: "/course" },
-  { icon: <Play className="w-5 h-5" />,          label: "Live Class", href: "#" },
-  { icon: <Library className="w-5 h-5" />,       label: "Library",    href: "#" },
-  { icon: <BarChart2 className="w-5 h-5" />,     label: "Reports",    href: "#" },
+  { icon: <Home className="w-5 h-5" />,           label: "Home",        href: "/dashboard" },
+  { icon: <BookOpen className="w-5 h-5" />,       label: "Course",      href: "/course" },
+  { icon: <Play className="w-5 h-5" />,           label: "Live Class",  href: "/liveClass" },
+  { icon: <Users2 className="w-5 h-5" />,         label: "Study Room",  href: "/study-room" },
+  { icon: <Trophy className="w-5 h-5" />,         label: "Leaderboard", href: "/leaderboard" },
+  { icon: <GraduationCap className="w-5 h-5" />,  label: "Pembimbing",  href: "/pembimbing" },
+  { icon: <BarChart2 className="w-5 h-5" />,      label: "Report",      href: "/report" },
 ];
 
-// Bottom nav mobile — hanya item utama
+// Bottom nav mobile — item utama (tanpa admin items)
 const BOTTOM_NAV = [
-  { icon: <Home className="w-5 h-5" />,     label: "Home",    href: "/dashboard" },
-  { icon: <BookOpen className="w-5 h-5" />, label: "Course",  href: "/course" },
-  { icon: <Play className="w-5 h-5" />,     label: "Live",    href: "#" },
-  { icon: <Library className="w-5 h-5" />,  label: "Library", href: "#" },
-  { icon: <BarChart2 className="w-5 h-5" />,label: "Reports", href: "#" },
+  { icon: <Home className="w-5 h-5" />,          label: "Home",   href: "/dashboard" },
+  { icon: <BookOpen className="w-5 h-5" />,      label: "Course", href: "/course" },
+  { icon: <Trophy className="w-5 h-5" />,        label: "Rank",   href: "/leaderboard" },
+  { icon: <Users2 className="w-5 h-5" />,        label: "Room",   href: "/study-room" },
+  { icon: <BarChart2 className="w-5 h-5" />,     label: "Report", href: "/report" },
 ];
 
 interface DashboardLayoutProps {
