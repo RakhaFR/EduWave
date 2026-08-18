@@ -72,25 +72,35 @@
 
 
 ### Phase 4.6 — Study Rooms & Realtime
-- [ ] StudyRoomController: index, store, show, join, leave, destroy
-- [ ] RoomMessageController: index (fetch history), store (send message)
+- [x] StudyRoomController implemented: index, store, show, join, leave, destroy
+- [x] RoomMessageController implemented: index (fetch history), store (send message)
 - [ ] Broadcasting events + `routes/channels.php` auth for `private-study-room.{room_id}`
 - [ ] Document `study_room_participants` schema back into web-analysis.md (added ad-hoc in Phase 4.1, not yet in the spec doc)
 
+> **Phase 4.6 audit (2026-08-18):** Controller methods, requests, models, migrations, policy, four broadcast events, the channel callback, README documentation, and 22 feature tests exist. Phase 4.6 is not operationally complete: no study-room routes are registered in `routes/api.php`, `routes/channels.php` is not loaded by `bootstrap/app.php`, and no `/broadcasting/auth` route is available. `php artisan test tests/Feature/StudyRoomTest.php` currently reports 22 failures because the endpoints return 404.
+
+- [ ] Register all 8 study-room API routes under `auth:sanctum` and verify with `php artisan route:list --path=study-rooms`
+- [ ] Load `routes/channels.php` and register broadcast authentication compatible with Sanctum Bearer tokens
+- [ ] Resolve the `max_capacity` mismatch: request allows 1–1000, while README/tests expect 2–100
+- [ ] Add tests for broadcast event dispatch and participant/non-participant channel authorization
+- [ ] Run `php artisan test tests/Feature/StudyRoomTest.php` successfully
+
 ### Phase 4.7 — Mascot & Achievements
-- [ ] MascotController: catalog, inventory, purchase, equip
-- [ ] AchievementController: list, user achievements
-- [ ] GamificationService: pearls earn/spend, XP award, achievement condition checks
+- [x] MascotController: catalog, inventory, purchase, equip
+- [x] AchievementController: list, user achievements
+- [x] GamificationService: pearls earn/spend, XP award, achievement condition checks
 
 ### Phase 4.8 — AI Assistant
 - [ ] AiController: chat, history, clearHistory, recommendations
 - [ ] AiService wrapping `openai-php/laravel`
 - [ ] ProcessAiResponse job
 
+> **Note:** Phase 4.8 intentionally deferred until AI integration requirements are finalized.
+
 ### Phase 4.9 — Admin
-- [ ] Admin/UserController: index, updateRole, destroy
-- [ ] Admin/CourseController, Admin/ExamController: moderation views
-- [ ] Admin/AnalyticsController: overview stats
+- [x] Admin/UserController: index, updateRole, destroy
+- [x] Admin/CourseController: index, updateStatus
+- [x] Admin/AnalyticsController: overview stats
 
 ### Cross-cutting (apply in every sub-phase above)
 - [ ] Consistent API response formatting: success, data, error, meta
@@ -120,7 +130,7 @@
 - [x] Add public authentication routes for register, login, forgot password, and reset password.
 - [x] Add protected authentication routes for logout and me under Sanctum middleware.
 - [x] Add protected user routes for me, update profile, change password, stats, mascot, achievements, and user detail endpoints.
-- [ ] Add admin-only user management routes for listing users, updating roles, and deleting users.
+- [x] Add admin-only user management routes for listing users, updating roles, and deleting users.
 - [x] Add public course listing and detail routes.
 - [x] Add authenticated course enroll, progress, and lesson access routes.
 - [x] Add admin/instructor routes for course creation, update, and deletion.
@@ -129,7 +139,7 @@
 - [x] Add exam show, attempt creation, submit, and attempt history routes for authenticated users.
 - [x] Add admin/instructor exam create, update, and delete routes.
 - [x] Add leaderboard endpoints for global and weekly rankings (monthly and course-specific dropped per Phase 4.5 notes).
-- [ ] Add study room routes for list, create, show, join, leave, destroy, and message retrieval.
+- [ ] Add authenticated study room routes for list, create, show, join, leave, destroy, message history retrieval, and message sending (8 routes total).
 - [ ] Register `routes/channels.php` authorization for the `private-study-room.{room_id}` Reverb channel — without this, WebSocket connections won't authorize.
 - [ ] Add AI Assistant routes: chat, chat/history (get + delete), recommendations, rate-limited via the `ai` throttle.
 - [ ] Ensure route names and controller mappings are consistent with the frontend API contract.
@@ -147,9 +157,9 @@
 - [x] Phase 4.4: Controllers — Exams & Attempts
 - [x] Phase 4.5: Controllers — Leaderboard
 - [ ] Phase 4.6: Controllers — Study Rooms & Realtime
-- [ ] Phase 4.7: Controllers — Mascot & Achievements
-- [ ] Phase 4.8: Controllers — AI Assistant
-- [ ] Phase 4.9: Controllers — Admin
+- [x] Phase 4.7: Controllers — Mascot & Achievements
+- [ ] Phase 4.8: Controllers — AI Assistant (deferred)
+- [x] Phase 4.9: Controllers — Admin
 - [ ] Phase 5: API routes and authentication boundaries
 - [ ] Phase 6: Feature testing for key flows
 - [ ] Phase 7: API documentation and frontend contract review
