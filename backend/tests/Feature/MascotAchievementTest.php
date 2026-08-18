@@ -6,10 +6,12 @@ use App\Models\Achievement;
 use App\Models\Mascot;
 use App\Models\User;
 use App\Services\GamificationService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class MascotAchievementTest extends TestCase
 {
+    use RefreshDatabase;
     protected $gamificationService;
 
     protected function setUp(): void

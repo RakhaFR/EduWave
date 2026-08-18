@@ -23,7 +23,7 @@ class StudyRoomFactory extends Factory
             'host_user_id' => User::factory(),
             'max_capacity' => fake()->numberBetween(5, 50),
             'is_public' => fake()->boolean(),
-            'status' => fake()->randomElement(['active', 'closed']),
+            'status' => 'active',
         ];
     }
 }

@@ -155,7 +155,7 @@ class MascotController extends Controller
             // Add mascot to user's inventory
             $user->mascots()->attach($mascot->id, [
                 'is_active' => false,
-                'accessories' => null,
+                'accessories' => '{}',
                 'unlocked_at' => now(),
             ]);
 
@@ -253,7 +253,7 @@ class MascotController extends Controller
         // Activate and update accessories for the selected mascot
         $user->mascots()->updateExistingPivot($mascotId, [
             'is_active' => true,
-            'accessories' => $request->accessories ? json_encode($request->accessories) : null,
+            'accessories' => $request->accessories ? json_encode($request->accessories) : '{}',
         ]);
 
         $mascot = Mascot::find($mascotId);

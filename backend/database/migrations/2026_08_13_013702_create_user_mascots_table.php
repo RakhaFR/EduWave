@@ -15,7 +15,7 @@ return new class extends Migration
             $table->uuid('user_id');
             $table->uuid('mascot_id');
             $table->boolean('is_active')->default(false);
-            $table->json('accessories')->default('{}');
+            $table->json('accessories')->nullable()->default('{}');
             $table->timestamp('unlocked_at')->useCurrent();
             $table->primary(['user_id', 'mascot_id']);
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();

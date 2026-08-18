@@ -16,7 +16,7 @@ class StoreStudyRoomRequest extends BaseRequest
         return [
             'name' => ['required', 'string', 'max:100'],
             'topic' => ['nullable', 'string'],
-            'max_capacity' => ['nullable', 'integer', 'min:1', 'max:1000'],
+            'max_capacity' => ['nullable', 'integer', 'min:2', 'max:1000'],
             'is_public' => ['nullable', 'boolean'],
         ];
     }
