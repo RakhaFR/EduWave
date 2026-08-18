@@ -1,21 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
   ChevronRight, Trash2, Trophy,
-  Flame, Target, Calendar, ChevronDown, Users, LogOut,
+  Flame, Target, Calendar, BookOpen
 } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-
-const MY_COURSES = [
-  { id: 1, title: "Dasar-Dasar Pemrograman Web Bawah Laut", instructor: "Kak Ariel", progress: 75,  img: "/ocean-bg.jpg"   },
-  { id: 2, title: "React & Next.js: Selami Framework Modern",  instructor: "Kak Dina",  progress: 40,  img: "/ocean-bg2.webp" },
-  { id: 3, title: "Desain UI/UX: Arus Kreativitas Digital",    instructor: "Kak Sekar", progress: 20,  img: "/ocean-bg3.webp" },
-  { id: 4, title: "Bahasa Inggris Intensif: Level Penyelam",   instructor: "Kak Mira",  progress: 60,  img: "/ocean-bg.jpg"   },
-];
+import { courseService, Course } from "@/services/courseService";
 
 const LEADERBOARD = [
   { rank: 4, name: "Rasya Raya Agung", xp: 3200, me: true  },
@@ -38,6 +32,43 @@ export default function DashboardHome() {
   const { user } = useCurrentUser();
   const displayName = user?.full_name || user?.username || "Penyelam EduWave";
 
+  const [myCourses, setMyCourses] = useState<(Course & { progress_pct: number })[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(true);
+
+  // Dynamic XP progress percentage (target level 1000 XP)
+  const xpVal = user?.xp ?? 0;
+  const xpPct = Math.min(100, Math.max(0, Math.round((xpVal % 1000) / 10)));
+
+  useEffect(() => {
+    async function loadMyCourses() {
+      setLoadingCourses(true);
+      try {
+        const res = await courseService.getAllCourses();
+        if (res.success && res.data) {
+          const list: (Course & { progress_pct: number })[] = [];
+          for (const c of res.data) {
+            try {
+              const p = await courseService.getCourseProgress(c.id);
+              if (p.success && p.data?.enrollment) {
+                list.push({ ...c, progress_pct: p.data.enrollment.progress_pct || 0 });
+              }
+            } catch (e) {
+              // Not enrolled
+            }
+          }
+          setMyCourses(list);
+        }
+      } catch (err) {
+        console.error("Gagal memuat kursus pengguna:", err);
+      } finally {
+        setLoadingCourses(false);
+      }
+    }
+    loadMyCourses();
+  }, []);
+
+  const completedCount = myCourses.filter((c) => c.progress_pct >= 100).length;
+
   return (
     <DashboardLayout searchPlaceholder="Search...">
       <main className="px-4 md:px-8 py-4 md:py-6 flex flex-col gap-6">
@@ -55,7 +86,7 @@ export default function DashboardHome() {
             <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#00172e] mb-4 md:mb-5">
               Halo, <span className="text-[#008be3]">{displayName}</span>
             </h1>
-            <Link href="/pelajar/course"
+            <Link href="/pelajar/all-course"
               className="inline-flex items-center gap-2 rounded-xl bg-[#008be3] px-5 py-2 md:px-6 md:py-2.5 text-sm font-bold text-white hover:bg-[#0078c8] transition-colors shadow-md shadow-[#008be3]/30">
               Mulai Belajar <ChevronRight className="w-4 h-4" />
             </Link>
@@ -72,35 +103,55 @@ export default function DashboardHome() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-bold text-white">Kursus Saya</h2>
-              <Link href="/course" className="text-xs text-white/80 font-semibold hover:underline flex items-center gap-1">
+              <Link href="/pelajar/my-courses" className="text-xs text-white/80 font-semibold hover:underline flex items-center gap-1">
                 Lihat Semua <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {MY_COURSES.map((course) => (
-                <Link key={course.id} href={`/course/${course.id}`}
-                  className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col">
-                  <div className="relative h-32 md:h-36 bg-[#c9e8ff]">
-                    <Image src={course.img} alt={course.title} fill sizes="300px" className="object-cover" />
-                  </div>
-                  <div className="p-3 flex flex-col flex-1">
-                    <p className="text-xs font-bold text-[#00172e] line-clamp-2 mb-0.5 min-h-[2.5rem]">{course.title}</p>
-                    <p className="text-[10px] text-slate-400 mb-2">{course.instructor} &bull; 2 jam yang lalu</p>
-                    <div className="mt-auto">
-                      <div className="h-1.5 rounded-full bg-slate-100 mb-1">
-                        <div className="h-1.5 rounded-full bg-green-400" style={{ width: `${course.progress}%` }} />
-                      </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-[10px] text-green-500 font-semibold">Progres {course.progress}%</span>
-                        <button onClick={(e) => e.preventDefault()} className="text-red-400 hover:text-red-500 transition-colors">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+
+            {loadingCourses ? (
+              <div className="bg-white rounded-2xl p-8 flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-[#008be3] border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : myCourses.length === 0 ? (
+              <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
+                <BookOpen className="w-10 h-10 text-[#008be3] mx-auto mb-2 opacity-50" />
+                <p className="text-xs font-semibold text-slate-600 mb-3">Anda belum mengikuti kursus apapun.</p>
+                <Link
+                  href="/pelajar/all-course"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-[#008be3] px-4 py-2 rounded-xl hover:bg-[#0078c8] transition-colors"
+                >
+                  Jelajahi All Course <ChevronRight className="w-3 h-3" />
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {myCourses.map((course) => (
+                  <Link key={course.id} href={`/course/${course.id}`}
+                    className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col">
+                    <div className="relative h-32 md:h-36 bg-[#c9e8ff]">
+                      <img
+                        src={course.thumbnail_url || "/ocean-bg.jpg"}
+                        alt={course.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).src = "/ocean-bg.jpg"; }}
+                      />
+                    </div>
+                    <div className="p-3 flex flex-col flex-1">
+                      <p className="text-xs font-bold text-[#00172e] line-clamp-2 mb-0.5 min-h-[2.5rem]">{course.title}</p>
+                      <p className="text-[10px] text-slate-400 mb-2">{course.instructor?.full_name || "Instruktur EduWave"}</p>
+                      <div className="mt-auto">
+                        <div className="h-1.5 rounded-full bg-slate-100 mb-1">
+                          <div className="h-1.5 rounded-full bg-green-400" style={{ width: `${course.progress_pct}%` }} />
+                        </div>
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-[10px] text-green-500 font-semibold">Progres {Math.round(course.progress_pct)}%</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right widget */}
@@ -126,10 +177,13 @@ export default function DashboardHome() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] text-slate-400">XP Selesai</span>
-                  <span className="text-[10px] font-semibold text-[#008be3]">{formatNumber(user?.xp ?? 0)} XP</span>
+                  <span className="text-[10px] font-semibold text-[#008be3]">{formatNumber(xpVal)} XP</span>
                 </div>
-                <div className="h-2 rounded-full bg-slate-100">
-                  <div className="h-2 rounded-full bg-gradient-to-r from-[#008be3] to-cyan-400 w-[64%]" />
+                <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                  <div
+                    className="h-2 rounded-full bg-gradient-to-r from-[#008be3] to-cyan-400 transition-all duration-500"
+                    style={{ width: `${xpPct}%` }}
+                  />
                 </div>
               </div>
               <div className="flex items-center gap-2 rounded-xl bg-orange-50 border border-orange-100 px-3 py-2">
@@ -144,7 +198,7 @@ export default function DashboardHome() {
                   <Target className="w-4 h-4 text-[#008be3] shrink-0" />
                   <div>
                     <p className="text-[10px] text-slate-400">Kursus Selesai</p>
-                    <p className="text-xs font-extrabold text-[#00172e]">2 / 4</p>
+                    <p className="text-xs font-extrabold text-[#00172e]">{completedCount} / {myCourses.length}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 rounded-xl bg-[#f0f7ff] px-3 py-2">
@@ -183,7 +237,7 @@ export default function DashboardHome() {
                   </div>
                 ))}
               </div>
-              <Link href="/leaderboard" className="mt-3 flex items-center justify-center gap-1 text-xs text-[#008be3] font-semibold hover:underline">
+              <Link href="/pelajar/leaderboard" className="mt-3 flex items-center justify-center gap-1 text-xs text-[#008be3] font-semibold hover:underline">
                 Lihat semua <ChevronRight className="w-3 h-3" />
               </Link>
             </div>

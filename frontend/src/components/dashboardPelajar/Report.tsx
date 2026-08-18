@@ -6,6 +6,7 @@ import {
   Star, TrendingUp, Award, ChevronUp, CheckCircle2, XCircle, Minus,
 } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 type Tab = "ringkasan" | "kalkulasi" | "riwayat";
 
@@ -63,8 +64,14 @@ const formatNumber = (num: number) => {
 
 export default function ReportComponent() {
   const [tab, setTab] = useState<Tab>("ringkasan");
+  const { user } = useCurrentUser();
 
-  const progressToNext = Math.round((STATS.totalXP / STATS.nextLevelXP) * 100);
+  const userXP = user?.xp || 0;
+  const userLevel = user?.level || 1;
+  const nextLevelXP = userLevel * 1000;
+  const currentLevelBaseXP = (userLevel - 1) * 1000;
+  const xpInCurrentLevel = userXP - currentLevelBaseXP;
+  const progressToNext = Math.min(100, Math.max(0, Math.round((xpInCurrentLevel / 1000) * 100)));
   const rankChange = STATS.prevRank - STATS.rank;
 
   return (
@@ -106,8 +113,8 @@ export default function ReportComponent() {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total XP Kamu</p>
-                  <p className="text-4xl font-extrabold text-[#008be3] leading-none">{formatNumber(STATS.totalXP)}</p>
-                  <p className="text-xs text-slate-400 mt-1">Mutiara terkumpul</p>
+                  <p className="text-4xl font-extrabold text-[#008be3] leading-none">{formatNumber(userXP)}</p>
+                  <p className="text-xs text-slate-400 mt-1">{user?.pearls ?? 0} Mutiara terkumpul</p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <div className="flex items-center gap-1.5 bg-[#f0f7ff] rounded-xl px-3 py-1.5">
@@ -127,8 +134,8 @@ export default function ReportComponent() {
               {/* Level progress */}
               <div className="mb-2">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-bold text-[#00172e]">Lv.{STATS.level} · {STATS.levelTitle}</span>
-                  <span className="text-xs font-semibold text-[#008be3]">{formatNumber(STATS.totalXP)} / {formatNumber(STATS.nextLevelXP)} XP</span>
+                  <span className="text-xs font-bold text-[#00172e]">Lv.{userLevel} · Penyelam</span>
+                  <span className="text-xs font-semibold text-[#008be3]">{formatNumber(userXP)} / {formatNumber(nextLevelXP)} XP</span>
                 </div>
                 <div className="h-3 rounded-full bg-slate-100 overflow-hidden">
                   <div
@@ -136,7 +143,7 @@ export default function ReportComponent() {
                     style={{ width: `${progressToNext}%` }}
                   />
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1 text-right">Butuh {formatNumber(STATS.nextLevelXP - STATS.totalXP)} XP lagi ke Lv.{STATS.level + 1}</p>
+                <p className="text-[10px] text-slate-400 mt-1 text-right">Butuh {formatNumber(Math.max(0, nextLevelXP - userXP))} XP lagi ke Lv.{userLevel + 1}</p>
               </div>
             </div>
 
