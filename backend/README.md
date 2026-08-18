@@ -89,6 +89,21 @@ Authorization: Bearer <sanctum_plain_text_token>
 
 Base URL: `/api/v1`
 
+**Column legend:** ✓ = confirmed passing in the latest full Collection Runner pass · ⚠️ = tested and currently failing, see Known Issues below · ☐ = not yet exercised by the test suite
+
+### Known Issues (from Collection Runner, 2026-08-13 08:47 AM — 66 assertions, 4 failed)
+
+| Request | Failed Assertion | Notes |
+|---|---|---|
+| `2.1 Update Profile` | Response envelope structure | Status 200 is correct, but the response body shape doesn't match what's documented. Needs a side-by-side diff of actual vs. expected — possibly related to the `current_password`-for-email/username change added after this test was written. |
+| `3.2 Index Courses as Instructor (Draft Visible)` | Draft courses visible to instructor | Status 200 is correct, but drafts aren't showing up for the owning instructor. `3.1` (guest, draft excluded) passes — this is specifically the instructor-visibility half of `CourseController::index` from Phase 4.3 not working as specified. |
+| `7.3 Malformed JSON Body` | Status code is 400 or 500 Bad Request | Actual status wasn't either — check what it actually returned; likely malformed JSON is being silently parsed as empty rather than rejected. |
+| `7.6 Absurdly Large Number in Integer Field` | Handled safely without unhandled 500 error | Likely a raw DB integer-overflow error bubbling up unhandled instead of a clean 422 — no upper-bound validation on the relevant integer field(s). |
+
+All other exercised endpoints (32 of 36 requests, 62 of 66 assertions) passed cleanly in this run.
+
+
+
 | Group | Method | Endpoint | Auth | Description | Tested? |
 |---|---|---|---|---|---|
 | **Auth** | `POST` | `/api/v1/auth/register` | No | Register a new user account | ✓ |
@@ -98,17 +113,17 @@ Base URL: `/api/v1`
 | **Auth** | `POST` | `/api/v1/auth/logout` | Yes | Revoke current authenticated token | ☐ |
 | **Auth** | `GET` | `/api/v1/auth/me` | Yes | Fetch basic auth user state | ✓ |
 | **User** | `GET` | `/api/v1/users/me` | Yes | Get detailed authenticated user profile | ☐ |
-| **User** | `PUT` | `/api/v1/users/me` | Yes | Update user profile details | ✓ |
+| **User** | `PUT` | `/api/v1/users/me` | Yes | Update user profile details | ⚠️ |
 | **User** | `PUT` | `/api/v1/users/me/password` | Yes | Change user password (revokes tokens) | ✓ |
 | **User** | `GET` | `/api/v1/users/me/stats` | Yes | Get gamification stats (pearls, xp, level, streak) | ☐ |
 | **User** | `PUT` | `/api/v1/users/me/mascot` | Yes | Equip mascot and update custom accessories | ☐ |
 | **User** | `GET` | `/api/v1/users/me/achievements` | Yes | Fetch list of unlocked user achievements | ☐ |
-| **Course** | `GET` | `/api/v1/courses` | No | List published courses (filterable by category, difficulty, search, sort) | ✓ |
+| **Course** | `GET` | `/api/v1/courses` | No | List published courses (filterable by category, difficulty, search, sort) | ⚠️ |
 | **Course** | `GET` | `/api/v1/courses/{course}` | No | Show course details with lesson outline | ✓ |
 | **Course** | `POST` | `/api/v1/courses` | Instructor/Admin | Create a new course | ☐ |
 | **Course** | `PUT` | `/api/v1/courses/{course}` | Instructor/Admin | Update course details | ☐ |
 | **Course** | `DELETE` | `/api/v1/courses/{course}` | Instructor/Admin | Soft-delete a course | ✓ |
-| **Enrollment** | `POST` | `/api/v1/courses/{course}/enroll` | Yes | Enroll authenticated user in a course | ☐ |
+| **Enrollment** | `POST` | `/api/v1/courses/{course}/enroll` | Yes | Enroll authenticated user in a course | ✓ |
 | **Enrollment** | `DELETE` | `/api/v1/courses/{course}/enroll` | Yes | Unenroll user from a course | ☐ |
 | **Enrollment** | `GET` | `/api/v1/courses/{course}/progress` | Yes | Get course enrollment and lesson completion status | ✓ |
 | **Lesson** | `GET` | `/api/v1/courses/{course}/lessons` | Yes | List lessons for a course (preview-filtered for non-enrolled) | ☐ |
