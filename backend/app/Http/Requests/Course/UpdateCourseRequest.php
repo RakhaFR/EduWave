@@ -22,8 +22,8 @@ class UpdateCourseRequest extends BaseRequest
             'thumbnail_url' => ['sometimes', 'nullable', 'url'],
             'trailer_url' => ['sometimes', 'nullable', 'url'],
             'status' => ['sometimes', 'nullable', 'in:draft,published,archived'],
-            'pearls_reward' => ['sometimes', 'integer', 'min:0'],
-            'duration_minutes' => ['sometimes', 'integer', 'min:0'],
+            'pearls_reward' => ['sometimes', 'integer', 'min:0', 'max:1000000'],
+            'duration_minutes' => ['sometimes', 'integer', 'min:0', 'max:100000'],
         ];
     }
 }

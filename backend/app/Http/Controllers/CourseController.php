@@ -22,8 +22,14 @@ class CourseController extends ApiController
 
         // Role-based visibility: non-admin/instructor only see published
         $user = $request->user();
-        if (!$user || !in_array($user->role, ['admin', 'instructor'])) {
+        if (! $user || ! in_array($user->role, ['admin', 'instructor'])) {
             $query->where('status', 'published');
+        } elseif ($user && $user->role === 'instructor') {
+            // Instructors see published + their own drafts/archived
+            $query->where(function ($q) use ($user) {
+                $q->where('status', 'published')
+                    ->orWhere('instructor_id', $user->id);
+            });
         }
 
         // Filters
@@ -38,7 +44,7 @@ class CourseController extends ApiController
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -46,7 +52,7 @@ class CourseController extends ApiController
         $sort = $request->query('sort', 'newest');
         match ($sort) {
             'popular' => $query->orderByDesc('enrollments_count'),
-            default   => $query->orderByDesc('created_at'),
+            default => $query->orderByDesc('created_at'),
         };
 
         $perPage = min((int) $request->query('per_page', 12), 50);
@@ -62,21 +68,21 @@ class CourseController extends ApiController
     {
         // Non-admin/instructor can only see published courses
         $user = $request->user();
-        if ((!$user || !in_array($user->role, ['admin', 'instructor'])) && $course->status !== 'published') {
+        if ((! $user || ! in_array($user->role, ['admin', 'instructor'])) && $course->status !== 'published') {
             return $this->error('COURSE_NOT_FOUND', 'Kursus tidak ditemukan.', 404);
         }
 
         $course->load('instructor:id,full_name,avatar_url')
-               ->loadCount(['lessons', 'enrollments']);
+            ->loadCount(['lessons', 'enrollments']);
 
         $lessons = $course->lessons()->orderBy('order')->get()->map(fn ($lesson) => [
-            'id'               => $lesson->id,
-            'title'            => $lesson->title,
-            'type'             => $lesson->type,
+            'id' => $lesson->id,
+            'title' => $lesson->title,
+            'type' => $lesson->type,
             'duration_minutes' => $lesson->duration_minutes,
-            'order'            => $lesson->order,
-            'xp_reward'        => $lesson->xp_reward,
-            'is_preview'       => $lesson->is_preview,
+            'order' => $lesson->order,
+            'xp_reward' => $lesson->xp_reward,
+            'is_preview' => $lesson->is_preview,
         ]);
 
         return $this->success(array_merge($this->formatCourse($course), ['lessons' => $lessons]));
@@ -136,25 +142,25 @@ class CourseController extends ApiController
     private function formatCourse(Course $course): array
     {
         return [
-            'id'               => $course->id,
-            'title'            => $course->title,
-            'description'      => $course->description,
-            'instructor'       => $course->instructor ? [
-                'id'         => $course->instructor->id,
-                'full_name'  => $course->instructor->full_name,
+            'id' => $course->id,
+            'title' => $course->title,
+            'description' => $course->description,
+            'instructor' => $course->instructor ? [
+                'id' => $course->instructor->id,
+                'full_name' => $course->instructor->full_name,
                 'avatar_url' => $course->instructor->avatar_url,
             ] : null,
-            'category'         => $course->category,
-            'difficulty'       => $course->difficulty,
-            'thumbnail_url'    => $course->thumbnail_url,
-            'trailer_url'      => $course->trailer_url,
+            'category' => $course->category,
+            'difficulty' => $course->difficulty,
+            'thumbnail_url' => $course->thumbnail_url,
+            'trailer_url' => $course->trailer_url,
             'duration_minutes' => $course->duration_minutes,
-            'lesson_count'     => $course->lessons_count ?? 0,
-            'enrolled_count'   => $course->enrollments_count ?? 0,
-            'status'           => $course->status,
-            'pearls_reward'    => $course->pearls_reward,
-            'created_at'       => $course->created_at,
-            'updated_at'       => $course->updated_at,
+            'lesson_count' => $course->lessons_count ?? 0,
+            'enrolled_count' => $course->enrollments_count ?? 0,
+            'status' => $course->status,
+            'pearls_reward' => $course->pearls_reward,
+            'created_at' => $course->created_at,
+            'updated_at' => $course->updated_at,
         ];
     }
 }

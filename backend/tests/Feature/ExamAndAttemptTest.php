@@ -32,16 +32,16 @@ class ExamAndAttemptTest extends TestCase
         $instructor = $this->instructor();
         $course = Course::factory()->create([
             'instructor_id' => $instructor->id,
-            'status'        => 'published',
+            'status' => 'published',
         ]);
 
         return Exam::factory()->create(array_merge([
-            'course_id'      => $course->id,
-            'title'          => 'Ujian Laravel',
+            'course_id' => $course->id,
+            'title' => 'Ujian Laravel',
             'time_limit_sec' => 3600,
-            'passing_score'  => 70,
-            'max_attempts'   => 2,
-            'pearls_reward'  => 30,
+            'passing_score' => 70,
+            'max_attempts' => 2,
+            'pearls_reward' => 30,
         ], $attributes));
     }
 
@@ -55,17 +55,17 @@ class ExamAndAttemptTest extends TestCase
         $exam = $this->createExam();
 
         ExamQuestion::factory()->create([
-            'exam_id'        => $exam->id,
-            'question_text'  => 'Apa kepanjangan MVC?',
-            'type'           => 'multiple_choice',
-            'options'        => [
+            'exam_id' => $exam->id,
+            'question_text' => 'Apa kepanjangan MVC?',
+            'type' => 'multiple_choice',
+            'options' => [
                 ['key' => 'A', 'value' => 'Model View Controller'],
                 ['key' => 'B', 'value' => 'Main View Core'],
             ],
             'correct_answer' => 'A',
-            'explanation'    => 'MVC singkatan dari Model View Controller.',
-            'points'         => 10,
-            'order'          => 1,
+            'explanation' => 'MVC singkatan dari Model View Controller.',
+            'points' => 10,
+            'order' => 1,
         ]);
 
         $response = $this->actingAs($student)
@@ -88,10 +88,10 @@ class ExamAndAttemptTest extends TestCase
         $exam = $this->createExam();
 
         ExamQuestion::factory()->create([
-            'exam_id'        => $exam->id,
-            'question_text'  => 'Soal Ujian',
+            'exam_id' => $exam->id,
+            'question_text' => 'Soal Ujian',
             'correct_answer' => 'B',
-            'explanation'    => 'Penjelasan rahasia',
+            'explanation' => 'Penjelasan rahasia',
         ]);
 
         $response = $this->actingAs($student)
@@ -140,13 +140,13 @@ class ExamAndAttemptTest extends TestCase
 
         // Create 2 submitted attempts
         ExamAttempt::factory()->create([
-            'user_id'      => $student->id,
-            'exam_id'      => $exam->id,
+            'user_id' => $student->id,
+            'exam_id' => $exam->id,
             'submitted_at' => now()->subHours(2),
         ]);
         ExamAttempt::factory()->create([
-            'user_id'      => $student->id,
-            'exam_id'      => $exam->id,
+            'user_id' => $student->id,
+            'exam_id' => $exam->id,
             'submitted_at' => now()->subHour(),
         ]);
 
@@ -167,16 +167,16 @@ class ExamAndAttemptTest extends TestCase
         $exam = $this->createExam(['passing_score' => 70, 'pearls_reward' => 50]);
 
         $q1 = ExamQuestion::factory()->create([
-            'exam_id'        => $exam->id,
+            'exam_id' => $exam->id,
             'correct_answer' => 'A',
-            'points'         => 10,
-            'order'          => 1,
+            'points' => 10,
+            'order' => 1,
         ]);
         $q2 = ExamQuestion::factory()->create([
-            'exam_id'        => $exam->id,
+            'exam_id' => $exam->id,
             'correct_answer' => 'B',
-            'points'         => 10,
-            'order'          => 2,
+            'points' => 10,
+            'order' => 2,
         ]);
 
         $startRes = $this->actingAs($student)
@@ -211,10 +211,10 @@ class ExamAndAttemptTest extends TestCase
         $exam = $this->createExam(['passing_score' => 70, 'pearls_reward' => 50, 'max_attempts' => 3]);
 
         $q1 = ExamQuestion::factory()->create([
-            'exam_id'        => $exam->id,
+            'exam_id' => $exam->id,
             'correct_answer' => 'A',
-            'points'         => 10,
-            'order'          => 1,
+            'points' => 10,
+            'order' => 1,
         ]);
 
         // Attempt 1 -> 100% pass -> gets 50 pearls
@@ -258,7 +258,56 @@ class ExamAndAttemptTest extends TestCase
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // 6. Admin / Instructor Exam Management (CRUD)
+    // 6. XP Award Regression Test (Phase 4.5 Bug Fix)
+    // ──────────────────────────────────────────────────────────────────────────
+
+    public function test_exam_submission_actually_increments_user_xp_in_database(): void
+    {
+        $student = $this->student();
+        $initialXp = $student->xp;
+        $this->assertEquals(0, $initialXp, 'Student should start with 0 XP');
+
+        $exam = $this->createExam(['passing_score' => 70]);
+
+        $q1 = ExamQuestion::factory()->create([
+            'exam_id' => $exam->id,
+            'correct_answer' => 'A',
+            'points' => 50,
+            'order' => 1,
+        ]);
+        $q2 = ExamQuestion::factory()->create([
+            'exam_id' => $exam->id,
+            'correct_answer' => 'B',
+            'points' => 50,
+            'order' => 2,
+        ]);
+
+        $startRes = $this->actingAs($student)
+            ->postJson("/api/v1/exams/{$exam->id}/attempts");
+        $attemptId = $startRes->json('data.attempt_id');
+
+        // Submit with 100% correct answers -> score 100 -> xp_earned = 100 * 2 = 200
+        $submitRes = $this->actingAs($student)
+            ->postJson("/api/v1/exams/{$exam->id}/attempts/{$attemptId}/submit", [
+                'answers' => [
+                    ['question_id' => $q1->id, 'selected_key' => 'A'],
+                    ['question_id' => $q2->id, 'selected_key' => 'B'],
+                ],
+            ]);
+
+        $submitRes->assertStatus(200)
+            ->assertJsonPath('data.score', 100)
+            ->assertJsonPath('data.xp_earned', 200);
+
+        // REGRESSION TEST: Verify the user's XP actually increased in the database
+        // This assertion catches the Phase 4.4 bug where xp_earned was returned in response
+        // but $user->increment('xp', $xpEarned) was never called
+        $this->assertEquals(200, $student->fresh()->xp, 'User XP must actually increment in database after exam submission');
+        $this->assertDatabaseHas('users', ['id' => $student->id, 'xp' => 200]);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 7. Admin / Instructor Exam Management (CRUD)
     // ──────────────────────────────────────────────────────────────────────────
 
     public function test_instructor_can_create_and_update_exam(): void
@@ -268,12 +317,12 @@ class ExamAndAttemptTest extends TestCase
 
         // Create exam
         $res = $this->actingAs($instructor)->postJson('/api/v1/exams', [
-            'course_id'      => $course->id,
-            'title'          => 'Ujian Tengah Semester',
+            'course_id' => $course->id,
+            'title' => 'Ujian Tengah Semester',
             'time_limit_sec' => 1800,
-            'passing_score'  => 80,
-            'max_attempts'   => 3,
-            'pearls_reward'  => 40,
+            'passing_score' => 80,
+            'max_attempts' => 3,
+            'pearls_reward' => 40,
         ]);
 
         $res->assertStatus(201)

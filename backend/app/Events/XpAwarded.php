@@ -11,14 +11,14 @@ class XpAwarded
     use Dispatchable, SerializesModels;
 
     public User $user;
+
     public int $xpAmount;
+
     public string $source;
 
     /**
      * Create a new event instance.
      *
-     * @param  User  $user
-     * @param  int  $xpAmount
      * @param  string  $source  ('lesson', 'exam', 'achievement', etc.)
      */
     public function __construct(User $user, int $xpAmount, string $source)

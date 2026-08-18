@@ -71,7 +71,7 @@ class AuthController extends ApiController
             ->orWhere('username', $validated['email'])
             ->first();
 
-        if (!$user || !Hash::check($validated['password'], $user->password)) {
+        if (! $user || ! Hash::check($validated['password'], $user->password)) {
             return $this->error('AUTH_INVALID_CREDENTIALS', 'Email atau password salah.', 401);
         }
 

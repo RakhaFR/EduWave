@@ -22,8 +22,8 @@ class StoreCourseRequest extends BaseRequest
             'thumbnail_url' => ['nullable', 'url'],
             'trailer_url' => ['nullable', 'url'],
             'status' => ['nullable', 'in:draft,published,archived'],
-            'pearls_reward' => ['nullable', 'integer', 'min:0'],
-            'duration_minutes' => ['nullable', 'integer', 'min:0'],
+            'pearls_reward' => ['nullable', 'integer', 'min:0', 'max:1000000'],
+            'duration_minutes' => ['nullable', 'integer', 'min:0', 'max:100000'],
         ];
     }
 }

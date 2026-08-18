@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -17,7 +16,7 @@ return new class extends Migration
             $table->string('title', 255);
             $table->text('description')->nullable();
             $table->uuid('instructor_id')->nullable();
-            $table->enum('category', ['technology','design','marine','language','science','business'])->nullable();
+            $table->enum('category', ['technology', 'design', 'marine', 'language', 'science', 'business'])->nullable();
             $table->enum('difficulty', ['beginner', 'intermediate', 'advanced'])->nullable();
             $table->text('thumbnail_url')->nullable();
             $table->text('trailer_url')->nullable();

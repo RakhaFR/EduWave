@@ -147,14 +147,14 @@ class AuthControllerTest extends TestCase
         $user = User::factory()->create();
         $token = $user->createToken('test');
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token->plainTextToken)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token->plainTextToken)
             ->postJson('/api/v1/auth/logout');
 
         $response->assertStatus(200);
         $response->assertJson(['success' => true]);
 
         // Token should be revoked
-        $this->withHeader('Authorization', 'Bearer ' . $token->plainTextToken)
+        $this->withHeader('Authorization', 'Bearer '.$token->plainTextToken)
             ->getJson('/api/v1/auth/me')
             ->assertStatus(401);
     }
@@ -194,4 +194,3 @@ class AuthControllerTest extends TestCase
         $this->getJson('/api/v1/auth/me')->assertStatus(401);
     }
 }
-

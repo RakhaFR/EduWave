@@ -31,13 +31,13 @@ class ExamService
         Gate::forUser($user)->authorize('create', [ExamAttempt::class, $exam]);
 
         $attempt = ExamAttempt::create([
-            'user_id'      => $user->id,
-            'exam_id'      => $exam->id,
-            'started_at'   => now(),
-            'expires_at'   => now()->addSeconds($exam->time_limit_sec),
-            'answers'      => [],
-            'score'        => null,
-            'passed'       => false,
+            'user_id' => $user->id,
+            'exam_id' => $exam->id,
+            'started_at' => now(),
+            'expires_at' => now()->addSeconds($exam->time_limit_sec),
+            'answers' => [],
+            'score' => null,
+            'passed' => false,
             'submitted_at' => null,
         ]);
 
@@ -57,7 +57,7 @@ class ExamService
         $exam = $attempt->exam;
 
         // Idempotency: if already submitted, return cached result
-        if (!is_null($attempt->submitted_at)) {
+        if (! is_null($attempt->submitted_at)) {
             return $this->formatSubmittedPayload($attempt, $exam);
         }
 
@@ -75,18 +75,18 @@ class ExamService
 
             // Objective choice grading (multiple_choice, single_choice, true_false)
             $isCorrect = false;
-            if (!is_null($userAnswer) && strtolower(trim((string) $userAnswer)) === strtolower(trim((string) $q->correct_answer))) {
+            if (! is_null($userAnswer) && strtolower(trim((string) $userAnswer)) === strtolower(trim((string) $q->correct_answer))) {
                 $isCorrect = true;
                 $earnedPoints += $q->points;
                 $correctCount++;
             }
 
             $results[] = [
-                'question_id'    => $q->id,
-                'is_correct'     => $isCorrect,
-                'your_answer'    => $userAnswer,
+                'question_id' => $q->id,
+                'is_correct' => $isCorrect,
+                'your_answer' => $userAnswer,
                 'correct_answer' => $q->correct_answer,
-                'explanation'    => $q->explanation,
+                'explanation' => $q->explanation,
             ];
         }
 
@@ -112,7 +112,7 @@ class ExamService
                 ->where('id', '!=', $attempt->id)
                 ->exists();
 
-            if (!$previouslyPassed) {
+            if (! $previouslyPassed) {
                 $user->increment('pearls', $exam->pearls_reward);
                 $pearlsEarned = $exam->pearls_reward;
             }
@@ -127,16 +127,16 @@ class ExamService
         $timeTakenSeconds = $attempt->started_at ? now()->diffInSeconds($attempt->started_at) : 0;
 
         return [
-            'attempt_id'         => $attempt->id,
-            'score'              => (float) $attempt->score,
-            'passed'             => (bool) $attempt->passed,
-            'passing_score'      => (int) $exam->passing_score,
-            'pearls_earned'      => $pearlsEarned,
-            'xp_earned'          => $xpEarned,
-            'correct_count'      => $correctCount,
-            'total_count'        => $questions->count(),
+            'attempt_id' => $attempt->id,
+            'score' => (float) $attempt->score,
+            'passed' => (bool) $attempt->passed,
+            'passing_score' => (int) $exam->passing_score,
+            'pearls_earned' => $pearlsEarned,
+            'xp_earned' => $xpEarned,
+            'correct_count' => $correctCount,
+            'total_count' => $questions->count(),
             'time_taken_seconds' => $timeTakenSeconds,
-            'results'            => $results,
+            'results' => $results,
         ];
     }
 
@@ -152,14 +152,14 @@ class ExamService
 
         return [
             'attempt_id' => $attempt->id,
-            'exam'       => [
-                'id'              => $exam->id,
-                'title'           => $exam->title,
-                'time_limit_sec'  => $exam->time_limit_sec,
-                'question_count'  => $questions->count(),
-                'passing_score'   => $exam->passing_score,
+            'exam' => [
+                'id' => $exam->id,
+                'title' => $exam->title,
+                'time_limit_sec' => $exam->time_limit_sec,
+                'question_count' => $questions->count(),
+                'passing_score' => $exam->passing_score,
             ],
-            'questions'  => $questions,
+            'questions' => $questions,
             'started_at' => $attempt->started_at,
             'expires_at' => $attempt->expires_at,
         ];
@@ -178,18 +178,18 @@ class ExamService
 
         foreach ($questions as $q) {
             $userAnswer = $submittedMap->get($q->id)['selected_key'] ?? null;
-            $isCorrect = (!is_null($userAnswer) && strtolower(trim((string) $userAnswer)) === strtolower(trim((string) $q->correct_answer)));
+            $isCorrect = (! is_null($userAnswer) && strtolower(trim((string) $userAnswer)) === strtolower(trim((string) $q->correct_answer)));
 
             if ($isCorrect) {
                 $correctCount++;
             }
 
             $results[] = [
-                'question_id'    => $q->id,
-                'is_correct'     => $isCorrect,
-                'your_answer'    => $userAnswer,
+                'question_id' => $q->id,
+                'is_correct' => $isCorrect,
+                'your_answer' => $userAnswer,
                 'correct_answer' => $q->correct_answer,
-                'explanation'    => $q->explanation,
+                'explanation' => $q->explanation,
             ];
         }
 
@@ -198,16 +198,16 @@ class ExamService
             : 0;
 
         return [
-            'attempt_id'         => $attempt->id,
-            'score'              => (float) $attempt->score,
-            'passed'             => (bool) $attempt->passed,
-            'passing_score'      => (int) $exam->passing_score,
-            'pearls_earned'      => 0, // already awarded during submit
-            'xp_earned'          => (int) round(($attempt->score ?? 0) * 2),
-            'correct_count'      => $correctCount,
-            'total_count'        => $questions->count(),
+            'attempt_id' => $attempt->id,
+            'score' => (float) $attempt->score,
+            'passed' => (bool) $attempt->passed,
+            'passing_score' => (int) $exam->passing_score,
+            'pearls_earned' => 0, // already awarded during submit
+            'xp_earned' => (int) round(($attempt->score ?? 0) * 2),
+            'correct_count' => $correctCount,
+            'total_count' => $questions->count(),
             'time_taken_seconds' => $timeTakenSeconds,
-            'results'            => $results,
+            'results' => $results,
         ];
     }
 
@@ -218,12 +218,12 @@ class ExamService
     public static function formatQuestionWithoutAnswerKey(ExamQuestion $q): array
     {
         return [
-            'id'            => $q->id,
+            'id' => $q->id,
             'question_text' => $q->question_text,
-            'type'          => $q->type,
-            'options'       => $q->options,
-            'points'        => $q->points,
-            'order'         => $q->order,
+            'type' => $q->type,
+            'options' => $q->options,
+            'points' => $q->points,
+            'order' => $q->order,
         ];
     }
 }

@@ -19,9 +19,9 @@ class StoreLessonRequest extends BaseRequest
             'type' => ['nullable', 'in:video,text,quiz'],
             'content' => ['nullable', 'string'],
             'video_url' => ['nullable', 'url'],
-            'duration_minutes' => ['nullable', 'integer', 'min:0'],
-            'order' => ['required', 'integer', 'min:1'],
-            'xp_reward' => ['nullable', 'integer', 'min:0'],
+            'duration_minutes' => ['nullable', 'integer', 'min:0', 'max:10000'],
+            'order' => ['required', 'integer', 'min:1', 'max:10000'],
+            'xp_reward' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'is_preview' => ['nullable', 'boolean'],
         ];
     }

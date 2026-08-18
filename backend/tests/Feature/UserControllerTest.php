@@ -46,6 +46,7 @@ class UserControllerTest extends TestCase
         $user = User::factory()->create([
             'full_name' => 'Old Name',
             'bio' => 'Old bio',
+            'email' => 'test@example.com',
         ]);
 
         $response = $this->actingAs($user)->putJson('/api/v1/users/me', [
@@ -55,6 +56,26 @@ class UserControllerTest extends TestCase
         ]);
 
         $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'success',
+            'data' => [
+                'user' => [
+                    'id',
+                    'username',
+                    'email',
+                    'full_name',
+                    'role',
+                    'avatar_url',
+                    'bio',
+                    'pearls',
+                    'xp',
+                    'level',
+                    'updated_at',
+                ],
+            ],
+            'error',
+            'meta',
+        ]);
         $response->assertJson([
             'success' => true,
             'data' => [
@@ -62,6 +83,7 @@ class UserControllerTest extends TestCase
                     'full_name' => 'New Name',
                     'bio' => 'New bio',
                     'avatar_url' => 'https://example.com/avatar.jpg',
+                    'email' => 'test@example.com',
                 ],
             ],
         ]);
@@ -71,6 +93,9 @@ class UserControllerTest extends TestCase
             'full_name' => 'New Name',
             'bio' => 'New bio',
         ]);
+
+        $user->refresh();
+        $this->assertNotEquals('current_password', $user->password);
     }
 
     public function test_update_profile_email_without_password_fails()
@@ -159,7 +184,7 @@ class UserControllerTest extends TestCase
         $user->update(['password' => bcrypt($oldPassword)]);
         $token = $user->createToken('test-token');
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token->plainTextToken)
+        $response = $this->withHeader('Authorization', 'Bearer '.$token->plainTextToken)
             ->putJson('/api/v1/users/me/password', [
                 'current_password' => $oldPassword,
                 'password' => $newPassword,
@@ -170,7 +195,7 @@ class UserControllerTest extends TestCase
         $response->assertJson(['success' => true]);
 
         // Old token should be revoked
-        $this->withHeader('Authorization', 'Bearer ' . $token->plainTextToken)
+        $this->withHeader('Authorization', 'Bearer '.$token->plainTextToken)
             ->getJson('/api/v1/users/me')
             ->assertStatus(401);
 
@@ -331,4 +356,3 @@ class UserControllerTest extends TestCase
         ]);
     }
 }
-

@@ -74,7 +74,7 @@ class UserController extends ApiController
         $user = $request->user();
 
         // Verify current password
-        if (!Hash::check($validated['current_password'], $user->password)) {
+        if (! Hash::check($validated['current_password'], $user->password)) {
             return $this->error('AUTH_INVALID_CREDENTIALS', 'Password saat ini salah.', 401);
         }
 
@@ -119,7 +119,7 @@ class UserController extends ApiController
             ->where('mascot_id', $validated['mascot_id'])
             ->first();
 
-        if (!$mascotOwnership) {
+        if (! $mascotOwnership) {
             return $this->error('MASCOT_NOT_OWNED', 'Anda tidak memiliki maskot ini.', 403);
         }
 

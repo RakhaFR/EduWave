@@ -53,47 +53,47 @@ Route::prefix('v1')->group(function () {
     // ──────────────────────────────────────────────────────
     Route::middleware('auth:sanctum')->group(function () {
         // Enrollment
-        Route::post  ('courses/{course}/enroll',   [EnrollmentController::class, 'enroll']);
-        Route::delete('courses/{course}/enroll',   [EnrollmentController::class, 'unenroll']);
-        Route::get   ('courses/{course}/progress', [EnrollmentController::class, 'progress']);
+        Route::post('courses/{course}/enroll', [EnrollmentController::class, 'enroll']);
+        Route::delete('courses/{course}/enroll', [EnrollmentController::class, 'unenroll']);
+        Route::get('courses/{course}/progress', [EnrollmentController::class, 'progress']);
 
         // Lesson listing for a course
         Route::get('courses/{course}/lessons', [LessonController::class, 'index']);
 
         // Lesson access + completion
-        Route::get ('lessons/{lesson}',          [LessonController::class, 'show']);
+        Route::get('lessons/{lesson}', [LessonController::class, 'show']);
         Route::post('lessons/{lesson}/complete', [LessonController::class, 'complete']);
 
         // Exam access & attempt management
-        Route::get ('exams/{exam}',                           [ExamController::class, 'show']);
-        Route::post('exams/{exam}/attempts',                  [AttemptController::class, 'start']);
+        Route::get('exams/{exam}', [ExamController::class, 'show']);
+        Route::post('exams/{exam}/attempts', [AttemptController::class, 'start']);
         Route::post('exams/{exam}/attempts/{attempt}/submit', [AttemptController::class, 'submit']);
-        Route::get ('exams/{exam}/attempts',                  [AttemptController::class, 'index']);
-        Route::get ('exams/{exam}/attempts/{attempt}',        [AttemptController::class, 'show']);
+        Route::get('exams/{exam}/attempts', [AttemptController::class, 'index']);
+        Route::get('exams/{exam}/attempts/{attempt}', [AttemptController::class, 'show']);
 
         // Leaderboard
-        Route::get('leaderboard',        [LeaderboardController::class, 'global']);
+        Route::get('leaderboard', [LeaderboardController::class, 'global']);
         Route::get('leaderboard/weekly', [LeaderboardController::class, 'weekly']);
-        Route::get('leaderboard/me',     [LeaderboardController::class, 'me']);
+        Route::get('leaderboard/me', [LeaderboardController::class, 'me']);
 
         // Admin / Instructor only — course management
         Route::middleware('role:admin,instructor')->group(function () {
-            Route::post  ('courses',          [CourseController::class, 'store']);
-            Route::put   ('courses/{course}', [CourseController::class, 'update']);
+            Route::post('courses', [CourseController::class, 'store']);
+            Route::put('courses/{course}', [CourseController::class, 'update']);
             Route::delete('courses/{course}', [CourseController::class, 'destroy']);
         });
 
         // Admin / Instructor only — lesson management
         Route::middleware('role:admin,instructor')->group(function () {
-            Route::post  ('lessons',          [LessonController::class, 'store']);
-            Route::put   ('lessons/{lesson}', [LessonController::class, 'update']);
+            Route::post('lessons', [LessonController::class, 'store']);
+            Route::put('lessons/{lesson}', [LessonController::class, 'update']);
             Route::delete('lessons/{lesson}', [LessonController::class, 'destroy']);
         });
 
         // Admin / Instructor only — exam management
         Route::middleware('role:admin,instructor')->group(function () {
-            Route::post  ('exams',        [ExamController::class, 'store']);
-            Route::put   ('exams/{exam}', [ExamController::class, 'update']);
+            Route::post('exams', [ExamController::class, 'store']);
+            Route::put('exams/{exam}', [ExamController::class, 'update']);
             Route::delete('exams/{exam}', [ExamController::class, 'destroy']);
         });
     });
