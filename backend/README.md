@@ -89,45 +89,45 @@ Authorization: Bearer <sanctum_plain_text_token>
 
 Base URL: `/api/v1`
 
-| Group | Method | Endpoint | Auth | Description |
-|---|---|---|---|---|
-| **Auth** | `POST` | `/api/v1/auth/register` | No | Register a new user account |
-| **Auth** | `POST` | `/api/v1/auth/login` | No | Authenticate user & issue Bearer token |
-| **Auth** | `POST` | `/api/v1/auth/forgot-password` | No | Request password reset link |
-| **Auth** | `POST` | `/api/v1/auth/reset-password` | No | Reset password using reset token |
-| **Auth** | `POST` | `/api/v1/auth/logout` | Yes | Revoke current authenticated token |
-| **Auth** | `GET` | `/api/v1/auth/me` | Yes | Fetch basic auth user state |
-| **User** | `GET` | `/api/v1/users/me` | Yes | Get detailed authenticated user profile |
-| **User** | `PUT` | `/api/v1/users/me` | Yes | Update user profile details |
-| **User** | `PUT` | `/api/v1/users/me/password` | Yes | Change user password (revokes tokens) |
-| **User** | `GET` | `/api/v1/users/me/stats` | Yes | Get gamification stats (pearls, xp, level, streak) |
-| **User** | `PUT` | `/api/v1/users/me/mascot` | Yes | Equip mascot and update custom accessories |
-| **User** | `GET` | `/api/v1/users/me/achievements` | Yes | Fetch list of unlocked user achievements |
-| **Course** | `GET` | `/api/v1/courses` | No | List published courses (filterable by category, difficulty, search, sort) |
-| **Course** | `GET` | `/api/v1/courses/{course}` | No | Show course details with lesson outline |
-| **Course** | `POST` | `/api/v1/courses` | Instructor/Admin | Create a new course |
-| **Course** | `PUT` | `/api/v1/courses/{course}` | Instructor/Admin | Update course details |
-| **Course** | `DELETE` | `/api/v1/courses/{course}` | Instructor/Admin | Soft-delete a course |
-| **Enrollment** | `POST` | `/api/v1/courses/{course}/enroll` | Yes | Enroll authenticated user in a course |
-| **Enrollment** | `DELETE` | `/api/v1/courses/{course}/enroll` | Yes | Unenroll user from a course |
-| **Enrollment** | `GET` | `/api/v1/courses/{course}/progress` | Yes | Get course enrollment and lesson completion status |
-| **Lesson** | `GET` | `/api/v1/courses/{course}/lessons` | Yes | List lessons for a course (preview-filtered for non-enrolled) |
-| **Lesson** | `GET` | `/api/v1/lessons/{lesson}` | Yes | Show lesson details (gated by enrollment or preview flag) |
-| **Lesson** | `POST` | `/api/v1/lessons/{lesson}/complete` | Yes | Complete lesson, award XP & course completion pearls |
-| **Lesson** | `POST` | `/api/v1/lessons` | Instructor/Admin | Create a new lesson |
-| **Lesson** | `PUT` | `/api/v1/lessons/{lesson}` | Instructor/Admin | Update lesson content and metadata |
-| **Lesson** | `DELETE` | `/api/v1/lessons/{lesson}` | Instructor/Admin | Delete a lesson |
-| **Exam** | `GET` | `/api/v1/exams/{exam}` | Yes | Show exam details & questions (security suppressed) |
-| **Exam** | `POST` | `/api/v1/exams` | Instructor/Admin | Create a new exam |
-| **Exam** | `PUT` | `/api/v1/exams/{exam}` | Instructor/Admin | Update exam details |
-| **Exam** | `DELETE` | `/api/v1/exams/{exam}` | Instructor/Admin | Delete an exam |
-| **Attempt** | `POST` | `/api/v1/exams/{exam}/attempts` | Yes | Start a new attempt or resume active in-progress attempt |
-| **Attempt** | `POST` | `/api/v1/exams/{exam}/attempts/{attempt}/submit` | Yes | Submit attempt for auto-grading & reward calculation |
-| **Attempt** | `GET` | `/api/v1/exams/{exam}/attempts` | Yes | List authenticated user's attempt history for an exam |
-| **Attempt** | `GET` | `/api/v1/exams/{exam}/attempts/{attempt}` | Yes | View attempt details (suppressed for in-progress, review for completed) |
-| **Leaderboard** | `GET` | `/api/v1/leaderboard` | Yes | Get global all-time leaderboard rankings |
-| **Leaderboard** | `GET` | `/api/v1/leaderboard/weekly` | Yes | Get current week leaderboard rankings |
-| **Leaderboard** | `GET` | `/api/v1/leaderboard/me` | Yes | Get authenticated user's rank and neighboring users |
+| Group | Method | Endpoint | Auth | Description | Tested? |
+|---|---|---|---|---|---|
+| **Auth** | `POST` | `/api/v1/auth/register` | No | Register a new user account | ✓ |
+| **Auth** | `POST` | `/api/v1/auth/login` | No | Authenticate user & issue Bearer token | ✓ |
+| **Auth** | `POST` | `/api/v1/auth/forgot-password` | No | Request password reset link | ☐ |
+| **Auth** | `POST` | `/api/v1/auth/reset-password` | No | Reset password using reset token | ☐ |
+| **Auth** | `POST` | `/api/v1/auth/logout` | Yes | Revoke current authenticated token | ☐ |
+| **Auth** | `GET` | `/api/v1/auth/me` | Yes | Fetch basic auth user state | ✓ |
+| **User** | `GET` | `/api/v1/users/me` | Yes | Get detailed authenticated user profile | ☐ |
+| **User** | `PUT` | `/api/v1/users/me` | Yes | Update user profile details | ☐ |
+| **User** | `PUT` | `/api/v1/users/me/password` | Yes | Change user password (revokes tokens) | ☐ |
+| **User** | `GET` | `/api/v1/users/me/stats` | Yes | Get gamification stats (pearls, xp, level, streak) | ☐ |
+| **User** | `PUT` | `/api/v1/users/me/mascot` | Yes | Equip mascot and update custom accessories | ☐ |
+| **User** | `GET` | `/api/v1/users/me/achievements` | Yes | Fetch list of unlocked user achievements | ☐ |
+| **Course** | `GET` | `/api/v1/courses` | No | List published courses (filterable by category, difficulty, search, sort) | ☐ |
+| **Course** | `GET` | `/api/v1/courses/{course}` | No | Show course details with lesson outline | ☐ |
+| **Course** | `POST` | `/api/v1/courses` | Instructor/Admin | Create a new course | ☐ |
+| **Course** | `PUT` | `/api/v1/courses/{course}` | Instructor/Admin | Update course details | ☐ |
+| **Course** | `DELETE` | `/api/v1/courses/{course}` | Instructor/Admin | Soft-delete a course | ☐ |
+| **Enrollment** | `POST` | `/api/v1/courses/{course}/enroll` | Yes | Enroll authenticated user in a course | ☐ |
+| **Enrollment** | `DELETE` | `/api/v1/courses/{course}/enroll` | Yes | Unenroll user from a course | ☐ |
+| **Enrollment** | `GET` | `/api/v1/courses/{course}/progress` | Yes | Get course enrollment and lesson completion status | ☐ |
+| **Lesson** | `GET` | `/api/v1/courses/{course}/lessons` | Yes | List lessons for a course (preview-filtered for non-enrolled) | ☐ |
+| **Lesson** | `GET` | `/api/v1/lessons/{lesson}` | Yes | Show lesson details (gated by enrollment or preview flag) | ☐ |
+| **Lesson** | `POST` | `/api/v1/lessons/{lesson}/complete` | Yes | Complete lesson, award XP & course completion pearls | ☐ |
+| **Lesson** | `POST` | `/api/v1/lessons` | Instructor/Admin | Create a new lesson | ☐ |
+| **Lesson** | `PUT` | `/api/v1/lessons/{lesson}` | Instructor/Admin | Update lesson content and metadata | ☐ |
+| **Lesson** | `DELETE` | `/api/v1/lessons/{lesson}` | Instructor/Admin | Delete a lesson | ☐ |
+| **Exam** | `GET` | `/api/v1/exams/{exam}` | Yes | Show exam details & questions (security suppressed) | ☐ |
+| **Exam** | `POST` | `/api/v1/exams` | Instructor/Admin | Create a new exam | ☐ |
+| **Exam** | `PUT` | `/api/v1/exams/{exam}` | Instructor/Admin | Update exam details | ☐ |
+| **Exam** | `DELETE` | `/api/v1/exams/{exam}` | Instructor/Admin | Delete an exam | ☐ |
+| **Attempt** | `POST` | `/api/v1/exams/{exam}/attempts` | Yes | Start a new attempt or resume active in-progress attempt | ☐ |
+| **Attempt** | `POST` | `/api/v1/exams/{exam}/attempts/{attempt}/submit` | Yes | Submit attempt for auto-grading & reward calculation | ☐ |
+| **Attempt** | `GET` | `/api/v1/exams/{exam}/attempts` | Yes | List authenticated user's attempt history for an exam | ☐ |
+| **Attempt** | `GET` | `/api/v1/exams/{exam}/attempts/{attempt}` | Yes | View attempt details (suppressed for in-progress, review for completed) | ☐ |
+| **Leaderboard** | `GET` | `/api/v1/leaderboard` | Yes | Get global all-time leaderboard rankings | ☐ |
+| **Leaderboard** | `GET` | `/api/v1/leaderboard/weekly` | Yes | Get current week leaderboard rankings | ☐ |
+| **Leaderboard** | `GET` | `/api/v1/leaderboard/me` | Yes | Get authenticated user's rank and neighboring users | ☐ |
 
 ---
 
@@ -349,9 +349,13 @@ Update user profile information.
   "username": "penjelajah_baru",
   "email": "user@example.com",
   "bio": "New bio content",
-  "avatar_url": "https://example.com/new_avatar.jpg"
+  "avatar_url": "https://example.com/new_avatar.jpg",
+  "current_password": "password123"
 }
 ```
+
+**Note:** `current_password` is **required** when changing `email` or `username`. It is not required when only updating `full_name`, `bio`, or `avatar_url`.
+
 * **Success Response (`200 OK`):**
 ```json
 {
@@ -1079,5 +1083,3 @@ Get authenticated user's rank and neighboring users (context leaderboard). Retur
 ```
 
 > **Implementation Note**: Leaderboard rankings are calculated using **Redis Sorted Sets** (`ZREVRANK`, `ZREVRANGE`) for O(log N) performance. XP awards automatically update both global and weekly leaderboards via the `XpAwarded` event and `UpdateLeaderboardOnXpAwarded` listener.
-
-
