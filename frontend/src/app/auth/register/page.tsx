@@ -3,7 +3,8 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { User, Mail, GraduationCap, Presentation, ArrowLeft, Anchor, Lock, Eye, EyeOff } from "lucide-react";
+import { User, Mail, GraduationCap, Presentation, ArrowLeft, Anchor, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
+import { authService } from "@/services/authService";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -11,10 +12,61 @@ export default function RegisterPage() {
   const [role, setRole] = useState<"siswa" | "pengajar">("siswa");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleRegister = (e: React.FormEvent) => {
+  // Form states
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Setelah register → langsung ke dashboard (simulasi sudah login)
-    router.push("/pelajar");
+    setErrorMsg("");
+
+    if (password !== confirmPassword) {
+      setErrorMsg("Password dan konfirmasi password tidak cocok.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await authService.register({
+        username,
+        email,
+        password,
+        password_confirmation: confirmPassword,
+        full_name: fullName,
+      });
+
+      if (res.success && res.data) {
+        if (res.data.token) {
+          localStorage.setItem("token", res.data.token);
+        }
+        if (res.data.user) {
+          localStorage.setItem("user", JSON.stringify(res.data.user));
+          const userRole = res.data.user.role;
+          if (userRole === "admin") {
+            router.push("/admin");
+          } else if (userRole === "instructor" || role === "pengajar") {
+            router.push("/pembimbing");
+          } else {
+            router.push("/pelajar");
+          }
+        } else {
+          router.push(role === "pengajar" ? "/pembimbing" : "/pelajar");
+        }
+      } else {
+        setErrorMsg(res.error?.message || "Pendaftaran gagal. Silakan periksa kembali data anda.");
+      }
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.error?.message || err.message || "Gagal terhubung ke server backend.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -45,6 +97,12 @@ export default function RegisterPage() {
             <p className="text-slate-400 text-sm">Daftar akun dan siap menyelam.</p>
           </div>
 
+          {errorMsg && (
+            <div className="p-3.5 rounded-xl bg-red-500/20 border border-red-500/50 text-red-200 text-sm">
+              {errorMsg}
+            </div>
+          )}
+
           {/* Stepper */}
           <div className="flex items-center justify-between relative my-6 px-4">
             <div className="absolute left-8 right-8 top-1/2 -translate-y-1/2 h-[2px] bg-slate-700 z-0" />
@@ -59,16 +117,16 @@ export default function RegisterPage() {
                 <label className="text-sm font-medium text-slate-200">Nama Lengkap</label>
                 <div className="relative flex items-center">
                   <User className="absolute left-4 h-5 w-5 text-slate-400" />
-                  <input type="text" required placeholder="Masukkan nama lengkap"
+                  <input type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Masukkan nama lengkap"
                     className="w-full rounded-xl border border-slate-700 bg-[#072042]/60 py-3.5 pl-12 pr-4 text-sm text-white placeholder-slate-500 outline-none transition-all focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500" />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200">Gmail</label>
+                <label className="text-sm font-medium text-slate-200">Gmail / Email</label>
                 <div className="relative flex items-center">
                   <Mail className="absolute left-4 h-5 w-5 text-slate-400" />
-                  <input type="email" required placeholder="contoh@gmail.com"
+                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="contoh@gmail.com"
                     className="w-full rounded-xl border border-slate-700 bg-[#072042]/60 py-3.5 pl-12 pr-4 text-sm text-white placeholder-slate-500 outline-none transition-all focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500" />
                 </div>
               </div>
@@ -103,7 +161,7 @@ export default function RegisterPage() {
                 <label className="text-sm font-medium text-slate-200">Username</label>
                 <div className="relative flex items-center">
                   <User className="absolute left-4 h-5 w-5 text-slate-400" />
-                  <input type="text" required placeholder="Pilih username unikmu"
+                  <input type="text" required value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Pilih username unikmu"
                     className="w-full rounded-xl border border-slate-700 bg-[#072042]/60 py-3.5 pl-12 pr-4 text-sm text-white placeholder-slate-500 outline-none transition-all focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500" />
                 </div>
               </div>
@@ -114,7 +172,7 @@ export default function RegisterPage() {
                   <Lock className="absolute left-4 h-5 w-5 text-slate-400" />
                   <input
                     type={showPassword ? "text" : "password"}
-                    required placeholder="Buat password kuat"
+                    required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Buat password kuat"
                     className="w-full rounded-xl border border-slate-700 bg-[#072042]/60 py-3.5 pl-12 pr-12 text-sm text-white placeholder-slate-500 outline-none transition-all focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)}
@@ -124,9 +182,21 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <button type="submit"
-                className="flex items-center justify-center gap-2 w-full rounded-xl bg-cyan-500/80 py-3.5 text-center text-sm font-semibold text-white transition-all hover:bg-cyan-500 shadow-lg">
-                <Anchor className="h-4 w-4" />
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-200">Konfirmasi Password</label>
+                <div className="relative flex items-center">
+                  <Lock className="absolute left-4 h-5 w-5 text-slate-400" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Ulangi password"
+                    className="w-full rounded-xl border border-slate-700 bg-[#072042]/60 py-3.5 pl-12 pr-12 text-sm text-white placeholder-slate-500 outline-none transition-all focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                  />
+                </div>
+              </div>
+
+              <button type="submit" disabled={loading}
+                className="flex items-center justify-center gap-2 w-full rounded-xl bg-cyan-500/80 py-3.5 text-center text-sm font-semibold text-white transition-all hover:bg-cyan-500 shadow-lg disabled:opacity-50">
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Anchor className="h-4 w-4" />}
                 Buat Akun & Mulai Menyelam
               </button>
             </form>
