@@ -1,200 +1,88 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  ArrowLeft, Search, Zap, Settings, User,
-  MessageSquare, HelpCircle, ChevronDown,
-  CheckCircle2, Sparkles, ChevronLeft, ChevronRight,
-  Menu, X, BookOpen,
-} from "lucide-react";
-
-const MODULES = [
-  { title: "Persiapan Belajar",          total: 1,  done: 1,  complete: true  },
-  { title: "Pengenalan Linux",           total: 7,  done: 3,  complete: false },
-  { title: "Berinteraksi dengan Linux",  total: 6,  done: 0,  complete: false },
-  { title: "Filesystem",                 total: 9,  done: 0,  complete: false },
-  { title: "Shell Scripting",            total: 8,  done: 0,  complete: false },
-  { title: "Proyek Pertama",             total: 1,  done: 0,  complete: false },
-];
-
-const CONTENT = `Kita sudah melihat bagaimana seluk-beluk Linux, mulai dari sejarahnya hingga berbagai macam distribusinya. Lantas, memangnya apa saja sih keuntungan menggunakan Linux? Apa yang membuatnya begitu populer?
-
-Para pengamat teknologi beranggapan bahwa kesuksesan Linux disebabkan karena kemandiriannya dari vendor atau perusahaan tertentu. Dengan demikian, apabila ditemukan problem atau bug pada Linux, tidak harus satu pihak yang berkewajiban atau bertanggung jawab untuk memperbaikinya. Setiap orang bisa berkontribusi untuk memperbaiki Linux.
-
-Sebagai contoh, jika ditemukan bug pada Microsoft Windows, yang bertanggung jawab untuk memperbaikinya adalah perusahaan bernama Microsoft. Nah, hal tersebut tidak berlaku pada Linux. Semua orang ataupun vendor berkesempatan untuk memperbaiki, memodifikasi, meningkatkan, atau menambah fitur pada Linux.
-
-Selain manfaat tersebut, Linux juga memiliki keunggulan-keunggulan lain yang membuatnya tenar sampai saat ini:`;
-
-const TOTAL_DONE = MODULES.reduce((acc, m) => acc + m.done, 0);
-const TOTAL_ALL  = MODULES.reduce((acc, m) => acc + m.total, 0);
-const PROGRESS   = Math.round((TOTAL_DONE / TOTAL_ALL) * 100);
+import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, BookOpen, CheckCircle2, Clock, PlayCircle } from "lucide-react";
+import { courseService, Course, Lesson } from "@/services/courseService";
 
 export default function CourseDetailPage() {
-  const [moduleOpen, setModuleOpen] = useState(false);
+  const params = useParams<{ id: string }>();
+  const router = useRouter();
+  const [course, setCourse] = useState<Course | null>(null);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [progress, setProgress] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
+  const [completing, setCompleting] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadCourse() {
+      try {
+        const [courseResponse, progressResponse] = await Promise.all([
+          courseService.getCourseById(params.id),
+          courseService.getCourseProgress(params.id).catch(() => null),
+        ]);
+        const courseData = courseResponse.data;
+        const lessonProgress = progressResponse?.data?.lessons_progress || [];
+        setCourse(courseData?.course || courseData || null);
+        setLessons((courseData?.lessons || []).map((lesson: Lesson) => ({
+          ...lesson,
+          is_completed: lessonProgress.find((item: { id: string }) => item.id === lesson.id)?.is_completed || false,
+        })));
+        setProgress(Number(progressResponse?.data?.enrollment?.progress_pct || 0));
+      } catch {
+        setMessage("Kursus tidak dapat dimuat.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (params.id) loadCourse();
+  }, [params.id]);
+
+  const completedLessons = useMemo(() => {
+    const progressResponse = lessons.filter((lesson) => lesson.is_completed);
+    return progressResponse.length;
+  }, [lessons]);
+
+  const completeLesson = async (lesson: Lesson) => {
+    setCompleting(lesson.id);
+    setMessage("");
+    try {
+      const response = await courseService.completeLesson(lesson.id);
+      setLessons((current) => current.map((item) => item.id === lesson.id ? { ...item, is_completed: true } : item));
+      if (response.data?.enrollment?.progress_pct !== undefined) {
+        setProgress(Number(response.data.enrollment.progress_pct));
+      }
+    } catch {
+      setMessage("Lesson hanya dapat diselesaikan setelah terdaftar di kursus.");
+    } finally {
+      setCompleting(null);
+    }
+  };
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center bg-[#0063A7]"><div className="w-9 h-9 border-4 border-white border-t-transparent rounded-full animate-spin" /></div>;
+  }
+
+  if (!course) {
+    return <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#0063A7] text-white"><p>{message || "Kursus tidak ditemukan."}</p><Link href="/pelajar/all-course" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-[#008be3]">Kembali ke All Course</Link></div>;
+  }
 
   return (
-    <div className="flex flex-col min-h-screen bg-white font-sans text-[#00172e]">
-
-      {/* ── Topbar ── */}
-      <header className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-slate-100 bg-white sticky top-0 z-30 gap-3">
-        {/* Left */}
-        <div className="flex items-center gap-2 min-w-0">
-          <Link href="/course" className="shrink-0 flex items-center gap-1.5 text-sm font-semibold text-[#00172e] hover:text-[#008be3] transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:block truncate max-w-[200px] md:max-w-xs">Dasar-Dasar Pemrograman Web Bawah Laut</span>
-          </Link>
-        </div>
-
-        {/* Center search — hidden on mobile */}
-        <div className="relative hidden md:block w-64 lg:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input type="text" placeholder="Cari modul/konten"
-            className="w-full pl-9 pr-16 py-2 rounded-full border border-slate-200 text-sm placeholder-slate-400 outline-none focus:ring-2 focus:ring-[#008be3]/30 focus:border-[#008be3]" />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">CTRL /</span>
-        </div>
-
-        {/* Right */}
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1.5">
-            <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-            <span className="text-xs font-bold text-amber-600">4</span>
-          </div>
-          <button className="hidden sm:flex w-8 h-8 rounded-full bg-slate-100 items-center justify-center hover:bg-slate-200 transition-colors">
-            <Settings className="w-4 h-4 text-slate-500" />
-          </button>
-          <button className="w-8 h-8 rounded-full bg-[#008be3] flex items-center justify-center">
-            <User className="w-4 h-4 text-white" />
-          </button>
-          {/* Module toggle mobile */}
-          <button
-            className="md:hidden w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
-            onClick={() => setModuleOpen(true)}
-          >
-            <BookOpen className="w-4 h-4 text-slate-500" />
-          </button>
-        </div>
+    <div className="min-h-screen bg-slate-50 text-[#00172e]">
+      <header className="sticky top-0 z-20 flex items-center gap-4 border-b border-slate-100 bg-white px-4 py-3 md:px-8">
+        <button onClick={() => router.back()} className="rounded-full p-2 hover:bg-slate-100"><ArrowLeft className="w-5 h-5" /></button>
+        <div className="min-w-0"><h1 className="truncate font-extrabold">{course.title}</h1><p className="text-xs text-slate-400">{course.instructor?.full_name || "Instruktur EduWave"}</p></div>
       </header>
-
-      {/* ── Body ── */}
-      <div className="flex flex-1 overflow-hidden relative">
-
-        {/* Left icon bar — hidden on mobile */}
-        <div className="hidden md:flex w-12 border-r border-slate-100 flex-col items-center pt-4 gap-5 bg-white shrink-0">
-          <button className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors" title="Diskusi">
-            <MessageSquare className="w-4 h-4 text-slate-500" />
-          </button>
-          <button className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors" title="FAQ">
-            <HelpCircle className="w-4 h-4 text-slate-500" />
-          </button>
-          <button className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors" title="Pengaturan">
-            <Settings className="w-4 h-4 text-slate-500" />
-          </button>
-        </div>
-
-        {/* ── Main content ── */}
-        <main className="flex-1 overflow-y-auto px-4 sm:px-8 md:px-10 py-6 md:py-8 max-w-3xl">
-          <h1 className="text-xl md:text-2xl font-extrabold text-[#00172e] mb-5">
-            Keuntungan Menggunakan Linux
-          </h1>
-          <div className="prose prose-sm max-w-none text-slate-600 leading-relaxed space-y-4">
-            {CONTENT.split("\n\n").map((para, i) => (
-              <p key={i}>{para}</p>
-            ))}
-          </div>
-        </main>
-
-        {/* ── Module list — desktop sidebar ── */}
-        <aside className="hidden md:flex w-72 border-l border-slate-100 bg-white flex-col overflow-y-auto shrink-0">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-            <button className="w-7 h-7 rounded-full bg-[#00172e] flex items-center justify-center">
-              <ChevronRight className="w-4 h-4 text-white" />
-            </button>
-            <div className="flex gap-4">
-              <button className="text-sm font-bold text-[#008be3] border-b-2 border-[#008be3] pb-1">Daftar Modul</button>
-              <button className="text-sm text-slate-400 hover:text-[#00172e] pb-1">Catatan</button>
-            </div>
-          </div>
-          <div className="px-4 py-3 border-b border-slate-100">
-            <div className="h-1.5 rounded-full bg-slate-100 mb-1.5">
-              <div className="h-1.5 rounded-full bg-[#008be3]" style={{ width: `${PROGRESS}%` }} />
-            </div>
-            <p className="text-xs text-slate-500 font-medium">{PROGRESS}% Selesai</p>
-          </div>
-          <div className="flex flex-col divide-y divide-slate-50">
-            {MODULES.map((mod) => (
-              <button key={mod.title} className="flex items-center justify-between px-4 py-3.5 text-left hover:bg-slate-50 transition-colors group">
-                <div className="flex items-center gap-2">
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#008be3] transition-colors" />
-                  <span className={`text-sm font-medium ${mod.complete ? "text-[#008be3]" : "text-[#00172e]"}`}>{mod.title}</span>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {mod.complete
-                    ? <CheckCircle2 className="w-4 h-4 text-[#008be3]" />
-                    : <span className="text-xs text-slate-400">{mod.done}/{mod.total}</span>}
-                </div>
-              </button>
-            ))}
-          </div>
-        </aside>
-
-        {/* ── Module drawer mobile ── */}
-        {moduleOpen && (
-          <div className="fixed inset-0 z-50 md:hidden">
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setModuleOpen(false)} />
-            <div className="absolute right-0 top-0 bottom-0 w-72 bg-white shadow-2xl flex flex-col">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                <p className="text-sm font-bold text-[#00172e]">Daftar Modul</p>
-                <button onClick={() => setModuleOpen(false)}
-                  className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center">
-                  <X className="w-4 h-4 text-slate-500" />
-                </button>
-              </div>
-              <div className="px-4 py-3 border-b border-slate-100">
-                <div className="h-1.5 rounded-full bg-slate-100 mb-1.5">
-                  <div className="h-1.5 rounded-full bg-[#008be3]" style={{ width: `${PROGRESS}%` }} />
-                </div>
-                <p className="text-xs text-slate-500 font-medium">{PROGRESS}% Selesai</p>
-              </div>
-              <div className="flex flex-col divide-y divide-slate-50 overflow-y-auto flex-1">
-                {MODULES.map((mod) => (
-                  <button key={mod.title} onClick={() => setModuleOpen(false)}
-                    className="flex items-center justify-between px-4 py-3.5 text-left hover:bg-slate-50 transition-colors">
-                    <div className="flex items-center gap-2">
-                      <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                      <span className={`text-sm font-medium ${mod.complete ? "text-[#008be3]" : "text-[#00172e]"}`}>{mod.title}</span>
-                    </div>
-                    {mod.complete
-                      ? <CheckCircle2 className="w-4 h-4 text-[#008be3]" />
-                      : <span className="text-xs text-slate-400">{mod.done}/{mod.total}</span>}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── Bottom nav ── */}
-      <footer className="flex items-center justify-between px-4 md:px-8 py-3 border-t border-slate-100 bg-white sticky bottom-0 z-30">
-        <button className="flex items-center gap-1.5 text-xs md:text-sm text-slate-400 hover:text-[#00172e] transition-colors">
-          <ChevronLeft className="w-4 h-4" />
-          <span className="hidden sm:block">Mengenal Linux Lebih Dalam</span>
-          <span className="sm:hidden">Sebelumnya</span>
-        </button>
-        <span className="text-xs md:text-sm font-semibold text-[#00172e] text-center px-2 line-clamp-1">Keuntungan Menggunakan Linux</span>
-        <button className="flex items-center gap-1.5 text-xs md:text-sm text-slate-400 hover:text-[#00172e] transition-colors">
-          <span className="hidden sm:block">Arsitektur Linux</span>
-          <span className="sm:hidden">Berikutnya</span>
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </footer>
-
-      {/* ── Tanya AI FAB ── */}
-      <button className="fixed bottom-16 md:bottom-16 right-4 md:right-8 flex items-center gap-2 rounded-2xl bg-[#00172e] px-4 md:px-5 py-2.5 md:py-3 text-sm font-bold text-white shadow-xl hover:bg-[#002d5a] transition-all hover:scale-105 z-40">
-        <Sparkles className="w-4 h-4 text-cyan-300" />
-        <span className="hidden sm:block">Tanya AI</span>
-      </button>
+      <main className="mx-auto max-w-5xl px-4 py-6 md:px-8">
+        <section className="mb-6 overflow-hidden rounded-3xl bg-white shadow-sm">
+          <div className="h-48 bg-[#c9e8ff]"><img src={course.thumbnail_url || "/ocean-bg.jpg"} alt={course.title} className="h-full w-full object-cover" onError={(event) => { event.currentTarget.src = "/ocean-bg.jpg"; }} /></div>
+          <div className="p-5 md:p-7"><div className="mb-3 flex flex-wrap gap-2"><span className="rounded-full bg-[#008be3]/10 px-3 py-1 text-xs font-bold text-[#008be3]">{course.category}</span><span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">{course.difficulty}</span></div><p className="text-sm leading-6 text-slate-600">{course.description}</p><div className="mt-5 flex items-center gap-5 text-xs text-slate-400"><span className="flex items-center gap-1"><BookOpen className="w-4 h-4" />{lessons.length} lesson</span><span className="flex items-center gap-1"><Clock className="w-4 h-4" />{course.duration_minutes} menit</span></div></div>
+        </section>
+        <section className="rounded-3xl bg-white p-5 shadow-sm md:p-7"><div className="mb-5 flex items-center justify-between"><div><h2 className="font-extrabold">Daftar Lesson</h2><p className="text-xs text-slate-400">{completedLessons} dari {lessons.length} lesson selesai</p></div><span className="text-sm font-extrabold text-[#008be3]">{Math.round(progress)}%</span></div><div className="mb-6 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#008be3] transition-all" style={{ width: `${Math.min(100, progress)}%` }} /></div><div className="divide-y divide-slate-100">{lessons.map((lesson) => <div key={lesson.id} className="flex items-center gap-3 py-4"><div className="shrink-0">{lesson.is_completed ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> : <PlayCircle className="w-5 h-5 text-[#008be3]" />}</div><div className="min-w-0 flex-1"><p className="font-bold text-sm">{lesson.order}. {lesson.title}</p><p className="text-xs text-slate-400">{lesson.type} · {lesson.duration_minutes} menit · +{lesson.xp_reward} XP</p></div><button disabled={Boolean(lesson.is_completed) || completing === lesson.id} onClick={() => completeLesson(lesson)} className="rounded-full bg-[#008be3] px-3 py-1.5 text-[11px] font-bold text-white disabled:bg-slate-200 disabled:text-slate-400">{lesson.is_completed ? "Selesai" : completing === lesson.id ? "Memproses..." : "Selesaikan"}</button></div>)}</div>{message && <p className="mt-4 rounded-xl bg-red-50 p-3 text-xs text-red-500">{message}</p>}</section>
+      </main>
     </div>
   );
 }
