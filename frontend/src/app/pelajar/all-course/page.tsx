@@ -17,23 +17,39 @@ export default function PelajarAllCoursePage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
+  const [enrolledMap, setEnrolledMap] = useState<Record<string, boolean>>({});
+
   const fetchCourses = async () => {
     setLoading(true);
     try {
-      const res = await courseService.getAllCourses({
-        search: search || undefined,
-        category: category || undefined,
-        difficulty: difficulty || undefined,
-      });
-      if (res.success && res.data) {
-        setCourses(res.data);
-        if (res.meta) {
-          setTotalPages(res.meta.last_page || 1);
-          setTotalItems(res.meta.total || res.data.length);
+      const [resCourses, resProgress] = await Promise.all([
+        courseService.getAllCourses({
+          search: search || undefined,
+          category: category || undefined,
+          difficulty: difficulty || undefined,
+        }),
+        courseService.getUserCourseProgress().catch(() => null),
+      ]);
+
+      if (resCourses.success && resCourses.data) {
+        setCourses(resCourses.data);
+        if (resCourses.meta) {
+          setTotalPages(resCourses.meta.last_page || 1);
+          setTotalItems(resCourses.meta.total || resCourses.data.length);
         } else {
           setTotalPages(1);
-          setTotalItems(res.data.length);
+          setTotalItems(resCourses.data.length);
         }
+      }
+
+      if (resProgress?.success && resProgress.data?.enrollments) {
+        const map: Record<string, boolean> = {};
+        resProgress.data.enrollments.forEach((e: any) => {
+          if (e.course_id && e.status !== "dropped") {
+            map[e.course_id] = true;
+          }
+        });
+        setEnrolledMap(map);
       }
     } catch (err) {
       console.error("Gagal mengambil data course:", err);
@@ -51,13 +67,24 @@ export default function PelajarAllCoursePage() {
     fetchCourses();
   };
 
-  const handleEnroll = async (e: React.MouseEvent, courseId: string) => {
+  const handleEnrollToggle = async (e: React.MouseEvent, courseId: string) => {
     e.preventDefault();
+    const isEnrolled = enrolledMap[courseId];
     try {
-      await courseService.enrollCourse(courseId);
-      fetchCourses();
+      if (isEnrolled) {
+        if (!confirm("Apakah Anda yakin ingin membatalkan pendaftaran kursus ini?")) return;
+        await courseService.unenrollCourse(courseId);
+        setEnrolledMap((prev) => ({ ...prev, [courseId]: false }));
+      } else {
+        await courseService.enrollCourse(courseId);
+        setEnrolledMap((prev) => ({ ...prev, [courseId]: true }));
+      }
     } catch (err: any) {
-      console.log("Enrollment error / already enrolled", err);
+      if (err.response?.status === 409) {
+        setEnrolledMap((prev) => ({ ...prev, [courseId]: true }));
+      } else {
+        console.error("Gagal toggle enroll:", err);
+      }
     }
   };
 
@@ -166,10 +193,15 @@ export default function PelajarAllCoursePage() {
                       {course.difficulty || "Semua Tingkat"}
                     </span>
                     <button
-                      onClick={(e) => handleEnroll(e, course.id)}
-                      className="flex items-center gap-1 rounded-full bg-[#008be3] px-4 py-1.5 text-[11px] font-bold text-white group-hover:bg-[#0078c8] transition-colors"
+                      onClick={(e) => handleEnrollToggle(e, course.id)}
+                      className={`flex items-center gap-1 rounded-full px-4 py-1.5 text-[11px] font-bold transition-colors ${
+                        enrolledMap[course.id]
+                          ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                          : "bg-[#008be3] text-white hover:bg-[#0078c8]"
+                      }`}
                     >
-                      Selami Kursus<ChevronRight className="w-3 h-3" />
+                      {enrolledMap[course.id] ? "Terdaftar" : "Enroll Kursus"}
+                      <ChevronRight className="w-3 h-3" />
                     </button>
                   </div>
                 </div>

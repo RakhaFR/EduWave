@@ -16,6 +16,9 @@ export default function CourseDetailPage() {
   const [message, setMessage] = useState("");
   const [completing, setCompleting] = useState<string | null>(null);
 
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
+
   useEffect(() => {
     async function loadCourse() {
       try {
@@ -30,7 +33,13 @@ export default function CourseDetailPage() {
           ...lesson,
           is_completed: lessonProgress.find((item: { id: string }) => item.id === lesson.id)?.is_completed || false,
         })));
-        setProgress(Number(progressResponse?.data?.enrollment?.progress_pct || 0));
+        
+        if (progressResponse?.success && progressResponse?.data?.enrollment) {
+          setIsEnrolled(true);
+          setProgress(Number(progressResponse.data.enrollment.progress_pct || 0));
+        } else {
+          setIsEnrolled(false);
+        }
       } catch {
         setMessage("Kursus tidak dapat dimuat.");
       } finally {
@@ -40,6 +49,39 @@ export default function CourseDetailPage() {
 
     if (params.id) loadCourse();
   }, [params.id]);
+
+  const handleEnrollToggle = async () => {
+    if (!course) return;
+    setEnrolling(true);
+    setMessage("");
+    try {
+      if (isEnrolled) {
+        if (!confirm("Apakah Anda yakin ingin membatalkan pendaftaran kursus ini?")) {
+          setEnrolling(false);
+          return;
+        }
+        await courseService.unenrollCourse(course.id);
+        setIsEnrolled(false);
+        setProgress(0);
+      } else {
+        await courseService.enrollCourse(course.id);
+        setIsEnrolled(true);
+        // Refresh progress after enrolling
+        const pRes = await courseService.getCourseProgress(course.id).catch(() => null);
+        if (pRes?.data?.enrollment) {
+          setProgress(Number(pRes.data.enrollment.progress_pct || 0));
+        }
+      }
+    } catch (err: any) {
+      if (err.response?.status === 409) {
+        setIsEnrolled(true);
+      } else {
+        setMessage(err.response?.data?.error?.message || "Gagal memperbarui pendaftaran kursus.");
+      }
+    } finally {
+      setEnrolling(false);
+    }
+  };
 
   const completedLessons = useMemo(() => {
     const progressResponse = lessons.filter((lesson) => lesson.is_completed);
@@ -79,7 +121,34 @@ export default function CourseDetailPage() {
       <main className="mx-auto max-w-5xl px-4 py-6 md:px-8">
         <section className="mb-6 overflow-hidden rounded-3xl bg-white shadow-sm">
           <div className="h-48 bg-[#c9e8ff]"><img src={course.thumbnail_url || "/ocean-bg.jpg"} alt={course.title} className="h-full w-full object-cover" onError={(event) => { event.currentTarget.src = "/ocean-bg.jpg"; }} /></div>
-          <div className="p-5 md:p-7"><div className="mb-3 flex flex-wrap gap-2"><span className="rounded-full bg-[#008be3]/10 px-3 py-1 text-xs font-bold text-[#008be3]">{course.category}</span><span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">{course.difficulty}</span></div><p className="text-sm leading-6 text-slate-600">{course.description}</p><div className="mt-5 flex items-center gap-5 text-xs text-slate-400"><span className="flex items-center gap-1"><BookOpen className="w-4 h-4" />{lessons.length} lesson</span><span className="flex items-center gap-1"><Clock className="w-4 h-4" />{course.duration_minutes} menit</span></div></div>
+          <div className="p-5 md:p-7">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded-full bg-[#008be3]/10 px-3 py-1 text-xs font-bold text-[#008be3]">{course.category}</span>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">{course.difficulty}</span>
+              </div>
+              <button
+                onClick={handleEnrollToggle}
+                disabled={enrolling}
+                className={`rounded-full px-5 py-2 text-xs font-bold transition-all shadow-sm ${
+                  isEnrolled
+                    ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
+                    : "bg-[#008be3] text-white hover:bg-[#0078c8]"
+                }`}
+              >
+                {enrolling
+                  ? "Memproses..."
+                  : isEnrolled
+                  ? "Batalkan Enrolled"
+                  : "Enroll Kursus Ini"}
+              </button>
+            </div>
+            <p className="text-sm leading-6 text-slate-600">{course.description}</p>
+            <div className="mt-5 flex items-center gap-5 text-xs text-slate-400">
+              <span className="flex items-center gap-1"><BookOpen className="w-4 h-4" />{lessons.length} lesson</span>
+              <span className="flex items-center gap-1"><Clock className="w-4 h-4" />{course.duration_minutes} menit</span>
+            </div>
+          </div>
         </section>
         <section className="rounded-3xl bg-white p-5 shadow-sm md:p-7"><div className="mb-5 flex items-center justify-between"><div><h2 className="font-extrabold">Daftar Lesson</h2><p className="text-xs text-slate-400">{completedLessons} dari {lessons.length} lesson selesai</p></div><span className="text-sm font-extrabold text-[#008be3]">{Math.round(progress)}%</span></div><div className="mb-6 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#008be3] transition-all" style={{ width: `${Math.min(100, progress)}%` }} /></div>              <div className="divide-y divide-slate-100">
                 {lessons.map((lesson) => (
