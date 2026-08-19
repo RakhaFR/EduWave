@@ -45,8 +45,8 @@ export const mascotService = {
     };
   },
 
-  async equip(mascotId: string) {
-    const response = await api.put("/mascots/equip", { mascot_id: mascotId });
+  async equip(mascotId: string, accessories: Record<string, string>) {
+    const response = await api.put("/mascots/equip", { mascot_id: mascotId, accessories });
     return response.data as {
       success: boolean;
       data: { mascot_id: string; name: string; avatar_url: string; is_active: boolean } | null;

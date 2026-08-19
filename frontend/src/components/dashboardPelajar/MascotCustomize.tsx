@@ -36,6 +36,30 @@ function getInventoryImage(mascot: InventoryMascot, index: number): string {
 }
 
 type Tab = "katalog" | "inventori";
+type AccessoryKey = "hat" | "glasses" | "outfit" | "background";
+
+const ACCESSORY_OPTIONS: Record<AccessoryKey, { label: string; value: string; title: string }[]> = {
+  hat: [
+    { label: "Tanpa topi", value: "none", title: "none" },
+    { label: "Kapten", value: "hat-captain", title: "captain" },
+    { label: "Penyelam", value: "hat-diver", title: "diver" },
+  ],
+  glasses: [
+    { label: "Tanpa kacamata", value: "none", title: "none" },
+    { label: "Matahari", value: "glasses-sun", title: "sun" },
+    { label: "Pintar", value: "glasses-smart", title: "smart" },
+  ],
+  outfit: [
+    { label: "Bawaan", value: "outfit-default", title: "default" },
+    { label: "Navy", value: "outfit-navy", title: "navy" },
+    { label: "Karang", value: "outfit-coral", title: "coral" },
+  ],
+  background: [
+    { label: "Laut", value: "bg-ocean", title: "ocean" },
+    { label: "Senja", value: "bg-sunset", title: "sunset" },
+    { label: "Palung", value: "bg-abyss", title: "abyss" },
+  ],
+};
 
 export default function MascotCustomizeComponent() {
   const [tab, setTab] = useState<Tab>("katalog");
@@ -46,6 +70,12 @@ export default function MascotCustomizeComponent() {
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [pearls, setPearls] = useState<number>(0);
+  const [accessories, setAccessories] = useState<Record<AccessoryKey, string>>({
+    hat: "none",
+    glasses: "none",
+    outfit: "outfit-default",
+    background: "bg-ocean",
+  });
 
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type });
@@ -110,12 +140,11 @@ export default function MascotCustomizeComponent() {
   };
 
   const handleEquip = async (mascot: InventoryMascot) => {
-    if (mascot.is_active) return;
     setActionLoading(mascot.id);
     try {
-      const res = await mascotService.equip(mascot.id);
+      const res = await mascotService.equip(mascot.id, accessories);
       if (res.success) {
-        showToast(`${mascot.name} sekarang aktif!`);
+        showToast(`${mascot.name} sekarang aktif dengan kustomisasi pilihanmu!`);
         await loadData();
       } else {
         showToast(res.error?.message ?? "Gagal equip maskot.", "error");
@@ -174,6 +203,33 @@ export default function MascotCustomizeComponent() {
             </div>
           </div>
         )}
+
+        {/* Accessory customization */}
+        <div className="bg-white rounded-3xl p-5 mb-6 shadow-lg text-[#00172e]">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="font-extrabold text-base">Kustomisasi Quli</h2>
+              <p className="text-xs text-slate-400 mt-1">Pilih aksesori lalu pasang dari tab Inventori.</p>
+            </div>
+            <span className="text-xs font-bold text-cyan-600 bg-cyan-50 px-3 py-1.5 rounded-full">4 pilihan</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {(Object.keys(ACCESSORY_OPTIONS) as AccessoryKey[]).map((key) => (
+              <label key={key} className="flex flex-col gap-1.5">
+                <span className="text-[11px] font-bold text-slate-500 capitalize">{key}</span>
+                <select
+                  value={accessories[key]}
+                  onChange={(e) => setAccessories((current) => ({ ...current, [key]: e.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-cyan-400"
+                >
+                  {ACCESSORY_OPTIONS[key].map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+            ))}
+          </div>
+        </div>
 
         {/* Tabs */}
         <div className="flex bg-white/10 backdrop-blur p-1 rounded-2xl mb-6 gap-1">
@@ -309,9 +365,13 @@ export default function MascotCustomizeComponent() {
 
                       <div className="w-full mt-auto">
                         {mascot.is_active ? (
-                          <div className="w-full py-2 rounded-xl bg-cyan-50 text-cyan-600 text-xs font-bold text-center border border-cyan-100">
-                            Aktif ✓
-                          </div>
+                          <button
+                            onClick={() => handleEquip(mascot)}
+                            disabled={isLoading}
+                            className="w-full py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-600 text-white shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60"
+                          >
+                            {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Simpan kustomisasi"}
+                          </button>
                         ) : (
                           <button
                             onClick={() => handleEquip(mascot)}
