@@ -5,17 +5,16 @@ import DashboardOverview from "@/components/dashboardAdmin/DashboardOverview";
 import { useAdmin } from "@/components/dashboardAdmin/AdminContext";
 
 export default function AdminDashboardPage() {
-  const { courses, users, registrations, searchGlobal } = useAdmin();
+  const { courses, coursesLoading, users, registrations, searchGlobal } = useAdmin();
 
   return (
     <>
-      {/* Welcome Banner */}
       <WelcomeBanner />
 
-      {/* Dashboard Overview */}
       <div className="flex-1 min-h-0">
         <DashboardOverview
           courses={courses}
+          coursesLoading={coursesLoading}
           users={users}
           registrations={registrations}
           searchGlobal={searchGlobal}

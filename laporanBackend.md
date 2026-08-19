@@ -87,5 +87,46 @@ Belum jelas apakah user harus enroll ke course terlebih dahulu sebelum bisa mula
 
 ---
 
+---
+
+## 4. [ADMIN] Tidak Ada Endpoint untuk List Semua Pengguna
+
+**Endpoint yang dibutuhkan:** `GET /api/v1/admin/users`
+
+**Masalah:**
+Halaman admin manajemen pengguna (`/admin/pengguna`) saat ini menggunakan data dummy karena tidak ada endpoint backend untuk mengambil daftar semua user (dengan filter role, status, dan search).
+
+**Yang dibutuhkan frontend:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "u1f2e3d4-...",
+      "name": "Budi Santoso",
+      "email": "budi@example.com",
+      "role": "student",
+      "status": "active",
+      "created_at": "2026-08-01T00:00:00.000000Z"
+    }
+  ],
+  "meta": {
+    "total": 100,
+    "per_page": 20,
+    "current_page": 1
+  }
+}
+```
+
+**Query params yang diperlukan:**
+- `search` — filter by name/email
+- `role` — filter by role (`student`, `instructor`, `admin`)
+- `status` — filter by status (`active`, `inactive`)
+- `per_page`, `page` — pagination
+
+**Tolong buatkan endpoint `GET /api/v1/admin/users` yang hanya bisa diakses oleh role `admin`.**
+
+---
+
 *Dibuat oleh: Tim Frontend — `r\RAKHA`*
 *Tanggal: 19 Agustus 2026*

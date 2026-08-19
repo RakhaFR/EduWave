@@ -7,77 +7,108 @@ import CourseTable from "@/components/dashboardAdmin/CourseTable";
 import Modals from "@/components/dashboardAdmin/Modals";
 import { useAdmin } from "@/components/dashboardAdmin/AdminContext";
 import { Course } from "@/components/dashboardAdmin/types";
+import { adminService, AdminCourseForm } from "@/services/adminService";
+
+const DEFAULT_FORM: AdminCourseForm = {
+  title: "",
+  description: "",
+  category: "",
+  difficulty: "beginner",
+  status: "draft",
+  pearls_reward: 0,
+  duration_minutes: 0,
+  thumbnail_url: "",
+};
 
 export default function AdminCoursePage() {
-  const { courses, setCourses, showToast, searchGlobal } = useAdmin();
+  const { courses, coursesLoading, refreshCourses, showToast, searchGlobal } = useAdmin();
 
-  // Modals state
   const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
-  const [courseForm, setCourseForm] = useState({
-    title: "",
-    category: "Teknologi",
-    instructor: "",
-    students: 0,
-    status: "Terbit",
-  });
+  const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
+  const [courseForm, setCourseForm] = useState<AdminCourseForm>(DEFAULT_FORM);
+  const [courseLoading, setCourseLoading] = useState(false);
 
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: "kursus" | "pengguna" | "kategori"; id: string } | null>(null);
 
-  // Operations
   const handleOpenCourseAdd = () => {
-    setEditingCourse(null);
-    setCourseForm({ title: "", category: "Teknologi", instructor: "", students: 0, status: "Terbit" });
+    setEditingCourseId(null);
+    setCourseForm(DEFAULT_FORM);
     setIsCourseModalOpen(true);
   };
 
   const handleOpenCourseEdit = (course: Course) => {
-    setEditingCourse(course);
+    setEditingCourseId(course.id);
     setCourseForm({
       title: course.title,
+      description: course.description,
       category: course.category,
-      instructor: course.instructor,
-      students: course.students,
+      difficulty: course.difficulty,
       status: course.status,
+      pearls_reward: course.pearls_reward,
+      duration_minutes: course.duration_minutes,
+      thumbnail_url: course.thumbnail_url ?? "",
     });
     setIsCourseModalOpen(true);
   };
 
-  const handleSaveCourse = (e: React.FormEvent) => {
+  const handleSaveCourse = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!courseForm.title || !courseForm.instructor) {
-      showToast("Judul dan Pengajar tidak boleh kosong!", "error");
+    if (!courseForm.title || !courseForm.description || !courseForm.category) {
+      showToast("Judul, Deskripsi, dan Kategori tidak boleh kosong!", "error");
       return;
     }
 
-    if (editingCourse) {
-      setCourses(
-        courses.map((c) =>
-          c.id === editingCourse.id ? { ...c, ...courseForm } : c
-        )
-      );
-      showToast("Kursus berhasil diperbarui!");
-    } else {
-      const newId = `C-0${courses.length + 1}`;
-      const newCourse: Course = {
-        id: newId,
+    setCourseLoading(true);
+    try {
+      const payload = {
         ...courseForm,
+        thumbnail_url: courseForm.thumbnail_url || undefined,
       };
-      setCourses([...courses, newCourse]);
-      showToast("Kursus baru berhasil ditambahkan!");
+
+      if (editingCourseId) {
+        const res = await adminService.updateCourse(editingCourseId, payload);
+        if (res.success) {
+          showToast("Kursus berhasil diperbarui!");
+        } else {
+          showToast(res.error?.message ?? "Gagal memperbarui kursus.", "error");
+        }
+      } else {
+        const res = await adminService.createCourse(payload);
+        if (res.success) {
+          showToast("Kursus baru berhasil ditambahkan!");
+        } else {
+          showToast(res.error?.message ?? "Gagal membuat kursus.", "error");
+        }
+      }
+      setIsCourseModalOpen(false);
+      refreshCourses();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+      showToast(msg ?? "Terjadi kesalahan. Coba lagi.", "error");
+    } finally {
+      setCourseLoading(false);
     }
-    setIsCourseModalOpen(false);
   };
 
   const handleDeleteCourseClick = (id: string) => {
     setDeleteConfirm({ type: "kursus", id });
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!deleteConfirm) return;
-    setCourses(courses.filter((c) => c.id !== deleteConfirm.id));
-    showToast("Kursus berhasil dihapus!");
-    setDeleteConfirm(null);
+    try {
+      const res = await adminService.deleteCourse(deleteConfirm.id);
+      if (res.success !== false) {
+        showToast("Kursus berhasil dihapus!");
+        refreshCourses();
+      } else {
+        showToast(res.error?.message ?? "Gagal menghapus kursus.", "error");
+      }
+    } catch {
+      showToast("Terjadi kesalahan saat menghapus kursus.", "error");
+    } finally {
+      setDeleteConfirm(null);
+    }
   };
 
   return (
@@ -89,6 +120,7 @@ export default function AdminCoursePage() {
       <div className="flex-1 min-h-0">
         <CourseTable
           courses={courses}
+          loading={coursesLoading}
           onAddClick={handleOpenCourseAdd}
           onEditClick={handleOpenCourseEdit}
           onDeleteClick={handleDeleteCourseClick}
@@ -99,11 +131,11 @@ export default function AdminCoursePage() {
       <Modals
         isCourseModalOpen={isCourseModalOpen}
         setIsCourseModalOpen={setIsCourseModalOpen}
-        editingCourse={editingCourse}
+        editingCourseId={editingCourseId}
         courseForm={courseForm}
         setCourseForm={setCourseForm}
         handleSaveCourse={handleSaveCourse}
-        // Dummy/Unused properties for other page modals
+        courseLoading={courseLoading}
         isUserModalOpen={false}
         setIsUserModalOpen={() => {}}
         editingUser={null}

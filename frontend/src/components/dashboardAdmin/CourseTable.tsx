@@ -1,21 +1,29 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Plus, Edit, Trash, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Edit, Trash, X, ChevronLeft, ChevronRight, Loader2, BookOpen, Users, Clock } from "lucide-react";
 import { Course } from "./types";
 
 interface CourseTableProps {
   courses: Course[];
+  loading?: boolean;
   onAddClick: () => void;
   onEditClick: (course: Course) => void;
   onDeleteClick: (id: string) => void;
   searchGlobal: string;
 }
 
-const ITEMS_PER_PAGE = 3;
+const ITEMS_PER_PAGE = 8;
+
+const DIFFICULTY_COLORS: Record<string, string> = {
+  beginner: "bg-green-50 text-green-600",
+  intermediate: "bg-amber-50 text-amber-600",
+  advanced: "bg-red-50 text-red-600",
+};
 
 export default function CourseTable({
   courses,
+  loading = false,
   onAddClick,
   onEditClick,
   onDeleteClick,
@@ -33,28 +41,27 @@ export default function CourseTable({
     setCurrentPage(1);
   }
 
-  // Filter courses based on local search & global search
   const filteredCourses = useMemo(() => {
     return courses.filter((c) => {
+      const instructorName = c.instructor?.full_name ?? "";
       const matchQuery =
         c.title.toLowerCase().includes(searchLocal.toLowerCase()) ||
         c.category.toLowerCase().includes(searchLocal.toLowerCase()) ||
-        c.instructor.toLowerCase().includes(searchLocal.toLowerCase()) ||
-        c.id.toLowerCase().includes(searchLocal.toLowerCase());
+        instructorName.toLowerCase().includes(searchLocal.toLowerCase()) ||
+        c.status.toLowerCase().includes(searchLocal.toLowerCase());
 
       const matchGlobal = searchGlobal
         ? c.title.toLowerCase().includes(searchGlobal.toLowerCase()) ||
           c.category.toLowerCase().includes(searchGlobal.toLowerCase()) ||
-          c.instructor.toLowerCase().includes(searchGlobal.toLowerCase())
+          instructorName.toLowerCase().includes(searchGlobal.toLowerCase())
         : true;
 
       return matchQuery && matchGlobal;
     });
   }, [courses, searchLocal, searchGlobal]);
 
-  // Pagination calculation
   const totalPages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE);
-  
+
   const paginatedCourses = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredCourses.slice(start, start + ITEMS_PER_PAGE);
@@ -70,7 +77,6 @@ export default function CourseTable({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Subbar Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -100,132 +106,159 @@ export default function CourseTable({
         </button>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto border border-slate-100 rounded-2xl shadow-sm">
-        <table className="w-full min-w-[700px] border-collapse text-left text-xs sm:text-sm">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-100 font-semibold text-slate-500">
-              <th className="py-4 px-5 w-20">ID</th>
-              <th className="py-4 px-5">Judul Kursus</th>
-              <th className="py-4 px-5">Kategori</th>
-              <th className="py-4 px-5">Pengajar</th>
-              <th className="py-4 px-5 w-24 text-center">Siswa</th>
-              <th className="py-4 px-5 w-28 text-center">Status</th>
-              <th className="py-4 px-5 w-32 text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {paginatedCourses.length > 0 ? (
-              paginatedCourses.map((c) => (
-                <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="py-3.5 px-5 font-mono text-slate-400">{c.id}</td>
-                  <td className="py-3.5 px-5 font-bold text-[#00172e]">{c.title}</td>
-                  <td className="py-3.5 px-5">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        c.category === "Teknologi"
-                          ? "bg-blue-50 text-blue-600"
-                          : c.category === "Desain"
-                          ? "bg-cyan-50 text-cyan-600"
-                          : "bg-emerald-50 text-emerald-600"
-                      }`}
-                    >
-                      {c.category}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-5 text-slate-600">{c.instructor}</td>
-                  <td className="py-3.5 px-5 text-center font-semibold text-[#00172e]">{c.students}</td>
-                  <td className="py-3.5 px-5 text-center">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        c.status === "Terbit"
-                          ? "bg-green-50 text-green-600"
-                          : "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      {c.status}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-5">
-                    <div className="flex items-center justify-center gap-1.5">
-                      <button
-                        onClick={() => onEditClick(c)}
-                        className="px-2.5 py-1 rounded-lg text-xs font-bold text-[#0073e6] hover:bg-blue-50 transition-all flex items-center gap-1 border border-transparent hover:border-blue-100 cursor-pointer"
-                      >
-                        <Edit className="w-3.5 h-3.5" />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        onClick={() => onDeleteClick(c.id)}
-                        className="px-2.5 py-1 rounded-lg text-xs font-bold text-red-500 hover:bg-red-50 transition-all flex items-center gap-1 border border-transparent hover:border-red-100 cursor-pointer"
-                      >
-                        <Trash className="w-3.5 h-3.5" />
-                        <span>Hapus</span>
-                      </button>
-                    </div>
-                  </td>
+      {loading ? (
+        <div className="flex items-center justify-center py-16 gap-3 text-slate-400">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span className="text-sm font-medium">Memuat data kursus...</span>
+        </div>
+      ) : (
+        <>
+          <div className="overflow-x-auto border border-slate-100 rounded-2xl shadow-sm">
+            <table className="w-full min-w-[800px] border-collapse text-left text-xs sm:text-sm">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100 font-semibold text-slate-500">
+                  <th className="py-4 px-5">Judul Kursus</th>
+                  <th className="py-4 px-5">Pengajar</th>
+                  <th className="py-4 px-5">Kategori</th>
+                  <th className="py-4 px-5 w-28 text-center">Kesulitan</th>
+                  <th className="py-4 px-5 w-24 text-center">Siswa</th>
+                  <th className="py-4 px-5 w-20 text-center">Lesson</th>
+                  <th className="py-4 px-5 w-28 text-center">Status</th>
+                  <th className="py-4 px-5 w-32 text-center">Aksi</th>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={7} className="py-8 text-center text-slate-400 font-medium">
-                  Tidak ada data kursus yang sesuai.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {paginatedCourses.length > 0 ? (
+                  paginatedCourses.map((c) => (
+                    <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="py-3.5 px-5">
+                        <div className="flex items-center gap-3">
+                          {c.thumbnail_url ? (
+                            <img src={c.thumbnail_url} alt={c.title} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-[#e6f3ff] flex items-center justify-center shrink-0">
+                              <BookOpen className="w-4 h-4 text-[#0073e6]" />
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-bold text-[#00172e] line-clamp-1">{c.title}</p>
+                            <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                              <Clock className="w-3 h-3" /> {c.duration_minutes} menit
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-5 text-slate-600">{c.instructor?.full_name ?? "-"}</td>
+                      <td className="py-3.5 px-5">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600">
+                          {c.category}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-5 text-center">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize ${DIFFICULTY_COLORS[c.difficulty] ?? "bg-slate-100 text-slate-500"}`}>
+                          {c.difficulty}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-5 text-center">
+                        <span className="flex items-center justify-center gap-1 text-slate-600 font-semibold">
+                          <Users className="w-3 h-3" /> {c.enrolled_count}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-5 text-center font-semibold text-[#00172e]">{c.lesson_count}</td>
+                      <td className="py-3.5 px-5 text-center">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                            c.status === "published"
+                              ? "bg-green-50 text-green-600"
+                              : c.status === "draft"
+                              ? "bg-slate-100 text-slate-500"
+                              : "bg-red-50 text-red-500"
+                          }`}
+                        >
+                          {c.status === "published" ? "Terbit" : c.status === "draft" ? "Draft" : c.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-5">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => onEditClick(c)}
+                            className="px-2.5 py-1 rounded-lg text-xs font-bold text-[#0073e6] hover:bg-blue-50 transition-all flex items-center gap-1 border border-transparent hover:border-blue-100 cursor-pointer"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            onClick={() => onDeleteClick(c.id)}
+                            className="px-2.5 py-1 rounded-lg text-xs font-bold text-red-500 hover:bg-red-50 transition-all flex items-center gap-1 border border-transparent hover:border-red-100 cursor-pointer"
+                          >
+                            <Trash className="w-3.5 h-3.5" />
+                            <span>Hapus</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-slate-400 font-medium">
+                      Tidak ada data kursus yang sesuai.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
 
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-2">
-          <p className="text-xs text-slate-400 font-medium">
-            Menampilkan <span className="font-bold text-slate-700">{Math.min(filteredCourses.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)}-{Math.min(filteredCourses.length, currentPage * ITEMS_PER_PAGE)}</span> dari <span className="font-bold text-slate-700">{filteredCourses.length}</span> kursus
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={handlePrevPage}
-              disabled={currentPage === 1}
-              className={`p-1.5 rounded-lg border text-slate-500 transition-all flex items-center justify-center ${
-                currentPage === 1
-                  ? "opacity-40 cursor-not-allowed border-slate-100"
-                  : "hover:bg-slate-50 border-slate-200 active:scale-95 cursor-pointer"
-              }`}
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-
-            {Array.from({ length: totalPages }).map((_, i) => {
-              const pageNum = i + 1;
-              return (
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-2">
+              <p className="text-xs text-slate-400 font-medium">
+                Menampilkan <span className="font-bold text-slate-700">{Math.min(filteredCourses.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)}-{Math.min(filteredCourses.length, currentPage * ITEMS_PER_PAGE)}</span> dari <span className="font-bold text-slate-700">{filteredCourses.length}</span> kursus
+              </p>
+              <div className="flex items-center gap-1">
                 <button
-                  key={pageNum}
-                  onClick={() => setCurrentPage(pageNum)}
-                  className={`w-8 h-8 rounded-lg border text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${
-                    currentPage === pageNum
-                      ? "bg-[#0073e6] border-[#0073e6] text-white shadow-sm shadow-blue-100"
-                      : "border-slate-200 text-slate-500 hover:bg-slate-50"
+                  onClick={handlePrevPage}
+                  disabled={currentPage === 1}
+                  className={`p-1.5 rounded-lg border text-slate-500 transition-all flex items-center justify-center ${
+                    currentPage === 1
+                      ? "opacity-40 cursor-not-allowed border-slate-100"
+                      : "hover:bg-slate-50 border-slate-200 active:scale-95 cursor-pointer"
                   }`}
                 >
-                  {pageNum}
+                  <ChevronLeft className="w-4 h-4" />
                 </button>
-              );
-            })}
 
-            <button
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages}
-              className={`p-1.5 rounded-lg border text-slate-500 transition-all flex items-center justify-center ${
-                currentPage === totalPages
-                  ? "opacity-40 cursor-not-allowed border-slate-100"
-                  : "hover:bg-slate-50 border-slate-200 active:scale-95 cursor-pointer"
-              }`}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+                {Array.from({ length: totalPages }).map((_, i) => {
+                  const pageNum = i + 1;
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-8 h-8 rounded-lg border text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${
+                        currentPage === pageNum
+                          ? "bg-[#0073e6] border-[#0073e6] text-white shadow-sm shadow-blue-100"
+                          : "border-slate-200 text-slate-500 hover:bg-slate-50"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                  className={`p-1.5 rounded-lg border text-slate-500 transition-all flex items-center justify-center ${
+                    currentPage === totalPages
+                      ? "opacity-40 cursor-not-allowed border-slate-100"
+                      : "hover:bg-slate-50 border-slate-200 active:scale-95 cursor-pointer"
+                  }`}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

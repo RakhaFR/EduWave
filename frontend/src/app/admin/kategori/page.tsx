@@ -96,8 +96,8 @@ export default function AdminCategoryPage() {
       <Modals
         isCourseModalOpen={false}
         setIsCourseModalOpen={() => {}}
-        editingCourse={null}
-        courseForm={{ title: "", category: "Teknologi", instructor: "", students: 0, status: "Terbit" }}
+        editingCourseId={null}
+        courseForm={{ title: "", description: "", category: "Teknologi", difficulty: "beginner", status: "draft", pearls_reward: 0, duration_minutes: 0 }}
         setCourseForm={() => {}}
         handleSaveCourse={() => {}}
         isUserModalOpen={false}

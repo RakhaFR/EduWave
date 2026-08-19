@@ -1,11 +1,14 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { Course, UserType, Category, Registration } from "./types";
+import { adminService } from "@/services/adminService";
 
 interface AdminContextType {
   courses: Course[];
   setCourses: React.Dispatch<React.SetStateAction<Course[]>>;
+  coursesLoading: boolean;
+  refreshCourses: () => void;
   users: UserType[];
   setUsers: React.Dispatch<React.SetStateAction<UserType[]>>;
   categories: Category[];
@@ -20,14 +23,6 @@ interface AdminContextType {
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
-const INITIAL_COURSES: Course[] = [
-  { id: "C-01", title: "Web Dev Dasar", category: "Teknologi", instructor: "Kapten Budi", students: 450, status: "Terbit" },
-  { id: "C-02", title: "UI/UX Bawah Laut", category: "Desain", instructor: "Kapten Siti", students: 320, status: "Terbit" },
-  { id: "C-03", title: "Biologi Samudra", category: "Sains", instructor: "Kapten Rina", students: 210, status: "Terbit" },
-  { id: "C-04", title: "JavaScript Arus Dalam", category: "Teknologi", instructor: "Kapten Andi", students: 180, status: "Draft" },
-  { id: "C-05", title: "React.js Kapal Induk", category: "Teknologi", instructor: "Kapten Budi", students: 95, status: "Terbit" },
-];
-
 const INITIAL_USERS: UserType[] = [
   { id: "U-01", name: "Kapten Budi", email: "budi@eduwave.id", role: "Pengajar", status: "Aktif" },
   { id: "U-02", name: "Kapten Siti", email: "siti@eduwave.id", role: "Pengajar", status: "Aktif" },
@@ -37,9 +32,9 @@ const INITIAL_USERS: UserType[] = [
 ];
 
 const INITIAL_CATEGORIES: Category[] = [
-  { id: "KAT-01", name: "Teknologi", description: "Pengembangan web, mobile app, dan software engineering", courseCount: 3, icon: "💻" },
-  { id: "KAT-02", name: "Desain", description: "UI/UX, desain grafis, dan ilustrasi digital", courseCount: 1, icon: "🎨" },
-  { id: "KAT-03", name: "Sains", description: "Biologi samudra, fisika laut, dan ilmu kelautan", courseCount: 1, icon: "🔬" },
+  { id: "KAT-01", name: "Teknologi", description: "Pengembangan web, mobile app, dan software engineering", courseCount: 0, icon: "💻" },
+  { id: "KAT-02", name: "Desain", description: "UI/UX, desain grafis, dan ilustrasi digital", courseCount: 0, icon: "🎨" },
+  { id: "KAT-03", name: "Sains", description: "Biologi samudra, fisika laut, dan ilmu kelautan", courseCount: 0, icon: "🔬" },
   { id: "KAT-04", name: "Bisnis", description: "Kewirausahaan digital dan manajemen proyek", courseCount: 0, icon: "💼" },
 ];
 
@@ -55,7 +50,8 @@ const INITIAL_REGISTRATIONS: Registration[] = [
 ];
 
 export function AdminProvider({ children }: { children: React.ReactNode }) {
-  const [courses, setCourses] = useState<Course[]>(INITIAL_COURSES);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [coursesLoading, setCoursesLoading] = useState(true);
   const [users, setUsers] = useState<UserType[]>(INITIAL_USERS);
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [registrations, setRegistrations] = useState<Registration[]>(INITIAL_REGISTRATIONS);
@@ -67,11 +63,31 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const refreshCourses = useCallback(async () => {
+    setCoursesLoading(true);
+    try {
+      const res = await adminService.getAllCourses();
+      if (res.success && res.data) {
+        setCourses(res.data);
+      }
+    } catch {
+      showToast("Gagal memuat data kursus dari server.", "error");
+    } finally {
+      setCoursesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshCourses();
+  }, [refreshCourses]);
+
   return (
     <AdminContext.Provider
       value={{
         courses,
         setCourses,
+        coursesLoading,
+        refreshCourses,
         users,
         setUsers,
         categories,

@@ -6,13 +6,15 @@ import {
   Users,
   GraduationCap,
   ClipboardList,
-  Sparkles
+  Sparkles,
+  Loader2
 } from "lucide-react";
 import { Course, UserType, Registration } from "./types";
 import RegistrationLog from "./RegistrationLog";
 
 interface DashboardOverviewProps {
   courses: Course[];
+  coursesLoading?: boolean;
   users: UserType[];
   registrations: Registration[];
   searchGlobal: string;
@@ -24,16 +26,17 @@ const formatNumber = (num: number) => {
 
 export default function DashboardOverview({
   courses,
+  coursesLoading = false,
   users,
   registrations,
   searchGlobal
 }: DashboardOverviewProps) {
   const courseStats = useMemo(() => {
     const total = courses.length;
-    const published = courses.filter((c) => c.status === "Terbit").length;
-    const draft = courses.filter((c) => c.status === "Draft").length;
-    const totalStudents = courses.reduce((acc, c) => acc + c.students, 0);
-    return { total, published, draft, totalStudents };
+    const published = courses.filter((c) => c.status === "published").length;
+    const draft = courses.filter((c) => c.status === "draft").length;
+    const totalEnrolled = courses.reduce((acc, c) => acc + (c.enrolled_count ?? 0), 0);
+    return { total, published, draft, totalEnrolled };
   }, [courses]);
 
   const userStats = useMemo(() => {
@@ -68,8 +71,12 @@ export default function DashboardOverview({
             <span className="text-[10px] font-bold bg-blue-50 text-[#0073e6] px-2.5 py-1 rounded-full">Kursus</span>
           </div>
           <div className="mt-4">
-            <p className="text-2xl font-black text-[#00172e]">{courseStats.total}</p>
-            <p className="text-xs font-semibold text-slate-400 mt-0.5">Total Kursus Aktif</p>
+            {coursesLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin text-slate-300" />
+            ) : (
+              <p className="text-2xl font-black text-[#00172e]">{courseStats.total}</p>
+            )}
+            <p className="text-xs font-semibold text-slate-400 mt-0.5">Total Kursus</p>
           </div>
           <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 pt-3 mt-3 border-t border-blue-50">
             <span>Terbit: <strong className="text-green-600 font-bold">{courseStats.published}</strong></span>
@@ -87,7 +94,7 @@ export default function DashboardOverview({
           </div>
           <div className="mt-4">
             <p className="text-2xl font-black text-[#00172e]">{userStats.total}</p>
-            <p className="text-xs font-semibold text-slate-400 mt-0.5">Total Pengguna Terdaftar</p>
+            <p className="text-xs font-semibold text-slate-400 mt-0.5">Total Pengguna</p>
           </div>
           <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 pt-3 mt-3 border-t border-purple-50">
             <span>Pengajar: <strong className="text-purple-600 font-bold">{userStats.teachers}</strong></span>
@@ -104,8 +111,12 @@ export default function DashboardOverview({
             <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full">Keterlibatan</span>
           </div>
           <div className="mt-4">
-            <p className="text-2xl font-black text-[#00172e]">{formatNumber(courseStats.totalStudents)}</p>
-            <p className="text-xs font-semibold text-slate-400 mt-0.5">Total Siswa Terdaftar</p>
+            {coursesLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin text-slate-300" />
+            ) : (
+              <p className="text-2xl font-black text-[#00172e]">{formatNumber(courseStats.totalEnrolled)}</p>
+            )}
+            <p className="text-xs font-semibold text-slate-400 mt-0.5">Total Pendaftaran Kursus</p>
           </div>
           <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 pt-3 mt-3 border-t border-emerald-50">
             <span>Pengguna Aktif: <strong className="text-emerald-600 font-bold">{userStats.active}</strong></span>
