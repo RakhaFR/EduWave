@@ -1,13 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { User, Mail, Shield, Award, Zap, Flame, Loader2 } from "lucide-react";
+import { User, Mail, Shield, Award, Zap, Flame, Loader2, Trophy } from "lucide-react";
+import { achievementService, Achievement } from "@/services/achievementService";
 
 export default function ProfileComponent() {
   const { user, loading } = useCurrentUser();
   const [imgError, setImgError] = useState(false);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [achLoading, setAchLoading] = useState(true);
+
+  useEffect(() => {
+    achievementService.getMyAchievements().then((res) => {
+      if (res.success && res.data) setAchievements(res.data.achievements);
+    }).catch(() => {}).finally(() => setAchLoading(false));
+  }, []);
 
   const initial = (user?.full_name || user?.username || "P").charAt(0).toUpperCase();
 
@@ -89,6 +98,48 @@ export default function ProfileComponent() {
                     <p className="font-semibold text-slate-700">{user?.bio || "Belum ada bio."}</p>
                   </div>
                 </div>
+              </div>
+
+              {/* Achievements */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Trophy className="w-4 h-4 text-amber-500" />
+                  <p className="text-sm font-bold text-slate-700">Pencapaian</p>
+                  {!achLoading && (
+                    <span className="text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100 px-2 py-0.5 rounded-full">
+                      {achievements.length} diraih
+                    </span>
+                  )}
+                </div>
+                {achLoading ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="w-5 h-5 animate-spin text-slate-300" />
+                  </div>
+                ) : achievements.length === 0 ? (
+                  <div className="text-center py-5 bg-slate-50 rounded-2xl border border-slate-100">
+                    <p className="text-xs text-slate-400 font-medium">Belum ada pencapaian.</p>
+                    <p className="text-[11px] text-slate-300 mt-0.5">Selesaikan kursus & ujian untuk meraihnya!</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {achievements.map((ach) => (
+                      <div key={ach.id} className="flex items-center gap-2.5 bg-amber-50 border border-amber-100 rounded-2xl p-3">
+                        <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 text-lg">
+                          {ach.icon_url ? (
+                            <img src={ach.icon_url} alt={ach.name} className="w-6 h-6 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                          ) : (
+                            <Trophy className="w-4 h-4 text-amber-500" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-bold text-[#00172e] leading-tight truncate">{ach.name}</p>
+                          <p className="text-[10px] text-slate-400 leading-tight truncate">{ach.description}</p>
+                          <p className="text-[10px] font-bold text-amber-600 mt-0.5">+{ach.pearls_reward} 🪙</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </>
           )}
