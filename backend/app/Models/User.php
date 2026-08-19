@@ -55,6 +55,19 @@ class User extends Authenticatable
         'deleted_at' => 'datetime',
     ];
 
+    protected static function booted(): void
+    {
+        static::created(function (User $user): void {
+            if (Mascot::whereKey(Mascot::DEFAULT_ID)->exists()) {
+                $user->mascots()->attach(Mascot::DEFAULT_ID, [
+                    'is_active' => true,
+                    'accessories' => null,
+                    'unlocked_at' => now(),
+                ]);
+            }
+        });
+    }
+
     public function courses(): HasMany
     {
         return $this->hasMany(Course::class, 'instructor_id');

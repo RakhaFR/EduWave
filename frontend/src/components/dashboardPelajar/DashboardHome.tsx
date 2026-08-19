@@ -32,9 +32,7 @@ const formatNumber = (num: number) => {
 const QULI_VARIANTS = ["/biru/biru1.webp", "/biru/biru2.webp", "/biru/biru3.webp", "/biru/biru4.webp"];
 
 const getMascotImage = (mascot: InventoryMascot, index: number) =>
-  mascot.avatar_url?.startsWith("http") && !mascot.avatar_url.includes("api.eduwave.id")
-    ? mascot.avatar_url
-    : QULI_VARIANTS[index % QULI_VARIANTS.length];
+  mascot.avatar_url || QULI_VARIANTS[index % QULI_VARIANTS.length];
 
 export default function DashboardHome() {
   const { user } = useCurrentUser();

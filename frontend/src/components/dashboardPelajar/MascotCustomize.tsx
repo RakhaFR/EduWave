@@ -22,14 +22,14 @@ const QULI_VARIANTS = [
 ];
 
 function getMascotImage(mascot: MascotItem, index: number): string {
-  if (mascot.avatar_url && mascot.avatar_url.startsWith("http") && !mascot.avatar_url.includes("api.eduwave.id")) {
+  if (mascot.avatar_url) {
     return mascot.avatar_url;
   }
   return QULI_VARIANTS[index % QULI_VARIANTS.length];
 }
 
 function getInventoryImage(mascot: InventoryMascot, index: number): string {
-  if (mascot.avatar_url && mascot.avatar_url.startsWith("http") && !mascot.avatar_url.includes("api.eduwave.id")) {
+  if (mascot.avatar_url) {
     return mascot.avatar_url;
   }
   return QULI_VARIANTS[index % QULI_VARIANTS.length];

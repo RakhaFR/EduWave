@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Mascot;
 use App\Models\User;
 use Tests\TestCase;
 
@@ -9,6 +10,8 @@ class AuthControllerTest extends TestCase
 {
     public function test_register_creates_new_user_and_returns_token()
     {
+        $defaultMascot = Mascot::factory()->create(['id' => Mascot::DEFAULT_ID]);
+
         $response = $this->postJson('/api/v1/auth/register', [
             'username' => 'penjelajah_baru',
             'email' => 'test.user@gmail.com',
@@ -56,6 +59,11 @@ class AuthControllerTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('users', ['email' => 'test.user@gmail.com']);
+        $this->assertDatabaseHas('user_mascots', [
+            'user_id' => $response->json('data.user.id'),
+            'mascot_id' => $defaultMascot->id,
+            'is_active' => true,
+        ]);
     }
 
     public function test_register_rejects_duplicate_email()

@@ -11,6 +11,8 @@ class Mascot extends Model
 {
     use HasFactory, HasUuids;
 
+    public const DEFAULT_ID = '10000002-0000-4000-8000-000000000001';
+
     public $incrementing = false;
 
     protected $keyType = 'string';
