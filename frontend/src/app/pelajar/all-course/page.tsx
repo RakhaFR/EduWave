@@ -78,10 +78,12 @@ export default function PelajarAllCoursePage() {
               className="bg-white text-slate-700 text-xs rounded-xl px-3 py-2 outline-none shadow-sm font-medium"
             >
               <option value="">Semua Kategori</option>
-              <option value="Teknologi & Koding">Teknologi & Koding</option>
-              <option value="Sains Laut">Sains Laut</option>
-              <option value="UI/UX">UI/UX</option>
-              <option value="Bahasa">Bahasa</option>
+              <option value="technology">Teknologi (technology)</option>
+              <option value="design">Desain (design)</option>
+              <option value="marine">Kelautan (marine)</option>
+              <option value="language">Bahasa (language)</option>
+              <option value="science">Sains (science)</option>
+              <option value="business">Bisnis (business)</option>
             </select>
 
             <select

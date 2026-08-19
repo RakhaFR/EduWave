@@ -179,4 +179,19 @@ export const courseService = {
     const response = await api.get(`/exams/${examId}/attempts/${attemptId}`);
     return response.data;
   },
+
+  async getLeaderboard(limit: number = 50) {
+    const response = await api.get("/leaderboard", { params: { limit } });
+    return response.data;
+  },
+
+  async getWeeklyLeaderboard(limit: number = 50) {
+    const response = await api.get("/leaderboard/weekly", { params: { limit } });
+    return response.data;
+  },
+
+  async getMyRank() {
+    const response = await api.get("/leaderboard/me");
+    return response.data;
+  },
 };

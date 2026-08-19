@@ -92,9 +92,9 @@ export default function CourseDetailPage() {
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-bold text-sm">
+                      <Link href={`/pelajar/lesson/${lesson.id}`} className="font-bold text-sm hover:text-[#008be3] hover:underline">
                         {lesson.order}. {lesson.title}
-                      </p>
+                      </Link>
                       <p className="text-xs text-slate-400">
                         {lesson.type} · {lesson.duration_minutes} menit · +{lesson.xp_reward} XP
                       </p>
