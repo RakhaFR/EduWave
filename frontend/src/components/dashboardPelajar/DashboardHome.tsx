@@ -10,6 +10,7 @@ import {
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { courseService, Course } from "@/services/courseService";
+import { mascotService, InventoryMascot } from "@/services/mascotService";
 
 const LEADERBOARD = [
   { rank: 4, name: "Rasya Raya Agung", xp: 3200, me: true  },
@@ -28,6 +29,13 @@ const formatNumber = (num: number) => {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };
 
+const QULI_VARIANTS = ["/biru/biru1.webp", "/biru/biru2.webp", "/biru/biru3.webp", "/biru/biru4.webp"];
+
+const getMascotImage = (mascot: InventoryMascot, index: number) =>
+  mascot.avatar_url?.startsWith("http") && !mascot.avatar_url.includes("api.eduwave.id")
+    ? mascot.avatar_url
+    : QULI_VARIANTS[index % QULI_VARIANTS.length];
+
 export default function DashboardHome() {
   const { user } = useCurrentUser();
   const displayName = user?.full_name || user?.username || "Penyelam EduWave";
@@ -35,6 +43,8 @@ export default function DashboardHome() {
   const [myCourses, setMyCourses] = useState<(Course & { progress_pct: number })[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [topPenyelam, setTopPenyelam] = useState<{ rank: number; name: string; xp: number; me: boolean }[]>([]);
+  const [activeMascot, setActiveMascot] = useState<InventoryMascot | null>(null);
+  const [activeMascotIndex, setActiveMascotIndex] = useState(0);
 
   // Dynamic XP progress percentage (target level 1000 XP)
   const xpVal = user?.xp ?? 0;
@@ -44,11 +54,19 @@ export default function DashboardHome() {
     async function loadDashboardData() {
       setLoadingCourses(true);
       try {
-        const [resCourses, resProgress, resLb] = await Promise.all([
+        const [resCourses, resProgress, resLb, resMascots] = await Promise.all([
           courseService.getAllCourses().catch(() => null),
           courseService.getUserCourseProgress().catch(() => null),
           courseService.getLeaderboard(10).catch(() => null),
+          mascotService.getInventory().catch(() => null),
         ]);
+
+        if (resMascots?.success && resMascots.data) {
+          const mascots = resMascots.data.mascots;
+          const index = mascots.findIndex((mascot) => mascot.is_active);
+          setActiveMascot(index >= 0 ? mascots[index] : null);
+          setActiveMascotIndex(index >= 0 ? index : 0);
+        }
 
         if (resCourses?.success && resCourses.data) {
           const allCourses: Course[] = resCourses.data;
@@ -107,9 +125,15 @@ export default function DashboardHome() {
               Mulai Belajar <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
-          <div className="relative w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 shrink-0 ml-4">
-            <Image src="/quli-maskot.webp" alt="Quli" fill className="object-contain drop-shadow-lg" sizes="160px" />
-          </div>
+           <div className="relative w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 shrink-0 ml-4">
+             <Image
+               src={activeMascot ? getMascotImage(activeMascot, activeMascotIndex) : "/quli-maskot.webp"}
+               alt={activeMascot?.name || "Quli"}
+               fill
+               className="object-contain drop-shadow-lg"
+               sizes="160px"
+             />
+           </div>
         </div>
 
         {/* Baris bawah */}
