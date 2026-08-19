@@ -112,6 +112,7 @@ The table below reflects confirmed implementation status and auth boundaries:
 | **User** | `PUT` | `/api/v1/users/me/mascot` | Bearer | Equip mascot and update custom accessories | Yes |
 | **User** | `GET` | `/api/v1/users/me/achievements` | Bearer | Fetch list of unlocked user achievements | Yes |
 | **User** | `GET` | `/api/v1/users/me/courses` | Bearer | List authenticated user's enrolled courses with progress | Yes |
+| **Enrollment** | `GET` | `/api/v1/users/me/course-progress` | Bearer | List progress for all active enrollments in one request | Yes |
 | **Course** | `GET` | `/api/v1/courses` | Public | List published courses (drafts included for owner/admin if authenticated) | Yes |
 | **Course** | `GET` | `/api/v1/courses/{course}` | Public | Show course details with lesson outline | Yes |
 | **Course** | `POST` | `/api/v1/courses` | Admin/Instructor | Create a new course | Yes |
@@ -749,6 +750,35 @@ Get current user's enrollment status and completed lesson checklist.
         "title": "Pengantar Zona Laut",
         "order": 1,
         "is_completed": true
+      }
+    ]
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `GET /api/v1/users/me/course-progress`
+Get the authenticated user's active course enrollments and aggregate progress in one request. Use this endpoint for dashboards and course-list pages instead of requesting `GET /api/v1/courses/{course}/progress` once per course. It does not include lesson-level progress; request the per-course endpoint only on a course detail page.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "enrollments": [
+      {
+        "id": "e1f2e3d4-5678-90ab-cdef-1234567890ab",
+        "course_id": "c1f2e3d4-5678-90ab-cdef-1234567890ab",
+        "course_title": "Pengenalan Oceanografi",
+        "user_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "progress_pct": 40.0,
+        "status": "enrolled",
+        "enrolled_at": "2026-08-13T13:00:00.000000Z",
+        "completed_at": null
       }
     ]
   },

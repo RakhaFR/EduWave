@@ -48,6 +48,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::put('users/me/mascot', [UserController::class, 'updateMascot'])->name('users.me.mascot.update');
         Route::get('users/me/achievements', [UserController::class, 'achievements'])->name('users.me.achievements');
         Route::get('users/me/courses', [UserController::class, 'courses'])->name('users.me.courses');
+        Route::get('users/me/course-progress', [EnrollmentController::class, 'allProgress'])->name('users.me.course-progress.index');
     });
 
     // ──────────────────────────────────────────────────────

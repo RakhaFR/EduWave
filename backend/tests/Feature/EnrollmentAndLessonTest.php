@@ -283,6 +283,47 @@ class EnrollmentAndLessonTest extends TestCase
         ]);
     }
 
+    public function test_student_can_get_all_active_course_progress_in_one_request(): void
+    {
+        $student = $this->student();
+        $activeCourse = $this->publishedCourse();
+        $completedCourse = $this->publishedCourse();
+        $droppedCourse = $this->publishedCourse();
+
+        Enrollment::factory()->create([
+            'user_id' => $student->id,
+            'course_id' => $activeCourse->id,
+            'status' => 'enrolled',
+            'progress_pct' => 25,
+        ]);
+        Enrollment::factory()->create([
+            'user_id' => $student->id,
+            'course_id' => $completedCourse->id,
+            'status' => 'completed',
+            'progress_pct' => 100,
+        ]);
+        Enrollment::factory()->create([
+            'user_id' => $student->id,
+            'course_id' => $droppedCourse->id,
+            'status' => 'dropped',
+        ]);
+
+        $this->actingAs($student)
+            ->getJson('/api/v1/users/me/course-progress')
+            ->assertOk()
+            ->assertJsonCount(2, 'data.enrollments')
+            ->assertJsonFragment([
+                'course_id' => $activeCourse->id,
+                'progress_pct' => 25,
+                'status' => 'enrolled',
+            ])
+            ->assertJsonFragment([
+                'course_id' => $completedCourse->id,
+                'progress_pct' => 100,
+                'status' => 'completed',
+            ]);
+    }
+
     public function test_reenrolling_does_not_award_course_completion_pearls_again(): void
     {
         $student = $this->student();

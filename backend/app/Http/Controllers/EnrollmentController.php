@@ -133,6 +133,26 @@ class EnrollmentController extends ApiController
         ]);
     }
 
+    /**
+     * Get progress for every active enrollment of the authenticated user.
+     *
+     * Use this for course-list and dashboard views instead of requesting one
+     * progress endpoint per course.
+     */
+    public function allProgress(Request $request): JsonResponse
+    {
+        $enrollments = Enrollment::query()
+            ->where('user_id', $request->user()->id)
+            ->whereIn('status', ['enrolled', 'completed'])
+            ->with('course:id,title')
+            ->get()
+            ->map(fn (Enrollment $enrollment) => $this->formatEnrollment($enrollment, $enrollment->course));
+
+        return $this->success([
+            'enrollments' => $enrollments,
+        ]);
+    }
+
     // ──────────────────────────────────────────────────────────────────────────
     // Private helpers
     // ──────────────────────────────────────────────────────────────────────────
