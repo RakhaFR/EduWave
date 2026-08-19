@@ -54,7 +54,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         />
 
         {/* --- MAIN CARD CONTAINER --- */}
-        <main className="bg-white rounded-[32px] shadow-2xl flex-1 p-6 md:p-8 flex flex-col gap-6 overflow-y-auto">
+        <main className="bg-white rounded-[24px] md:rounded-[32px] shadow-2xl flex-1 p-4 sm:p-6 md:p-8 flex flex-col gap-6 overflow-y-auto">
           {children}
         </main>
       </div>

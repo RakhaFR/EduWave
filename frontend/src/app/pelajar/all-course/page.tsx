@@ -139,73 +139,74 @@ export default function PelajarAllCoursePage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5 mb-8">
             {courses.map((course) => (
-              <Link
+              <div
                 key={course.id}
-                href={`/course/${course.id}`}
                 className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-black/20 hover:-translate-y-1 transition-all duration-300 flex flex-col"
               >
-                <div className="relative h-40 md:h-44 bg-[#c9e8ff] shrink-0">
-                  <img
-                    src={course.thumbnail_url || "/ocean-bg.jpg"}
-                    alt={course.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/ocean-bg.jpg";
-                    }}
-                  />
-                  <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1">
-                    <span className="text-[10px] font-semibold text-[#008be3]">{course.category || "Umum"}</span>
-                  </div>
-                  {course.pearls_reward > 0 && (
-                    <div className="absolute top-3 right-3 bg-amber-400/90 backdrop-blur-sm rounded-full px-2 py-0.5 flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-white fill-white" />
-                      <span className="text-[10px] font-bold text-white">+{course.pearls_reward} Mutiara</span>
+                <Link href={`/course/${course.id}`} className="block cursor-pointer">
+                  <div className="relative h-40 md:h-44 bg-[#c9e8ff] shrink-0">
+                    <img
+                      src={course.thumbnail_url || "/ocean-bg.jpg"}
+                      alt={course.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/ocean-bg.jpg";
+                      }}
+                    />
+                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1">
+                      <span className="text-[10px] font-semibold text-[#008be3]">{course.category || "Umum"}</span>
                     </div>
-                  )}
-                </div>
-                <div className="p-4 flex flex-col gap-3 flex-1">
-                  <div>
-                    <h3 className="font-bold text-[#00172e] text-sm leading-snug mb-1 line-clamp-2 min-h-[2.5rem]">
-                      {course.title}
-                    </h3>
-                    <p className="text-xs text-slate-400">
-                      {course.instructor?.full_name || "Instruktur EduWave"}
-                    </p>
+                    {course.pearls_reward > 0 && (
+                      <div className="absolute top-3 right-3 bg-amber-400/90 backdrop-blur-sm rounded-full px-2 py-0.5 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-white fill-white" />
+                        <span className="text-[10px] font-bold text-white">+{course.pearls_reward} Mutiara</span>
+                      </div>
+                    )}
                   </div>
+                  <div className="px-4 pt-4 pb-2 flex flex-col gap-3">
+                    <div>
+                      <h3 className="font-bold text-[#00172e] text-sm leading-snug mb-1 line-clamp-2 min-h-[2.5rem]">
+                        {course.title}
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        {course.instructor?.full_name || "Instruktur EduWave"}
+                      </p>
+                    </div>
 
-                  <div className="flex items-center gap-3 text-[11px] text-slate-400">
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3 h-3 text-[#008be3]" />
-                      {course.enrolled_count || 0} Siswa
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-[#008be3]" />
-                      {course.duration_minutes || 0} Menit
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <BookOpen className="w-3 h-3 text-[#008be3]" />
-                      {course.lesson_count || 0} Lesson
-                    </span>
+                    <div className="flex items-center gap-3 text-[11px] text-slate-400">
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3 h-3 text-[#008be3]" />
+                        {course.enrolled_count || 0} Siswa
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-[#008be3]" />
+                        {course.duration_minutes || 0} Menit
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <BookOpen className="w-3 h-3 text-[#008be3]" />
+                        {course.lesson_count || 0} Lesson
+                      </span>
+                    </div>
                   </div>
+                </Link>
 
-                  <div className="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-xs font-bold capitalize text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
-                      {course.difficulty || "Semua Tingkat"}
-                    </span>
-                    <button
-                      onClick={(e) => handleEnrollToggle(e, course.id)}
-                      className={`flex items-center gap-1 rounded-full px-4 py-1.5 text-[11px] font-bold transition-colors ${
-                        enrolledMap[course.id]
-                          ? "bg-emerald-500 text-white hover:bg-emerald-600"
-                          : "bg-[#008be3] text-white hover:bg-[#0078c8]"
-                      }`}
-                    >
-                      {enrolledMap[course.id] ? "Terdaftar" : "Enroll Kursus"}
-                      <ChevronRight className="w-3 h-3" />
-                    </button>
-                  </div>
+                <div className="px-4 pb-4 mt-auto pt-2 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-xs font-bold capitalize text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
+                    {course.difficulty || "Semua Tingkat"}
+                  </span>
+                  <button
+                    onClick={(e) => handleEnrollToggle(e, course.id)}
+                    className={`cursor-pointer flex items-center gap-1 rounded-full px-4 py-1.5 text-[11px] font-bold transition-colors ${
+                      enrolledMap[course.id]
+                        ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                        : "bg-[#008be3] text-white hover:bg-[#0078c8]"
+                    }`}
+                  >
+                    {enrolledMap[course.id] ? "Terdaftar ✓" : "Ikuti Kursus"}
+                    {!enrolledMap[course.id] && <ChevronRight className="w-3 h-3" />}
+                  </button>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}

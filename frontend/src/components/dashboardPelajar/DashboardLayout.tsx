@@ -147,7 +147,7 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
                     initial
                   )}
                 </div>
-                <span className="hidden md:block text-sm font-semibold text-white">{displayName}</span>
+                <span className="hidden md:block text-sm font-semibold text-white max-w-[120px] truncate">{displayName}</span>
                 <ChevronDown className={`w-3.5 h-3.5 text-white/70 transition-transform ${avatarOpen ? "rotate-180" : ""}`} />
               </button>
 

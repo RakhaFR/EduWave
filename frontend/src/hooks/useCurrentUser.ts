@@ -2,89 +2,94 @@ import { useState, useEffect } from 'react';
 import { authService } from '@/services/authService';
 import { UserProfile } from '@/types/auth';
 
-let cachedUserPromise: Promise<UserProfile | null> | null = null;
 let cachedUser: UserProfile | null = null;
+let fetchPromise: Promise<UserProfile | null> | null = null;
+
+function getStoredUser(): UserProfile | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('user');
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function storeUser(u: UserProfile) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('user', JSON.stringify(u));
+  }
+}
+
+async function doFetch(): Promise<UserProfile | null> {
+  if (fetchPromise) return fetchPromise;
+  fetchPromise = (async () => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) return null;
+      const res = await authService.getUserMe();
+      if (res.success && res.data?.user) {
+        cachedUser = res.data.user;
+        storeUser(res.data.user);
+        return res.data.user;
+      }
+      const res2 = await authService.getAuthMe();
+      if (res2.success && res2.data?.user) {
+        cachedUser = res2.data.user;
+        storeUser(res2.data.user);
+        return res2.data.user;
+      }
+    } catch {
+      try {
+        const res2 = await authService.getAuthMe();
+        if (res2.success && res2.data?.user) {
+          cachedUser = res2.data.user;
+          storeUser(res2.data.user);
+          return res2.data.user;
+        }
+      } catch { /* ignore */ }
+    }
+    return null;
+  })();
+  const result = await fetchPromise;
+  fetchPromise = null;
+  return result;
+}
 
 export function clearUserCache() {
-  cachedUserPromise = null;
   cachedUser = null;
+  fetchPromise = null;
 }
 
 export function useCurrentUser() {
-  const [user, setUser] = useState<UserProfile | null>(() => {
-    if (cachedUser) return cachedUser;
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('user');
-      if (stored) {
-        try { return JSON.parse(stored); } catch (e) {}
-      }
-    }
-    return null;
-  });
-  const [loading, setLoading] = useState<boolean>(!user);
+  const initialUser = cachedUser ?? getStoredUser();
+  const [user, setUser] = useState<UserProfile | null>(initialUser);
+  const [loading, setLoading] = useState<boolean>(!initialUser);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchUser = async (force: boolean = false) => {
-    if (force) {
-      clearUserCache();
-    }
-    if (cachedUser && !force) {
+  useEffect(() => {
+    if (cachedUser) {
       setUser(cachedUser);
       setLoading(false);
       return;
     }
-    if (cachedUserPromise && !force) {
-      const u = await cachedUserPromise;
+    setLoading(true);
+    doFetch().then((u) => {
       setUser(u);
       setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    cachedUserPromise = (async () => {
-      try {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        if (!token) {
-          return null;
-        }
-        const res = await authService.getUserMe();
-        if (res.success && res.data?.user) {
-          cachedUser = res.data.user;
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('user', JSON.stringify(res.data.user));
-          }
-          return res.data.user;
-        }
-        const authRes = await authService.getAuthMe();
-        if (authRes.success && authRes.data?.user) {
-          cachedUser = authRes.data.user;
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('user', JSON.stringify(authRes.data.user));
-          }
-          return authRes.data.user;
-        }
-      } catch (err: any) {
-        try {
-          const authRes = await authService.getAuthMe();
-          if (authRes.success && authRes.data?.user) {
-            cachedUser = authRes.data.user;
-            return authRes.data.user;
-          }
-        } catch (authErr: any) {}
-      }
-      return null;
-    })();
-
-    const result = await cachedUserPromise;
-    setUser(result);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchUser();
+    }).catch(() => {
+      setError('Gagal terhubung ke backend');
+      setLoading(false);
+    });
   }, []);
 
-  return { user, loading, error, refetch: () => fetchUser(true) };
+  const refetch = () => {
+    clearUserCache();
+    if (typeof window !== 'undefined') localStorage.removeItem('user');
+    setLoading(true);
+    doFetch().then((u) => {
+      setUser(u);
+      setLoading(false);
+    });
+  };
+
+  return { user, loading, error, refetch };
 }
