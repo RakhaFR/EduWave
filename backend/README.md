@@ -642,10 +642,38 @@ Create a new course (Requires `instructor` or `admin` role).
 #### `PUT /api/v1/courses/{course}`
 Update course details (Admin or course owner instructor).
 
+* **Headers:** `Authorization: Bearer <token>`
+* **Request Body:** All fields are optional. Instructors cannot change `instructor_id`.
+```json
+{
+  "title": "Pemrograman Laravel untuk Pemula",
+  "description": "Panduan lengkap membangun API modern.",
+  "category": "technology",
+  "difficulty": "beginner",
+  "thumbnail_url": "https://example.com/thumb.jpg",
+  "trailer_url": "https://example.com/trailer.mp4",
+  "status": "published",
+  "pearls_reward": 100,
+  "duration_minutes": 180
+}
+```
+* **Success Response (`200 OK`):** Returns the updated course object in `data`, using the same shape as `POST /api/v1/courses`.
+
 ---
 
 #### `DELETE /api/v1/courses/{course}`
 Soft-delete a course (Admin or course owner instructor).
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": [],
+  "error": null,
+  "meta": null
+}
+```
 
 ---
 
@@ -679,12 +707,55 @@ Enroll the authenticated user in a published course. Prevents duplicate enrollme
 ---
 
 #### `DELETE /api/v1/courses/{course}/enroll`
-Unenroll / drop user from course.
+Drop the authenticated user from a course. The enrollment record is retained with a `dropped` status and can be reactivated by enrolling again.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Error Response:** `404 NOT_ENROLLED` when the user has no enrollment record for the course.
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": [],
+  "error": null,
+  "meta": null
+}
+```
 
 ---
 
 #### `GET /api/v1/courses/{course}/progress`
 Get current user's enrollment status and completed lesson checklist.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Error Response:** `404 NOT_ENROLLED` when the user is not actively enrolled in the course.
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "enrollment": {
+      "id": "e1f2e3d4-5678-90ab-cdef-1234567890ab",
+      "course_id": "c1f2e3d4-5678-90ab-cdef-1234567890ab",
+      "course_title": "Pengenalan Oceanografi",
+      "user_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "progress_pct": 40.0,
+      "status": "enrolled",
+      "enrolled_at": "2026-08-13T13:00:00.000000Z",
+      "completed_at": null
+    },
+    "lessons_progress": [
+      {
+        "id": "l1f2e3d4-5678-90ab-cdef-1234567890ab",
+        "title": "Pengantar Zona Laut",
+        "order": 1,
+        "is_completed": true
+      }
+    ]
+  },
+  "error": null,
+  "meta": null
+}
+```
 
 ---
 
@@ -915,7 +986,41 @@ List history of attempt submissions for current user.
 ---
 
 #### `GET /api/v1/exams/{exam}/attempts/{attempt}`
-View attempt payload. Returns in-progress state (with suppressed answer keys) if `submitted_at` is null, or review payload (with score & explanations) if completed.
+View a specific attempt owned by the authenticated user. Admins may view any attempt. The `{attempt}` must belong to the specified `{exam}`.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Access:** Attempt owner or admin. Returns `403` for another user's attempt and `400` with `INVALID_ATTEMPT` when the attempt belongs to another exam.
+* **Success Response (`200 OK`) for an in-progress attempt:** The response has the same shape as `POST /api/v1/exams/{exam}/attempts`. Question objects do not include `correct_answer` or `explanation`.
+```json
+{
+  "success": true,
+  "data": {
+    "attempt_id": "a1f2e3d4-5678-90ab-cdef-1234567890ab",
+    "exam": {
+      "id": "x1f2e3d4-5678-90ab-cdef-1234567890ab",
+      "title": "Ujian Akhir: Oceanografi Dasar",
+      "time_limit_sec": 3600,
+      "question_count": 10,
+      "passing_score": 70
+    },
+    "questions": [
+      {
+        "id": "q1f2e3d4-5678-90ab-cdef-1234567890ab",
+        "question_text": "Apa zona laut yang paling dalam?",
+        "type": "multiple_choice",
+        "options": [{ "key": "A", "value": "Pelagis" }],
+        "points": 10,
+        "order": 1
+      }
+    ],
+    "started_at": "2026-08-13T13:40:00.000000Z",
+    "expires_at": "2026-08-13T14:40:00.000000Z"
+  },
+  "error": null,
+  "meta": null
+}
+```
+* **Success Response (`200 OK`) for a submitted attempt:** The response has the same shape as `POST /api/v1/exams/{exam}/attempts/{attempt}/submit`. Its `pearls_earned` is always `0` because rewards were granted during submission; `xp_earned` is the score multiplied by `2`.
 
 ---
 
