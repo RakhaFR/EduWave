@@ -45,7 +45,12 @@ export interface PembimbingExamForm {
 
 export const pembimbingService = {
   async getMyCourses() {
-    const response = await api.get("/courses", { params: { per_page: 50 } });
+    const response = await api.get("/instructor/courses");
+    return response.data;
+  },
+
+  async getMyExams() {
+    const response = await api.get("/exams");
     return response.data;
   },
 

@@ -132,10 +132,10 @@ export default function RegistrationLog({
       </div>
 
       {/* --- Auto Expire Notice Banner --- */}
-      <div className="bg-amber-50/70 border border-amber-200/60 rounded-2xl p-3.5 flex items-center gap-3 text-xs text-amber-800 font-medium">
-        <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+      <div className="bg-blue-50/70 border border-blue-200/60 rounded-2xl p-3.5 flex items-center gap-3 text-xs text-blue-800 font-medium">
+        <Clock className="w-4 h-4 text-blue-600 shrink-0" />
         <span>
-          Log ini melakukan <strong>tracking real-time</strong> aktivitas pendaftaran &amp; akses. Catatan log akan secara otomatis terhapus bertahap setelah kurun waktu 30 hari.
+          Log ini menampilkan <strong>pengguna terbaru</strong> yang mendaftar ke sistem. Data IP dan perangkat tidak tersimpan di database saat ini.
         </span>
       </div>
 

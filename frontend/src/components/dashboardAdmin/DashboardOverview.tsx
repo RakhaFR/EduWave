@@ -10,6 +10,7 @@ import {
   Loader2
 } from "lucide-react";
 import { Course, UserType, Registration } from "./types";
+import { AdminAnalytics } from "@/services/adminService";
 import RegistrationLog from "./RegistrationLog";
 
 interface DashboardOverviewProps {
@@ -17,6 +18,7 @@ interface DashboardOverviewProps {
   coursesLoading?: boolean;
   users: UserType[];
   registrations: Registration[];
+  analytics?: AdminAnalytics | null;
   searchGlobal: string;
 }
 
@@ -29,23 +31,24 @@ export default function DashboardOverview({
   coursesLoading = false,
   users,
   registrations,
+  analytics,
   searchGlobal
 }: DashboardOverviewProps) {
   const courseStats = useMemo(() => {
-    const total = courses.length;
-    const published = courses.filter((c) => c.status === "published").length;
-    const draft = courses.filter((c) => c.status === "draft").length;
-    const totalEnrolled = courses.reduce((acc, c) => acc + (c.enrolled_count ?? 0), 0);
+    const total = analytics?.courses.total ?? courses.length;
+    const published = analytics?.courses.published ?? courses.filter((c) => c.status === "published").length;
+    const draft = analytics?.courses.draft ?? courses.filter((c) => c.status === "draft").length;
+    const totalEnrolled = analytics?.enrollments.total ?? courses.reduce((acc, c) => acc + (c.enrolled_count ?? 0), 0);
     return { total, published, draft, totalEnrolled };
-  }, [courses]);
+  }, [courses, analytics]);
 
   const userStats = useMemo(() => {
-    const total = users.length;
-    const teachers = users.filter((u) => u.role === "Pengajar").length;
-    const students = users.filter((u) => u.role === "Siswa").length;
-    const active = users.filter((u) => u.status === "Aktif").length;
+    const total = analytics?.users.total ?? users.length;
+    const teachers = analytics?.users.instructors ?? users.filter((u) => u.role === "Pengajar").length;
+    const students = analytics?.users.students ?? users.filter((u) => u.role === "Siswa").length;
+    const active = analytics?.users.active ?? users.filter((u) => u.status === "Aktif").length;
     return { total, teachers, students, active };
-  }, [users]);
+  }, [users, analytics]);
 
   const regStats = useMemo(() => {
     const total = registrations.length;

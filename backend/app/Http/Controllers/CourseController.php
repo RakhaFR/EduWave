@@ -61,6 +61,17 @@ class CourseController extends ApiController
         return $this->paginated($paginator, fn ($course) => $this->formatCourse($course));
     }
 
+    public function mine(Request $request): JsonResponse
+    {
+        $courses = Course::with('instructor:id,full_name,avatar_url')
+            ->withCount(['lessons', 'enrollments'])
+            ->where('instructor_id', $request->user()->id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return $this->success($courses->map(fn (Course $course) => $this->formatCourse($course)));
+    }
+
     /**
      * Show a single course with lessons list.
      */

@@ -5,7 +5,7 @@ import DashboardOverview from "@/components/dashboardAdmin/DashboardOverview";
 import { useAdmin } from "@/components/dashboardAdmin/AdminContext";
 
 export default function AdminDashboardPage() {
-  const { courses, coursesLoading, users, registrations, searchGlobal } = useAdmin();
+  const { courses, coursesLoading, users, registrations, analytics, searchGlobal } = useAdmin();
 
   return (
     <>
@@ -17,6 +17,7 @@ export default function AdminDashboardPage() {
           coursesLoading={coursesLoading}
           users={users}
           registrations={registrations}
+          analytics={analytics}
           searchGlobal={searchGlobal}
         />
       </div>

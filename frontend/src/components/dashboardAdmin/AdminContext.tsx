@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { Course, UserType, Category, Registration } from "./types";
-import { adminService } from "@/services/adminService";
+import { adminService, AdminAnalytics } from "@/services/adminService";
 
 interface AdminContextType {
   courses: Course[];
@@ -15,6 +15,7 @@ interface AdminContextType {
   setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
   registrations: Registration[];
   setRegistrations: React.Dispatch<React.SetStateAction<Registration[]>>;
+  analytics: AdminAnalytics | null;
   searchGlobal: string;
   setSearchGlobal: (val: string) => void;
   toast: { message: string; type: "success" | "error" } | null;
@@ -29,6 +30,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   const [users, setUsers] = useState<UserType[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [analytics, setAnalytics] = useState<AdminAnalytics | null>(null);
   const [searchGlobal, setSearchGlobal] = useState("");
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
@@ -57,15 +59,18 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
           catMap[catKey] = (catMap[catKey] || 0) + 1;
         });
 
-        const categoryList: Category[] = [
-          { id: "technology", name: "Teknologi", description: "Pengembangan web, mobile, & software engineering", courseCount: catMap["technology"] || 0, icon: "💻" },
-          { id: "design", name: "Desain", description: "UI/UX, desain grafis, dan ilustrasi digital", courseCount: catMap["design"] || 0, icon: "🎨" },
-          { id: "marine", name: "Marine", description: "Biologi samudra, fisika laut, & teknologi maritim", courseCount: catMap["marine"] || 0, icon: "🌊" },
-          { id: "language", name: "Bahasa", description: "Bahasa asing & komunikasi maritim internasional", courseCount: catMap["language"] || 0, icon: "🗣️" },
-          { id: "science", name: "Sains", description: "Sains dasar & ilmu kelautan lanjutan", courseCount: catMap["science"] || 0, icon: "🔬" },
-          { id: "business", name: "Bisnis", description: "Kewirausahaan digital & manajemen proyek", courseCount: catMap["business"] || 0, icon: "💼" },
-        ];
+        const categoryList: Category[] = Object.entries(catMap).map(([name, courseCount]) => ({
+          id: name,
+          name,
+          description: "Kategori yang digunakan oleh kursus di database.",
+          courseCount,
+          icon: "📁",
+        }));
         setCategories(categoryList);
+      }
+
+      if (analyticsRes?.success && analyticsRes.data) {
+        setAnalytics(analyticsRes.data);
       }
 
       if (usersRes?.success && Array.isArray(usersRes.data)) {
@@ -84,9 +89,9 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
           id: ru.id,
           user: ru.full_name || ru.username,
           email: ru.email,
-          action: `Registrasi Akun (${ru.role})`,
-          ip: "Server Log",
-          device: "Web Browser",
+          action: `Registrasi akun (${ru.role})`,
+          ip: "Tidak tersedia",
+          device: "Tidak tersedia",
           timeAgo: new Date(ru.created_at).toLocaleDateString("id-ID"),
           isSuspicious: false,
         }));
@@ -116,6 +121,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         setCategories,
         registrations,
         setRegistrations,
+        analytics,
         searchGlobal,
         setSearchGlobal,
         toast,

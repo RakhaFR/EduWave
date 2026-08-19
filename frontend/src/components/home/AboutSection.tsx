@@ -10,8 +10,7 @@ import {
   PenLine,
   Smartphone,
 } from "lucide-react";
-import { adminService } from "@/services/adminService";
-import { courseService } from "@/services/courseService";
+import { publicService } from "@/services/publicService";
 
 const FEATURES = [
   {
@@ -86,22 +85,13 @@ export default function AboutSection() {
   useEffect(() => {
     async function loadStats() {
       try {
-        const [overviewRes, coursesRes] = await Promise.all([
-          adminService.getAnalyticsOverview().catch(() => null),
-          courseService.getAllCourses().catch(() => null),
-        ]);
-
-        const overview = overviewRes?.data;
-        const courses = coursesRes?.data || [];
-
-        const studentCount = overview?.users_by_role?.student || 0;
-        const totalCourses = courses.length || overview?.total_courses || 0;
-        const totalEnrollments = overview?.total_enrollments || 0;
+        const response = await publicService.getStats();
+        const stats = response?.data;
 
         setStatsData([
-          { target: studentCount, label: "Penyelam Aktif", suffix: "" },
-          { target: totalCourses, label: "Materi Khusus", suffix: "" },
-          { target: totalEnrollments, label: "Total Pendaftaran", suffix: "" },
+          { target: stats?.active_students ?? 0, label: "Penyelam Aktif", suffix: "" },
+          { target: stats?.published_courses ?? 0, label: "Materi Khusus", suffix: "" },
+          { target: stats?.total_enrollments ?? 0, label: "Total Pendaftaran", suffix: "" },
         ]);
       } catch (err) {
         console.error("Gagal memuat stats about section:", err);

@@ -9,6 +9,7 @@ interface PembimbingContextType {
   setCourses: React.Dispatch<React.SetStateAction<PembimbingCourse[]>>;
   coursesLoading: boolean;
   refreshCourses: () => void;
+  refreshExams: () => void;
   exams: Exam[];
   setExams: React.Dispatch<React.SetStateAction<Exam[]>>;
   searchGlobal: string;
@@ -19,12 +20,10 @@ interface PembimbingContextType {
 
 const PembimbingContext = createContext<PembimbingContextType | undefined>(undefined);
 
-const INITIAL_EXAMS: Exam[] = [];
-
 export function PembimbingProvider({ children }: { children: React.ReactNode }) {
   const [courses, setCourses] = useState<PembimbingCourse[]>([]);
   const [coursesLoading, setCoursesLoading] = useState(true);
-  const [exams, setExams] = useState<Exam[]>(INITIAL_EXAMS);
+  const [exams, setExams] = useState<Exam[]>([]);
   const [searchGlobal, setSearchGlobal] = useState("");
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
@@ -47,9 +46,21 @@ export function PembimbingProvider({ children }: { children: React.ReactNode }) 
     }
   }, []);
 
+  const refreshExams = useCallback(async () => {
+    try {
+      const res = await pembimbingService.getMyExams();
+      if (res.success && Array.isArray(res.data)) {
+        setExams(res.data);
+      }
+    } catch {
+      showToast("Gagal memuat data ujian dari server.", "error");
+    }
+  }, []);
+
   useEffect(() => {
     refreshCourses();
-  }, [refreshCourses]);
+    refreshExams();
+  }, [refreshCourses, refreshExams]);
 
   return (
     <PembimbingContext.Provider
@@ -58,6 +69,7 @@ export function PembimbingProvider({ children }: { children: React.ReactNode }) 
         setCourses,
         coursesLoading,
         refreshCourses,
+        refreshExams,
         exams,
         setExams,
         searchGlobal,

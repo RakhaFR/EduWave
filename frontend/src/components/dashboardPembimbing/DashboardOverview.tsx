@@ -92,7 +92,7 @@ export default function DashboardOverview({ courses, coursesLoading = false, exa
             <p className="text-xs font-semibold text-slate-400 mt-0.5">Total Ujian Dibuat</p>
           </div>
           <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 pt-3 mt-3 border-t border-emerald-50">
-            <span>Data lokal sementara</span>
+            <span>Dari data ujian saya</span>
           </div>
         </div>
 

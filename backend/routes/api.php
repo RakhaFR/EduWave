@@ -12,6 +12,7 @@ use App\Http\Controllers\ExamController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\MascotController;
+use App\Http\Controllers\PublicDataController;
 use App\Http\Controllers\RoomMessageController;
 use App\Http\Controllers\StudyRoomController;
 use App\Http\Controllers\UserController;
@@ -52,6 +53,12 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     });
 
     // ──────────────────────────────────────────────────────
+    // Public platform data
+    // ──────────────────────────────────────────────────────
+    Route::get('public/stats', [PublicDataController::class, 'stats'])->name('public.stats');
+    Route::get('instructors', [PublicDataController::class, 'instructors'])->name('instructors.index');
+
+    // ──────────────────────────────────────────────────────
     // Course Routes (Public — index + show)
     // ──────────────────────────────────────────────────────
     Route::get('courses', [CourseController::class, 'index'])->name('courses.index');
@@ -65,6 +72,9 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     // Course, Lesson, Enrollment, Exam & Attempt Routes (Authenticated)
     // ──────────────────────────────────────────────────────
     Route::middleware('auth:sanctum')->group(function () {
+        // Instructor-owned courses
+        Route::middleware('role:instructor')->get('instructor/courses', [CourseController::class, 'mine'])->name('instructor.courses.index');
+
         // Enrollment
         Route::post('courses/{course}/enroll', [EnrollmentController::class, 'enroll'])->name('courses.enrollments.store');
         Route::delete('courses/{course}/enroll', [EnrollmentController::class, 'unenroll'])->name('courses.enrollments.destroy');
@@ -78,6 +88,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::post('lessons/{lesson}/complete', [LessonController::class, 'complete'])->name('lessons.complete');
 
         // Exam access & attempt management
+        Route::middleware('role:admin,instructor')->get('exams', [ExamController::class, 'index'])->name('exams.index');
         Route::get('exams/{exam}', [ExamController::class, 'show'])->name('exams.show');
         Route::post('exams/{exam}/attempts', [AttemptController::class, 'start'])->name('exams.attempts.store');
         Route::post('exams/{exam}/attempts/{attempt}/submit', [AttemptController::class, 'submit'])->name('exams.attempts.submit');

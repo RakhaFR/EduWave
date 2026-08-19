@@ -12,6 +12,30 @@ use Illuminate\Http\Request;
 
 class ExamController extends ApiController
 {
+    public function index(Request $request): JsonResponse
+    {
+        $query = Exam::with('course:id,title,instructor_id');
+
+        if ($request->user()->role === 'instructor') {
+            $query->whereHas('course', fn ($courseQuery) => $courseQuery
+                ->where('instructor_id', $request->user()->id));
+        }
+
+        $exams = $query->orderByDesc('created_at')->get()->map(fn (Exam $exam) => [
+            'id' => $exam->id,
+            'title' => $exam->title,
+            'course_id' => $exam->course_id,
+            'course_title' => $exam->course?->title ?? '',
+            'lesson_id' => $exam->lesson_id,
+            'time_limit_sec' => $exam->time_limit_sec,
+            'passing_score' => $exam->passing_score,
+            'max_attempts' => $exam->max_attempts,
+            'pearls_reward' => $exam->pearls_reward,
+        ]);
+
+        return $this->success($exams);
+    }
+
     /**
      * Show exam details and questions.
      * SECURITY: Question output uses formatQuestionWithoutAnswerKey to NEVER leak correct_answer or explanation.
