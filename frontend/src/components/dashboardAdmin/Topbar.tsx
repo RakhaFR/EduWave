@@ -40,10 +40,10 @@ export default function Topbar({
 
   return (
     <header className="flex items-center justify-between gap-4 mb-4 px-2">
-      {/* Mobile hamburger */}
+      {/* Mobile & Tablet hamburger (< 1024px) */}
       <button
         onClick={() => setMobileMenuOpen(true)}
-        className="md:hidden p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all focus:outline-none cursor-pointer"
+        className="lg:hidden p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all focus:outline-none cursor-pointer"
       >
         <Menu className="w-6 h-6" />
       </button>

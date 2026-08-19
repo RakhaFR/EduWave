@@ -38,13 +38,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Background Animated Bubbles */}
       <FloatingBubbles count={15} className="z-0 opacity-40 animate-float-bubble" />
 
-      {/* --- SIDEBAR DESKTOP --- */}
-      <aside className="hidden md:block w-72 shrink-0 p-4 z-10">
+      {/* --- SIDEBAR DESKTOP (>= 1024px) --- */}
+      <aside className="hidden lg:block w-72 shrink-0 p-4 z-10">
         <Sidebar showToast={(msg) => showToast(msg)} />
       </aside>
 
       {/* --- CONTENT AREA & HEADER --- */}
-      <div className="flex-1 flex flex-col p-4 z-10 min-w-0 md:pl-0">
+      <div className="flex-1 flex flex-col p-4 z-10 min-w-0 lg:pl-0">
         {/* Topbar */}
         <Topbar
           searchGlobal={searchGlobal}
@@ -59,9 +59,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </main>
       </div>
 
-      {/* --- MOBILE SIDEBAR DRAWER --- */}
+      {/* --- MOBILE & TABLET SIDEBAR DRAWER (< 1024px) --- */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex">
+        <div className="fixed inset-0 z-50 lg:hidden flex">
           {/* Backdrop */}
           <div
             onClick={() => setMobileMenuOpen(false)}

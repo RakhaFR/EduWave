@@ -67,17 +67,17 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
           style={{ display: "block", height: "240px", objectFit: "cover", objectPosition: "top" }} />
       </div>
 
-      {/* ── SIDEBAR DESKTOP (md+) ── */}
-      <div className="hidden md:block w-16 lg:w-64 shrink-0 p-3 relative" style={{ zIndex: 20 }}>
-        <aside className="relative h-full rounded-3xl bg-white flex flex-col px-2 lg:px-5 py-6 shadow-xl">
+      {/* ── SIDEBAR DESKTOP (lg+) ── */}
+      <div className="hidden lg:block w-64 shrink-0 p-3 relative" style={{ zIndex: 20 }}>
+        <aside className="relative h-full rounded-3xl bg-white flex flex-col px-5 py-6 shadow-xl">
 
           {/* Logo */}
-          <Link href="/pelajar" className="flex items-center gap-2 mb-2 justify-center lg:justify-start">
+          <Link href="/pelajar" className="flex items-center gap-2 mb-2">
             <Image src="/logo-eduwave.webp" alt="EduWave" width={32} height={32} className="h-8 w-auto shrink-0" />
-            <span className="hidden lg:block text-lg font-bold text-[#00172e]">
+            <span className="text-lg font-bold text-[#00172e]">
               Edu<span className="text-[#008be3]">Wave</span>
             </span>
-            <ChevronRight className="hidden lg:block w-4 h-4 text-slate-300 ml-auto" />
+            <ChevronRight className="w-4 h-4 text-slate-300 ml-auto" />
           </Link>
 
           <div className="border-b border-slate-100 mb-5" />
@@ -94,7 +94,7 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
                       ? "bg-[#008be3]/10 text-[#008be3] border-l-4 border-[#008be3]"
                       : "text-slate-500 hover:bg-slate-50 hover:text-[#008be3]"}`}>
                   <span className="shrink-0">{item.icon}</span>
-                  <span className="hidden lg:block">{item.label}</span>
+                  <span>{item.label}</span>
                 </Link>
               );
             })}
@@ -108,9 +108,9 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
         {/* Topbar */}
         <header className="flex items-center justify-between px-4 md:px-8 py-3 md:py-4 bg-transparent">
 
-          {/* Mobile: hamburger */}
+          {/* Mobile & Tablet (< 1024px): hamburger */}
           <button
-            className="md:hidden w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white"
+            className="lg:hidden w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white cursor-pointer"
             onClick={() => setMobileMenuOpen(true)}
           >
             <Menu className="w-5 h-5" />
@@ -175,9 +175,9 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
         </div>
       </div>
 
-      {/* ── MOBILE SIDEBAR DRAWER ── */}
+      {/* ── MOBILE SIDEBAR DRAWER (< 1024px) ── */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
+        <div className="fixed inset-0 z-50 lg:hidden">
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
 
@@ -222,8 +222,8 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
         </div>
       )}
 
-      {/* ── BOTTOM NAV MOBILE ── */}
-      <div className="fixed bottom-0 left-0 right-0 md:hidden z-40">
+      {/* ── BOTTOM NAV MOBILE (< 1024px) ── */}
+      <div className="fixed bottom-0 left-0 right-0 lg:hidden z-40">
         <div className="mx-3 mb-3 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 px-2 py-2 flex items-center justify-around">
           {BOTTOM_NAV.map((item) => {
             const active = pathname === item.href;

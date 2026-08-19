@@ -35,11 +35,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="min-h-screen font-sans flex flex-col md:flex-row bg-[#0073e6] text-[#00172e] relative overflow-x-hidden select-none items-stretch">
       <FloatingBubbles count={15} className="z-0 opacity-40 animate-float-bubble" />
 
-      <aside className="hidden md:block w-72 shrink-0 p-4 z-10">
+      <aside className="hidden lg:block w-72 shrink-0 p-4 z-10">
         <Sidebar showToast={(msg) => showToast(msg)} />
       </aside>
 
-      <div className="flex-1 flex flex-col p-4 z-10 min-w-0 md:pl-0">
+      <div className="flex-1 flex flex-col p-4 z-10 min-w-0 lg:pl-0">
         <Topbar
           searchGlobal={searchGlobal}
           setSearchGlobal={setSearchGlobal}
@@ -53,7 +53,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex">
+        <div className="fixed inset-0 z-50 lg:hidden flex">
           <div
             onClick={() => setMobileMenuOpen(false)}
             className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
