@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Course;
+use App\Models\Exam;
 use App\Models\Lesson;
 use App\Models\User;
 use Tests\TestCase;
@@ -110,5 +111,22 @@ class CourseVisibilityTest extends TestCase
         ])->assertForbidden();
 
         $this->assertSame($sourceCourse->id, $lesson->fresh()->course_id);
+    }
+
+    public function test_course_detail_includes_the_exam_id_for_each_lesson(): void
+    {
+        $course = Course::factory()->create(['status' => 'published']);
+        $lessonWithExam = Lesson::factory()->create(['course_id' => $course->id, 'order' => 1]);
+        $lessonWithoutExam = Lesson::factory()->create(['course_id' => $course->id, 'order' => 2]);
+        $exam = Exam::factory()->create([
+            'course_id' => $course->id,
+            'lesson_id' => $lessonWithExam->id,
+        ]);
+
+        $response = $this->getJson("/api/v1/courses/{$course->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('data.lessons.0.exam_id', $exam->id)
+            ->assertJsonPath('data.lessons.1.exam_id', null);
     }
 }

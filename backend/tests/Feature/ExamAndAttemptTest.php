@@ -372,6 +372,23 @@ class ExamAndAttemptTest extends TestCase
         $this->actingAs($student)->postJson("/api/v1/exams/{$exam->id}/attempts")->assertCreated();
     }
 
+    public function test_attempt_history_is_returned_as_a_data_array(): void
+    {
+        $student = $this->student();
+        $exam = $this->createExam();
+        $this->enroll($student, $exam);
+        $attempt = ExamAttempt::factory()->create([
+            'user_id' => $student->id,
+            'exam_id' => $exam->id,
+            'submitted_at' => now(),
+        ]);
+
+        $this->actingAs($student)->getJson("/api/v1/exams/{$exam->id}/attempts")
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $attempt->id)
+            ->assertJsonStructure(['data' => [['id', 'score', 'passed', 'started_at', 'submitted_at', 'expires_at']]]);
+    }
+
     public function test_empty_exam_cannot_award_rewards(): void
     {
         $student = $this->student();

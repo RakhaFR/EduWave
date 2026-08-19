@@ -80,7 +80,7 @@ class CourseController extends ApiController
         $course->load('instructor:id,full_name,avatar_url')
             ->loadCount(['lessons', 'enrollments']);
 
-        $lessons = $course->lessons()->orderBy('order')->get()->map(fn ($lesson) => [
+        $lessons = $course->lessons()->with('exam:id,lesson_id')->orderBy('order')->get()->map(fn ($lesson) => [
             'id' => $lesson->id,
             'title' => $lesson->title,
             'type' => $lesson->type,
@@ -88,6 +88,7 @@ class CourseController extends ApiController
             'order' => $lesson->order,
             'xp_reward' => $lesson->xp_reward,
             'is_preview' => $lesson->is_preview,
+            'exam_id' => $lesson->exam?->id,
         ]);
 
         return $this->success(array_merge($this->formatCourse($course), ['lessons' => $lessons]));

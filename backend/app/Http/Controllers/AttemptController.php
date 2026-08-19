@@ -62,7 +62,7 @@ class AttemptController extends ApiController
                 'expires_at' => $attempt->expires_at,
             ]);
 
-        return $this->success(['attempts' => $attempts]);
+        return $this->success($attempts);
     }
 
     /**

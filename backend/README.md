@@ -891,6 +891,27 @@ Submit answers for auto-grading. Calculates percentage score, determines pass/fa
 #### `GET /api/v1/exams/{exam}/attempts`
 List history of attempt submissions for current user.
 
+* **Headers:** `Authorization: Bearer <token>`
+* **Access:** Students must be enrolled in the exam's published course. Admins and instructors can access exams without enrollment.
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "a1f2e3d4-5678-90ab-cdef-1234567890ab",
+      "score": 85.0,
+      "passed": true,
+      "started_at": "2026-08-13T13:40:00.000000Z",
+      "submitted_at": "2026-08-13T14:00:00.000000Z",
+      "expires_at": "2026-08-13T14:10:00.000000Z"
+    }
+  ],
+  "error": null,
+  "meta": null
+}
+```
+
 ---
 
 #### `GET /api/v1/exams/{exam}/attempts/{attempt}`
