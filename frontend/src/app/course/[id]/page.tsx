@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, BookOpen, CheckCircle2, Clock, PlayCircle } from "lucide-react";
+import { ArrowLeft, BookOpen, CheckCircle2, Clock, PlayCircle, Trophy } from "lucide-react";
 import { courseService, Course, Lesson } from "@/services/courseService";
 
 export default function CourseDetailPage() {
@@ -81,7 +81,45 @@ export default function CourseDetailPage() {
           <div className="h-48 bg-[#c9e8ff]"><img src={course.thumbnail_url || "/ocean-bg.jpg"} alt={course.title} className="h-full w-full object-cover" onError={(event) => { event.currentTarget.src = "/ocean-bg.jpg"; }} /></div>
           <div className="p-5 md:p-7"><div className="mb-3 flex flex-wrap gap-2"><span className="rounded-full bg-[#008be3]/10 px-3 py-1 text-xs font-bold text-[#008be3]">{course.category}</span><span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">{course.difficulty}</span></div><p className="text-sm leading-6 text-slate-600">{course.description}</p><div className="mt-5 flex items-center gap-5 text-xs text-slate-400"><span className="flex items-center gap-1"><BookOpen className="w-4 h-4" />{lessons.length} lesson</span><span className="flex items-center gap-1"><Clock className="w-4 h-4" />{course.duration_minutes} menit</span></div></div>
         </section>
-        <section className="rounded-3xl bg-white p-5 shadow-sm md:p-7"><div className="mb-5 flex items-center justify-between"><div><h2 className="font-extrabold">Daftar Lesson</h2><p className="text-xs text-slate-400">{completedLessons} dari {lessons.length} lesson selesai</p></div><span className="text-sm font-extrabold text-[#008be3]">{Math.round(progress)}%</span></div><div className="mb-6 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#008be3] transition-all" style={{ width: `${Math.min(100, progress)}%` }} /></div><div className="divide-y divide-slate-100">{lessons.map((lesson) => <div key={lesson.id} className="flex items-center gap-3 py-4"><div className="shrink-0">{lesson.is_completed ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> : <PlayCircle className="w-5 h-5 text-[#008be3]" />}</div><div className="min-w-0 flex-1"><p className="font-bold text-sm">{lesson.order}. {lesson.title}</p><p className="text-xs text-slate-400">{lesson.type} · {lesson.duration_minutes} menit · +{lesson.xp_reward} XP</p></div><button disabled={Boolean(lesson.is_completed) || completing === lesson.id} onClick={() => completeLesson(lesson)} className="rounded-full bg-[#008be3] px-3 py-1.5 text-[11px] font-bold text-white disabled:bg-slate-200 disabled:text-slate-400">{lesson.is_completed ? "Selesai" : completing === lesson.id ? "Memproses..." : "Selesaikan"}</button></div>)}</div>{message && <p className="mt-4 rounded-xl bg-red-50 p-3 text-xs text-red-500">{message}</p>}</section>
+        <section className="rounded-3xl bg-white p-5 shadow-sm md:p-7"><div className="mb-5 flex items-center justify-between"><div><h2 className="font-extrabold">Daftar Lesson</h2><p className="text-xs text-slate-400">{completedLessons} dari {lessons.length} lesson selesai</p></div><span className="text-sm font-extrabold text-[#008be3]">{Math.round(progress)}%</span></div><div className="mb-6 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#008be3] transition-all" style={{ width: `${Math.min(100, progress)}%` }} /></div>              <div className="divide-y divide-slate-100">
+                {lessons.map((lesson) => (
+                  <div key={lesson.id} className="flex items-center gap-3 py-4">
+                    <div className="shrink-0">
+                      {lesson.is_completed ? (
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                      ) : (
+                        <PlayCircle className="w-5 h-5 text-[#008be3]" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-sm">
+                        {lesson.order}. {lesson.title}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {lesson.type} · {lesson.duration_minutes} menit · +{lesson.xp_reward} XP
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {lesson.exam_id && (
+                        <Link
+                          href={`/pelajar/exam/${lesson.exam_id}`}
+                          className="flex items-center gap-1 rounded-full bg-amber-500/10 px-3 py-1.5 text-[11px] font-bold text-amber-600 hover:bg-amber-500/20"
+                        >
+                          <Trophy className="w-3 h-3" />
+                          Ujian
+                        </Link>
+                      )}
+                      <button
+                        disabled={Boolean(lesson.is_completed) || completing === lesson.id}
+                        onClick={() => completeLesson(lesson)}
+                        className="rounded-full bg-[#008be3] px-3 py-1.5 text-[11px] font-bold text-white disabled:bg-slate-200 disabled:text-slate-400"
+                      >
+                        {lesson.is_completed ? "Selesai" : completing === lesson.id ? "Memproses..." : "Selesaikan"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>{message && <p className="mt-4 rounded-xl bg-red-50 p-3 text-xs text-red-500">{message}</p>}</section>
       </main>
     </div>
   );

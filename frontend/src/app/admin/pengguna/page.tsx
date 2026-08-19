@@ -6,6 +6,7 @@ import StatsGrid from "@/components/dashboardAdmin/StatsGrid";
 import UserTable from "@/components/dashboardAdmin/UserTable";
 import Modals from "@/components/dashboardAdmin/Modals";
 import { useAdmin } from "@/components/dashboardAdmin/AdminContext";
+import { adminService } from "@/services/adminService";
 import { UserType } from "@/components/dashboardAdmin/types";
 
 export default function AdminUsersPage() {
@@ -41,28 +42,25 @@ export default function AdminUsersPage() {
     setIsUserModalOpen(true);
   };
 
-  const handleSaveUser = (e: React.FormEvent) => {
+  const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userForm.name || !userForm.email) {
       showToast("Nama dan Email tidak boleh kosong!", "error");
       return;
     }
 
+    const backendRole = userForm.role === "Admin" ? "admin" : userForm.role === "Pengajar" ? "instructor" : "student";
+
     if (editingUser) {
-      setUsers(
-        users.map((u) =>
-          u.id === editingUser.id ? { ...u, ...userForm } : u
-        )
-      );
-      showToast("Pengguna berhasil diperbarui!");
+      try {
+        await adminService.updateUserRole(editingUser.id, backendRole);
+        setUsers(users.map((u) => (u.id === editingUser.id ? { ...u, role: userForm.role, status: userForm.status } : u)));
+        showToast("Role pengguna berhasil diperbarui di database!");
+      } catch {
+        showToast("Gagal mengupdate role pengguna di server.", "error");
+      }
     } else {
-      const newId = `U-0${users.length + 1}`;
-      const newUser: UserType = {
-        id: newId,
-        ...userForm,
-      };
-      setUsers([...users, newUser]);
-      showToast("Pengguna baru berhasil ditambahkan!");
+      showToast("Untuk membuat pengguna baru, pengguna dapat mendaftar via halaman registrasi.", "error");
     }
     setIsUserModalOpen(false);
   };
@@ -71,11 +69,17 @@ export default function AdminUsersPage() {
     setDeleteConfirm({ type: "pengguna", id });
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!deleteConfirm) return;
-    setUsers(users.filter((u) => u.id !== deleteConfirm.id));
-    showToast("Pengguna berhasil dihapus!");
-    setDeleteConfirm(null);
+    try {
+      await adminService.deleteUser(deleteConfirm.id);
+      setUsers(users.filter((u) => u.id !== deleteConfirm.id));
+      showToast("Pengguna berhasil dihapus!");
+    } catch {
+      showToast("Gagal menghapus pengguna (Admin tidak dapat dihapus).", "error");
+    } finally {
+      setDeleteConfirm(null);
+    }
   };
 
   return (
