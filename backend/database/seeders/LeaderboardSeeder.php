@@ -5,20 +5,21 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\Services\LeaderboardService;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Redis;
 
 class LeaderboardSeeder extends Seeder
 {
     public function run(): void
     {
         $service = app(LeaderboardService::class);
-        $users = User::where('xp', '>', 0)->get();
+        $weeklyKey = 'leaderboard:weekly:'.now()->format('o-\WW');
+
+        Redis::del('leaderboard:global', $weeklyKey);
+
+        $users = User::where('xp', '>', 0)->cursor();
 
         foreach ($users as $user) {
-            try {
-                $service->updateUserScore($user->id, (int) $user->xp);
-            } catch (\Throwable $e) {
-                // Redis offline fallback — swallow exception during seeding
-            }
+            $service->updateScore($user);
         }
     }
 }

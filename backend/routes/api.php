@@ -56,6 +56,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::get('courses', [CourseController::class, 'index'])->name('courses.index');
     Route::get('courses/{course}', [CourseController::class, 'show'])->name('courses.show');
 
+    // Public leaderboard rankings
+    Route::get('leaderboard', [LeaderboardController::class, 'global'])->name('leaderboard.global');
+    Route::get('leaderboard/weekly', [LeaderboardController::class, 'weekly'])->name('leaderboard.weekly');
+
     // ──────────────────────────────────────────────────────
     // Course, Lesson, Enrollment, Exam & Attempt Routes (Authenticated)
     // ──────────────────────────────────────────────────────
@@ -79,9 +83,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('exams/{exam}/attempts', [AttemptController::class, 'index'])->name('exams.attempts.index');
         Route::get('exams/{exam}/attempts/{attempt}', [AttemptController::class, 'show'])->name('exams.attempts.show');
 
-        // Leaderboard
-        Route::get('leaderboard', [LeaderboardController::class, 'global'])->name('leaderboard.global');
-        Route::get('leaderboard/weekly', [LeaderboardController::class, 'weekly'])->name('leaderboard.weekly');
+        // Authenticated user's leaderboard position
         Route::get('leaderboard/me', [LeaderboardController::class, 'me'])->name('leaderboard.me');
 
         // Mascots

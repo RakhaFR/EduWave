@@ -74,10 +74,6 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              },
-              {
                 "key": "Accept",
                 "value": "application/json"
               }
@@ -90,7 +86,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Public endpoint returns 200 OK without a token', function () { pm.response.to.have.status(200); });",
                   "var jsonData = pm.response.json();",
                   "pm.test('Global leaderboard has the documented envelope and pagination metadata', function () {",
                   "    pm.expect(jsonData).to.have.all.keys('success', 'data', 'error', 'meta');",
@@ -119,10 +115,6 @@
             "method": "GET",
             "header": [
               {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              },
-              {
                 "key": "Accept",
                 "value": "application/json"
               }
@@ -135,7 +127,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Public endpoint returns 200 OK without a token', function () { pm.response.to.have.status(200); });",
                   "var jsonData = pm.response.json();",
                   "pm.test('Weekly leaderboard has the documented response shape', function () {",
                   "    pm.expect(jsonData).to.have.all.keys('success', 'data', 'error', 'meta');",
@@ -222,39 +214,6 @@
                   "    pm.expect(jsonData.meta.scope).to.eql('weekly');",
                   "    pm.expect(jsonData.data.neighbors).to.be.an('array');",
                   "    pm.expect(jsonData.data.user_rank === null || typeof jsonData.data.user_rank === 'number').to.eql(true);",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "3. Authentication Guard",
-      "item": [
-        {
-          "name": "3.1 Global Leaderboard Without Token",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
-            "url": "{{base_url}}/leaderboard"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 401 Unauthorized', function () { pm.response.to.have.status(401); });",
-                  "pm.test('Unauthorized response has Laravel's authentication error shape', function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.message).to.eql('Unauthenticated.');",
                   "});"
                 ]
               }

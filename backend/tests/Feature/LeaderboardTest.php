@@ -269,7 +269,6 @@ class LeaderboardTest extends TestCase
         $service->updateScore($user4);
         $service->updateScore($user5);
 
-        $this->actingAs($user1);
         $response = $this->getJson('/api/v1/leaderboard');
 
         $response->assertStatus(200);
@@ -297,7 +296,6 @@ class LeaderboardTest extends TestCase
         $service->updateScore($user2);
         $service->updateScore($user3);
 
-        $this->actingAs($user1);
         $response = $this->getJson('/api/v1/leaderboard/weekly');
 
         $response->assertStatus(200);
