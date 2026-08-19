@@ -855,6 +855,87 @@ Mark a lesson completed. Idempotently awards XP on first completion, recalculate
 
 ---
 
+#### `POST /api/v1/lessons`
+Create a lesson (Requires `instructor` or `admin` role). An instructor can only add lessons to a course they own; an admin can add lessons to any course.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Request Body:** `course_id`, `title`, and `order` are required. Other fields are optional and use database defaults when omitted.
+```json
+{
+  "course_id": "c1f2e3d4-5678-90ab-cdef-1234567890ab",
+  "title": "Pengantar Zona Laut",
+  "type": "video",
+  "content": "Materi pengantar...",
+  "video_url": "https://example.com/video.mp4",
+  "duration_minutes": 15,
+  "order": 1,
+  "xp_reward": 30,
+  "is_preview": true
+}
+```
+* **Validation:** `course_id` must be a UUID; `type` must be `video`, `text`, or `quiz`; `video_url` must be a valid URL; `duration_minutes` must be between `0` and `10000`; `order` must be between `1` and `10000`; and `xp_reward` must be between `0` and `1000000`.
+* **Success Response (`201 Created`):**
+```json
+{
+  "success": true,
+  "data": {
+    "lesson": {
+      "id": "l1f2e3d4-5678-90ab-cdef-1234567890ab",
+      "course_id": "c1f2e3d4-5678-90ab-cdef-1234567890ab",
+      "title": "Pengantar Zona Laut",
+      "type": "video",
+      "duration_minutes": 15,
+      "order": 1,
+      "xp_reward": 30,
+      "is_preview": true,
+      "created_at": "2026-08-13T13:00:00.000000Z",
+      "updated_at": "2026-08-13T13:00:00.000000Z"
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `PUT /api/v1/lessons/{lesson}`
+Update a lesson (Admin or instructor who owns the lesson's parent course). An instructor may move the lesson only to another course they own; an admin may move it to any course.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Request Body:** All fields are optional. Only include fields that should change.
+```json
+{
+  "title": "Zona Laut dan Kedalamannya",
+  "content": "Materi yang telah diperbarui...",
+  "video_url": "https://example.com/updated-video.mp4",
+  "duration_minutes": 20,
+  "order": 2,
+  "xp_reward": 40,
+  "is_preview": false
+}
+```
+* **Validation:** Uses the same field constraints as `POST /api/v1/lessons`. If supplied, `course_id` must be a UUID.
+* **Success Response (`200 OK`):** Returns the updated lesson in `data.lesson`, using the same shape as the create response.
+
+---
+
+#### `DELETE /api/v1/lessons/{lesson}`
+Delete a lesson (Admin or instructor who owns the lesson's parent course). Related lesson progress records are deleted through a database cascade; a linked exam is retained with its `lesson_id` set to `null`.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": [],
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
 ### 6. Exam & Attempt Endpoints (`/api/v1/exams`, `/api/v1/exams/{exam}/attempts`)
 
 #### `GET /api/v1/exams/{exam}`
