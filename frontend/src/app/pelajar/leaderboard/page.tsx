@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { Trophy, Medal, Crown, Flame, Star, ChevronUp, ChevronDown, Minus, ChevronLeft, ChevronRight } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { courseService } from "@/services/courseService";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 type Period = "minggu" | "semua";
 
 interface LeaderboardUser {
+  id?: string;
   rank: number;
   name: string;
   xp: number;
@@ -38,6 +40,7 @@ const formatNumber = (num: number) => {
 };
 
 export default function PelajarLeaderboardPage() {
+  const { user: currentUser } = useCurrentUser();
   const [period, setPeriod] = useState<Period>("minggu");
   const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
   const [top3, setTop3] = useState<LeaderboardUser[]>([]);
@@ -60,6 +63,7 @@ export default function PelajarLeaderboardPage() {
           const userObj = item.user || item;
           const fullName = userObj.full_name || userObj.username || item.full_name || item.name || "Penyelam";
           return {
+            id: userObj.id || item.user_id,
             rank: item.rank || index + 1,
             name: fullName,
             xp: item.xp !== undefined ? item.xp : item.total_xp || 0,
@@ -68,7 +72,7 @@ export default function PelajarLeaderboardPage() {
             avatar: fullName[0].toUpperCase(),
             avatarUrl: userObj.avatar_url || userObj.profile_photo_path || userObj.image || null,
             change: item.rank_change || 0,
-            me: item.is_me || false,
+            me: userObj.id === currentUser?.id,
           };
         });
         setTop3(formattedTop3);
@@ -90,7 +94,7 @@ export default function PelajarLeaderboardPage() {
                 return courseService.getLeaderboard(perPage, page);
               })
             : courseService.getLeaderboard(perPage, page),
-          courseService.getMyRank().catch(() => null),
+          courseService.getMyRank(period === "minggu" ? "weekly" : "global").catch(() => null),
         ]);
 
         const rawList = lbRes?.data?.rankings || lbRes?.data || lbRes || [];
@@ -98,6 +102,7 @@ export default function PelajarLeaderboardPage() {
           const userObj = item.user || item;
           const fullName = userObj.full_name || userObj.username || item.full_name || item.name || "Penyelam";
           return {
+            id: userObj.id || item.user_id,
             rank: item.rank || (page - 1) * perPage + index + 1,
             name: fullName,
             xp: item.xp !== undefined ? item.xp : item.total_xp || 0,
@@ -106,7 +111,7 @@ export default function PelajarLeaderboardPage() {
             avatar: fullName[0].toUpperCase(),
             avatarUrl: userObj.avatar_url || userObj.profile_photo_path || userObj.image || null,
             change: item.rank_change || 0,
-            me: item.is_me || false,
+            me: userObj.id === currentUser?.id,
           };
         });
 
@@ -114,13 +119,12 @@ export default function PelajarLeaderboardPage() {
 
         if (meRes?.data) {
           const userRank = meRes.data.user_rank;
-          const myNeighbor = meRes.data.neighbors?.find((n: any) => n.user?.id || n.is_me);
-          const uObj = myNeighbor?.user || {};
+          const myNeighbor = meRes.data.neighbors?.find((n: any) => n.user?.id === currentUser?.id || n.is_me);
           setMyRank({
             rank: userRank || "-",
-            total_xp: myNeighbor?.xp || 0,
-            name: uObj.full_name || uObj.username || "Kamu",
-            avatarUrl: uObj.avatar_url || uObj.profile_photo_path || uObj.image || null,
+            total_xp: myNeighbor?.xp ?? currentUser?.xp ?? 0,
+            name: currentUser?.full_name || currentUser?.username || "Kamu",
+            avatarUrl: currentUser?.avatar_url || undefined,
           });
         }
       } catch (err) {
@@ -131,13 +135,13 @@ export default function PelajarLeaderboardPage() {
     }
 
     loadData();
-  }, [period, page]);
+  }, [period, page, currentUser?.id, currentUser?.xp, currentUser?.full_name, currentUser?.username, currentUser?.avatar_url]);
 
-  const me = leaderboard.find((u) => u.me) || {
+  const me = leaderboard.find((u) => u.id === currentUser?.id) || {
     rank: myRank?.rank || "-",
-    name: myRank?.name || "Kamu",
-    xp: myRank?.total_xp || 0,
-    avatarUrl: myRank?.avatarUrl,
+    name: currentUser?.full_name || currentUser?.username || myRank?.name || "Kamu",
+    xp: myRank?.total_xp ?? currentUser?.xp ?? 0,
+    avatarUrl: currentUser?.avatar_url || myRank?.avatarUrl,
   };
 
   return (

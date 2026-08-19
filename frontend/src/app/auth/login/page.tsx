@@ -7,6 +7,7 @@ import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { authService } from "@/services/authService";
 import { formatErrorMessage } from "@/lib/utils";
 import { sanitizeInput, validatePassword, authRateLimiter } from "@/lib/security";
+import { clearUserCache } from "@/hooks/useCurrentUser";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function LoginPage() {
           else router.replace("/pelajar");
         }
       }).catch(() => {
+        clearUserCache();
         localStorage.removeItem("token");
         localStorage.removeItem("user");
       });
@@ -63,6 +65,7 @@ export default function LoginPage() {
     try {
       const res = await authService.login({ email: cleanEmail, password: cleanPassword });
       if (res.success && res.data) {
+        clearUserCache();
         authRateLimiter.resetAttempts("login_attempt");
         if (res.data.token) {
           localStorage.setItem("token", res.data.token);

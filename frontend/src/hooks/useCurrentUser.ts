@@ -3,6 +3,7 @@ import { authService } from '@/services/authService';
 import { UserProfile } from '@/types/auth';
 
 let cachedUser: UserProfile | null = null;
+let cachedToken: string | null = null;
 let fetchPromise: Promise<UserProfile | null> | null = null;
 
 function getStoredUser(): UserProfile | null {
@@ -20,14 +21,15 @@ function storeUser(u: UserProfile) {
 }
 
 async function doFetch(): Promise<UserProfile | null> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  if (!token) return null;
   if (fetchPromise) return fetchPromise;
   fetchPromise = (async () => {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      if (!token) return null;
       const res = await authService.getUserMe();
       if (res.success && res.data?.user) {
         cachedUser = res.data.user;
+        cachedToken = token;
         storeUser(res.data.user);
         return res.data.user;
       }
@@ -56,17 +58,20 @@ async function doFetch(): Promise<UserProfile | null> {
 
 export function clearUserCache() {
   cachedUser = null;
+  cachedToken = null;
   fetchPromise = null;
 }
 
 export function useCurrentUser() {
-  const initialUser = cachedUser ?? getStoredUser();
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const initialUser = cachedToken === token ? cachedUser : getStoredUser();
   const [user, setUser] = useState<UserProfile | null>(initialUser);
   const [loading, setLoading] = useState<boolean>(!initialUser);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (cachedUser) {
+    const currentToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (cachedUser && cachedToken === currentToken) {
       setUser(cachedUser);
       setLoading(false);
       return;

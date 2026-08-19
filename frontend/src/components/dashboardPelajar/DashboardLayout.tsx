@@ -10,7 +10,7 @@ import {
   LogOut, ChevronDown, Menu, X,
 } from "lucide-react";
 import FloatingBubbles from "@/components/ui/FloatingBubbles";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { clearUserCache, useCurrentUser } from "@/hooks/useCurrentUser";
 
 const NAV_ITEMS = [
   { icon: <Home className="w-5 h-5" />,           label: "Home",        href: "/pelajar" },
@@ -48,6 +48,7 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
   const initial = displayName.charAt(0).toUpperCase();
 
   const handleLogout = () => {
+    clearUserCache();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setAvatarOpen(false);
@@ -212,7 +213,7 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
             </nav>
 
             <div className="border-t border-slate-100 pt-4">
-              <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}
+              <Link href="/auth/login" onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
                 className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-red-400 hover:bg-red-50 transition-colors">
                 <LogOut className="w-4 h-4" />Keluar
               </Link>

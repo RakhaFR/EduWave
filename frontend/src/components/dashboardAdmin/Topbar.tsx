@@ -11,7 +11,7 @@ import {
   Settings,
   X
 } from "lucide-react";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { clearUserCache, useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface TopbarProps {
   searchGlobal: string;
@@ -31,6 +31,7 @@ export default function Topbar({
   const { user } = useCurrentUser();
 
   const handleLogout = () => {
+    clearUserCache();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
   };

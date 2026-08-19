@@ -195,8 +195,8 @@ export const courseService = {
     return response.data;
   },
 
-  async getMyRank() {
-    const response = await api.get("/leaderboard/me");
+  async getMyRank(scope: "global" | "weekly" = "global") {
+    const response = await api.get("/leaderboard/me", { params: { scope } });
     return response.data;
   },
 };

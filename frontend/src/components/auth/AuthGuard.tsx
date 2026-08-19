@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { authService } from "@/services/authService";
 import { UserProfile } from "@/types/auth";
+import { clearUserCache } from "@/hooks/useCurrentUser";
 import { Loader2 } from "lucide-react";
 
 interface AuthGuardProps {
@@ -44,6 +45,7 @@ export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
         }
 
         if (!user) {
+          clearUserCache();
           localStorage.removeItem("token");
           localStorage.removeItem("user");
           if (isMounted) router.replace("/auth/login");
@@ -72,6 +74,7 @@ export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
         }
       } catch (err) {
         // Jika token invalid / 401 unauthenticated
+        clearUserCache();
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         if (isMounted) {
