@@ -19,5 +19,31 @@ Frontend menambahkan fallback otomatis: Jika `GET /leaderboard/weekly` melempar 
 
 ---
 
+## 2. [COURSES] Public Request `GET /api/v1/courses` Tanpa Token Mengembalikan 500 Internal Server Error
+
+**Endpoint:** `GET /api/v1/courses` (tanpa Header `Authorization: Bearer <token>`)
+
+**Masalah:**
+Saat diakses secara anonim (public/guest), endpoint `/api/v1/courses` di `CourseController.php` melempar HTTP Status 500 Internal Server Error.
+
+**Penyebab di Backend Controller:**
+Pada `CourseController.php` baris 24:
+```php
+$user = $request->user();
+if (! $user || ! in_array($user->role, ['admin', 'instructor'])) { ... }
+```
+Jika request bersifat public (unauthenticated / guest), `$user` adalah `null`, sehingga mencoba mengakses properti `$user->role` menyebabkan PHP error: `Attempt to read property "role" on null`.
+
+**Solusi / Perbaikan di Backend:**
+Perbarui kondisi role-check pada `CourseController.php`:
+```php
+$user = $request->user();
+if (! $user || ! in_array($user?->role, ['admin', 'instructor'])) {
+    $query->where('status', 'published');
+}
+```
+
+---
+
 *Dibuat oleh: Tim Frontend — `r\RAKHA`*
 *Tanggal: 19 Agustus 2026*
