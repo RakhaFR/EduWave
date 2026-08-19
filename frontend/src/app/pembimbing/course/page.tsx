@@ -6,68 +6,114 @@ import CourseTable from "@/components/dashboardPembimbing/CourseTable";
 import Modals from "@/components/dashboardPembimbing/Modals";
 import { usePembimbing } from "@/components/dashboardPembimbing/PembimbingContext";
 import { PembimbingCourse } from "@/components/dashboardPembimbing/types";
+import { pembimbingService, PembimbingCourseForm, PembimbingExamForm } from "@/services/pembimbingService";
+
+const DEFAULT_COURSE_FORM: PembimbingCourseForm = {
+  title: "",
+  description: "",
+  category: "technology",
+  difficulty: "beginner",
+  status: "draft",
+  pearls_reward: 0,
+  duration_minutes: 0,
+  thumbnail_url: "",
+};
+
+const DEFAULT_EXAM_FORM: PembimbingExamForm = {
+  course_id: "",
+  title: "",
+  time_limit_sec: 3600,
+  passing_score: 70,
+  max_attempts: 3,
+  pearls_reward: 0,
+};
 
 export default function PembimbingCoursePage() {
-  const { courses, setCourses, showToast, searchGlobal } = usePembimbing();
+  const { courses, coursesLoading, refreshCourses, showToast, searchGlobal } = usePembimbing();
 
   const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<PembimbingCourse | null>(null);
-  const [courseForm, setCourseForm] = useState({
-    title: "",
-    category: "Teknologi",
-    students: 0,
-    status: "Terbit",
-    description: "",
-  });
+  const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
+  const [courseForm, setCourseForm] = useState<PembimbingCourseForm>(DEFAULT_COURSE_FORM);
+  const [courseLoading, setCourseLoading] = useState(false);
 
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: "kursus" | "ujian"; id: string } | null>(null);
 
   const handleOpenCourseAdd = () => {
-    setEditingCourse(null);
-    setCourseForm({ title: "", category: "Teknologi", students: 0, status: "Terbit", description: "" });
+    setEditingCourseId(null);
+    setCourseForm(DEFAULT_COURSE_FORM);
     setIsCourseModalOpen(true);
   };
 
   const handleOpenCourseEdit = (course: PembimbingCourse) => {
-    setEditingCourse(course);
+    setEditingCourseId(course.id);
     setCourseForm({
       title: course.title,
-      category: course.category,
-      students: course.students,
-      status: course.status,
       description: course.description,
+      category: course.category,
+      difficulty: course.difficulty,
+      status: course.status,
+      pearls_reward: course.pearls_reward,
+      duration_minutes: course.duration_minutes,
+      thumbnail_url: course.thumbnail_url ?? "",
     });
     setIsCourseModalOpen(true);
   };
 
-  const handleSaveCourse = (e: React.FormEvent) => {
+  const handleSaveCourse = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!courseForm.title) {
       showToast("Judul kursus tidak boleh kosong!", "error");
       return;
     }
 
-    if (editingCourse) {
-      setCourses(courses.map((c) => (c.id === editingCourse.id ? { ...c, ...courseForm } : c)));
-      showToast("Kursus berhasil diperbarui!");
-    } else {
-      const newId = `PC-0${courses.length + 1}`;
-      const newCourse: PembimbingCourse = { id: newId, ...courseForm };
-      setCourses([...courses, newCourse]);
-      showToast("Kursus baru berhasil ditambahkan!");
+    setCourseLoading(true);
+    try {
+      const payload = { ...courseForm, thumbnail_url: courseForm.thumbnail_url || undefined };
+
+      if (editingCourseId) {
+        const res = await pembimbingService.updateCourse(editingCourseId, payload);
+        if (res.success) {
+          showToast("Kursus berhasil diperbarui!");
+        } else {
+          showToast(res.error?.message ?? "Gagal memperbarui kursus.", "error");
+        }
+      } else {
+        const res = await pembimbingService.createCourse(payload);
+        if (res.success) {
+          showToast("Kursus baru berhasil ditambahkan!");
+        } else {
+          showToast(res.error?.message ?? "Gagal membuat kursus.", "error");
+        }
+      }
+      setIsCourseModalOpen(false);
+      refreshCourses();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+      showToast(msg ?? "Terjadi kesalahan. Coba lagi.", "error");
+    } finally {
+      setCourseLoading(false);
     }
-    setIsCourseModalOpen(false);
   };
 
   const handleDeleteCourseClick = (id: string) => {
     setDeleteConfirm({ type: "kursus", id });
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!deleteConfirm) return;
-    setCourses(courses.filter((c) => c.id !== deleteConfirm.id));
-    showToast("Kursus berhasil dihapus!");
-    setDeleteConfirm(null);
+    try {
+      const res = await pembimbingService.deleteCourse(deleteConfirm.id);
+      if (res.success !== false) {
+        showToast("Kursus berhasil dihapus!");
+        refreshCourses();
+      } else {
+        showToast(res.error?.message ?? "Gagal menghapus kursus.", "error");
+      }
+    } catch {
+      showToast("Terjadi kesalahan saat menghapus kursus.", "error");
+    } finally {
+      setDeleteConfirm(null);
+    }
   };
 
   return (
@@ -77,6 +123,7 @@ export default function PembimbingCoursePage() {
       <div className="flex-1 min-h-0">
         <CourseTable
           courses={courses}
+          loading={coursesLoading}
           onAddClick={handleOpenCourseAdd}
           onEditClick={handleOpenCourseEdit}
           onDeleteClick={handleDeleteCourseClick}
@@ -87,14 +134,15 @@ export default function PembimbingCoursePage() {
       <Modals
         isCourseModalOpen={isCourseModalOpen}
         setIsCourseModalOpen={setIsCourseModalOpen}
-        editingCourse={editingCourse}
+        editingCourseId={editingCourseId}
         courseForm={courseForm}
         setCourseForm={setCourseForm}
         handleSaveCourse={handleSaveCourse}
+        courseLoading={courseLoading}
         isExamModalOpen={false}
         setIsExamModalOpen={() => {}}
-        editingExam={null}
-        examForm={{ title: "", courseId: "", courseTitle: "", duration: 60, totalQuestions: 10, status: "Aktif", deadline: "" }}
+        editingExamId={null}
+        examForm={DEFAULT_EXAM_FORM}
         setExamForm={() => {}}
         handleSaveExam={() => {}}
         availableCourses={courses}

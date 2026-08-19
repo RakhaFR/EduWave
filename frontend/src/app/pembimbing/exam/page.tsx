@@ -6,80 +6,130 @@ import ExamTable from "@/components/dashboardPembimbing/ExamTable";
 import Modals from "@/components/dashboardPembimbing/Modals";
 import { usePembimbing } from "@/components/dashboardPembimbing/PembimbingContext";
 import { Exam } from "@/components/dashboardPembimbing/types";
+import { pembimbingService, PembimbingCourseForm, PembimbingExamForm } from "@/services/pembimbingService";
+
+const DEFAULT_COURSE_FORM: PembimbingCourseForm = {
+  title: "",
+  description: "",
+  category: "technology",
+  difficulty: "beginner",
+  status: "draft",
+  pearls_reward: 0,
+  duration_minutes: 0,
+  thumbnail_url: "",
+};
+
+const DEFAULT_EXAM_FORM: PembimbingExamForm = {
+  course_id: "",
+  title: "",
+  time_limit_sec: 3600,
+  passing_score: 70,
+  max_attempts: 3,
+  pearls_reward: 0,
+};
 
 export default function PembimbingExamPage() {
   const { courses, exams, setExams, showToast, searchGlobal } = usePembimbing();
 
   const [isExamModalOpen, setIsExamModalOpen] = useState(false);
-  const [editingExam, setEditingExam] = useState<Exam | null>(null);
-  const [examForm, setExamForm] = useState({
-    title: "",
-    courseId: courses[0]?.id ?? "",
-    courseTitle: courses[0]?.title ?? "",
-    duration: 60,
-    totalQuestions: 10,
-    status: "Aktif",
-    deadline: "",
+  const [editingExamId, setEditingExamId] = useState<string | null>(null);
+  const [examForm, setExamForm] = useState<PembimbingExamForm>({
+    ...DEFAULT_EXAM_FORM,
+    course_id: courses[0]?.id ?? "",
   });
+  const [examLoading, setExamLoading] = useState(false);
 
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: "kursus" | "ujian"; id: string } | null>(null);
 
   const handleOpenExamAdd = () => {
-    setEditingExam(null);
-    setExamForm({
-      title: "",
-      courseId: courses[0]?.id ?? "",
-      courseTitle: courses[0]?.title ?? "",
-      duration: 60,
-      totalQuestions: 10,
-      status: "Aktif",
-      deadline: "",
-    });
+    setEditingExamId(null);
+    setExamForm({ ...DEFAULT_EXAM_FORM, course_id: courses[0]?.id ?? "" });
     setIsExamModalOpen(true);
   };
 
   const handleOpenExamEdit = (exam: Exam) => {
-    setEditingExam(exam);
+    setEditingExamId(exam.id);
     setExamForm({
+      course_id: exam.course_id,
       title: exam.title,
-      courseId: exam.courseId,
-      courseTitle: exam.courseTitle,
-      duration: exam.duration,
-      totalQuestions: exam.totalQuestions,
-      status: exam.status,
-      deadline: exam.deadline,
+      time_limit_sec: exam.time_limit_sec,
+      passing_score: exam.passing_score,
+      max_attempts: exam.max_attempts,
+      pearls_reward: exam.pearls_reward,
     });
     setIsExamModalOpen(true);
   };
 
-  const handleSaveExam = (e: React.FormEvent) => {
+  const handleSaveExam = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!examForm.title || !examForm.deadline) {
-      showToast("Judul dan deadline ujian tidak boleh kosong!", "error");
+    if (!examForm.title || !examForm.course_id) {
+      showToast("Judul dan kursus ujian tidak boleh kosong!", "error");
       return;
     }
 
-    if (editingExam) {
-      setExams(exams.map((ex) => (ex.id === editingExam.id ? { ...ex, ...examForm } : ex)));
-      showToast("Ujian berhasil diperbarui!");
-    } else {
-      const newId = `EX-0${exams.length + 1}`;
-      const newExam: Exam = { id: newId, ...examForm };
-      setExams([...exams, newExam]);
-      showToast("Ujian baru berhasil ditambahkan!");
+    setExamLoading(true);
+    try {
+      if (editingExamId) {
+        const res = await pembimbingService.updateExam(editingExamId, examForm);
+        if (res.success) {
+          const course = courses.find((c) => c.id === examForm.course_id);
+          setExams(exams.map((ex) =>
+            ex.id === editingExamId
+              ? { ...ex, ...examForm, course_title: course?.title ?? ex.course_title }
+              : ex
+          ));
+          showToast("Ujian berhasil diperbarui!");
+        } else {
+          showToast(res.error?.message ?? "Gagal memperbarui ujian.", "error");
+        }
+      } else {
+        const res = await pembimbingService.createExam(examForm);
+        if (res.success && res.data) {
+          const course = courses.find((c) => c.id === examForm.course_id);
+          const newExam: Exam = {
+            id: res.data.id,
+            title: res.data.title,
+            course_id: res.data.course_id,
+            course_title: course?.title ?? "",
+            time_limit_sec: res.data.time_limit_sec,
+            passing_score: res.data.passing_score,
+            max_attempts: res.data.max_attempts,
+            pearls_reward: res.data.pearls_reward,
+          };
+          setExams([...exams, newExam]);
+          showToast("Ujian baru berhasil ditambahkan!");
+        } else {
+          showToast(res.error?.message ?? "Gagal membuat ujian.", "error");
+        }
+      }
+      setIsExamModalOpen(false);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+      showToast(msg ?? "Terjadi kesalahan. Coba lagi.", "error");
+    } finally {
+      setExamLoading(false);
     }
-    setIsExamModalOpen(false);
   };
 
   const handleDeleteExamClick = (id: string) => {
     setDeleteConfirm({ type: "ujian", id });
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!deleteConfirm) return;
-    setExams(exams.filter((ex) => ex.id !== deleteConfirm.id));
-    showToast("Ujian berhasil dihapus!");
-    setDeleteConfirm(null);
+    try {
+      const res = await pembimbingService.deleteExam(deleteConfirm.id);
+      if (res.success !== false) {
+        setExams(exams.filter((ex) => ex.id !== deleteConfirm.id));
+        showToast("Ujian berhasil dihapus!");
+      } else {
+        showToast(res.error?.message ?? "Gagal menghapus ujian.", "error");
+      }
+    } catch {
+      showToast("Terjadi kesalahan saat menghapus ujian.", "error");
+    } finally {
+      setDeleteConfirm(null);
+    }
   };
 
   return (
@@ -99,16 +149,17 @@ export default function PembimbingExamPage() {
       <Modals
         isCourseModalOpen={false}
         setIsCourseModalOpen={() => {}}
-        editingCourse={null}
-        courseForm={{ title: "", category: "Teknologi", students: 0, status: "Terbit", description: "" }}
+        editingCourseId={null}
+        courseForm={DEFAULT_COURSE_FORM}
         setCourseForm={() => {}}
         handleSaveCourse={() => {}}
         isExamModalOpen={isExamModalOpen}
         setIsExamModalOpen={setIsExamModalOpen}
-        editingExam={editingExam}
+        editingExamId={editingExamId}
         examForm={examForm}
         setExamForm={setExamForm}
         handleSaveExam={handleSaveExam}
+        examLoading={examLoading}
         availableCourses={courses}
         deleteConfirm={deleteConfirm}
         setDeleteConfirm={setDeleteConfirm}

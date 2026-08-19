@@ -1,25 +1,39 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Plus, Edit, Trash, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Edit, Trash, X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { PembimbingCourse } from "./types";
 
 interface CourseTableProps {
   courses: PembimbingCourse[];
+  loading?: boolean;
   onAddClick: () => void;
   onEditClick: (course: PembimbingCourse) => void;
   onDeleteClick: (id: string) => void;
   searchGlobal: string;
 }
 
-const ITEMS_PER_PAGE = 3;
+const ITEMS_PER_PAGE = 5;
+
+const DIFFICULTY_LABEL: Record<string, string> = {
+  beginner: "Pemula",
+  intermediate: "Menengah",
+  advanced: "Mahir",
+};
+
+const DIFFICULTY_COLOR: Record<string, string> = {
+  beginner: "bg-emerald-50 text-emerald-600",
+  intermediate: "bg-amber-50 text-amber-600",
+  advanced: "bg-red-50 text-red-600",
+};
 
 export default function CourseTable({
   courses,
+  loading = false,
   onAddClick,
   onEditClick,
   onDeleteClick,
-  searchGlobal
+  searchGlobal,
 }: CourseTableProps) {
   const [searchLocal, setSearchLocal] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -56,14 +70,6 @@ export default function CourseTable({
     return filteredCourses.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredCourses, currentPage]);
 
-  const handlePrevPage = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-  };
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -96,49 +102,53 @@ export default function CourseTable({
       </div>
 
       <div className="overflow-x-auto border border-slate-100 rounded-2xl shadow-sm">
-        <table className="w-full min-w-[640px] border-collapse text-left text-xs sm:text-sm">
+        <table className="w-full min-w-[700px] border-collapse text-left text-xs sm:text-sm">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-100 font-semibold text-slate-500">
-              <th className="py-4 px-5 w-20">ID</th>
               <th className="py-4 px-5">Judul Kursus</th>
               <th className="py-4 px-5">Kategori</th>
+              <th className="py-4 px-5 w-28 text-center">Tingkat</th>
               <th className="py-4 px-5 w-24 text-center">Siswa</th>
               <th className="py-4 px-5 w-28 text-center">Status</th>
               <th className="py-4 px-5 w-32 text-center">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {paginatedCourses.length > 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan={6} className="py-10 text-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-blue-400 mx-auto" />
+                </td>
+              </tr>
+            ) : paginatedCourses.length > 0 ? (
               paginatedCourses.map((c) => (
                 <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="py-3.5 px-5 font-mono text-slate-400">{c.id}</td>
                   <td className="py-3.5 px-5">
                     <p className="font-bold text-[#00172e]">{c.title}</p>
                     <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">{c.description}</p>
                   </td>
                   <td className="py-3.5 px-5">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        c.category === "Teknologi"
-                          ? "bg-blue-50 text-blue-600"
-                          : c.category === "Desain"
-                          ? "bg-cyan-50 text-cyan-600"
-                          : "bg-emerald-50 text-emerald-600"
-                      }`}
-                    >
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600">
                       {c.category}
                     </span>
                   </td>
-                  <td className="py-3.5 px-5 text-center font-semibold text-[#00172e]">{c.students}</td>
+                  <td className="py-3.5 px-5 text-center">
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${DIFFICULTY_COLOR[c.difficulty] ?? "bg-slate-100 text-slate-500"}`}>
+                      {DIFFICULTY_LABEL[c.difficulty] ?? c.difficulty}
+                    </span>
+                  </td>
+                  <td className="py-3.5 px-5 text-center font-semibold text-[#00172e]">{c.enrolled_count}</td>
                   <td className="py-3.5 px-5 text-center">
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        c.status === "Terbit"
+                        c.status === "published"
                           ? "bg-green-50 text-green-600"
+                          : c.status === "archived"
+                          ? "bg-amber-50 text-amber-600"
                           : "bg-slate-100 text-slate-500"
                       }`}
                     >
-                      {c.status}
+                      {c.status === "published" ? "Terbit" : c.status === "archived" ? "Arsip" : "Draft"}
                     </span>
                   </td>
                   <td className="py-3.5 px-5">
@@ -179,42 +189,28 @@ export default function CourseTable({
           </p>
           <div className="flex items-center gap-1">
             <button
-              onClick={handlePrevPage}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className={`p-1.5 rounded-lg border text-slate-500 transition-all flex items-center justify-center ${
-                currentPage === 1
-                  ? "opacity-40 cursor-not-allowed border-slate-100"
-                  : "hover:bg-slate-50 border-slate-200 active:scale-95 cursor-pointer"
-              }`}
+              className={`p-1.5 rounded-lg border text-slate-500 transition-all flex items-center justify-center ${currentPage === 1 ? "opacity-40 cursor-not-allowed border-slate-100" : "hover:bg-slate-50 border-slate-200 active:scale-95 cursor-pointer"}`}
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-
             {Array.from({ length: totalPages }).map((_, i) => {
               const pageNum = i + 1;
               return (
                 <button
                   key={pageNum}
                   onClick={() => setCurrentPage(pageNum)}
-                  className={`w-8 h-8 rounded-lg border text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${
-                    currentPage === pageNum
-                      ? "bg-[#0073e6] border-[#0073e6] text-white shadow-sm shadow-blue-100"
-                      : "border-slate-200 text-slate-500 hover:bg-slate-50"
-                  }`}
+                  className={`w-8 h-8 rounded-lg border text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${currentPage === pageNum ? "bg-[#0073e6] border-[#0073e6] text-white shadow-sm shadow-blue-100" : "border-slate-200 text-slate-500 hover:bg-slate-50"}`}
                 >
                   {pageNum}
                 </button>
               );
             })}
-
             <button
-              onClick={handleNextPage}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className={`p-1.5 rounded-lg border text-slate-500 transition-all flex items-center justify-center ${
-                currentPage === totalPages
-                  ? "opacity-40 cursor-not-allowed border-slate-100"
-                  : "hover:bg-slate-50 border-slate-200 active:scale-95 cursor-pointer"
-              }`}
+              className={`p-1.5 rounded-lg border text-slate-500 transition-all flex items-center justify-center ${currentPage === totalPages ? "opacity-40 cursor-not-allowed border-slate-100" : "hover:bg-slate-50 border-slate-200 active:scale-95 cursor-pointer"}`}
             >
               <ChevronRight className="w-4 h-4" />
             </button>

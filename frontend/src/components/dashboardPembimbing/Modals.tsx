@@ -2,21 +2,24 @@
 
 import { X } from "lucide-react";
 import { PembimbingCourse, Exam } from "./types";
+import { PembimbingCourseForm, PembimbingExamForm } from "@/services/pembimbingService";
 
 interface ModalsProps {
   isCourseModalOpen: boolean;
   setIsCourseModalOpen: (open: boolean) => void;
-  editingCourse: PembimbingCourse | null;
-  courseForm: { title: string; category: string; students: number; status: string; description: string };
-  setCourseForm: (form: { title: string; category: string; students: number; status: string; description: string }) => void;
+  editingCourseId: string | null;
+  courseForm: PembimbingCourseForm;
+  setCourseForm: (form: PembimbingCourseForm) => void;
   handleSaveCourse: (e: React.FormEvent) => void;
+  courseLoading?: boolean;
 
   isExamModalOpen: boolean;
   setIsExamModalOpen: (open: boolean) => void;
-  editingExam: Exam | null;
-  examForm: { title: string; courseId: string; courseTitle: string; duration: number; totalQuestions: number; status: string; deadline: string };
-  setExamForm: (form: { title: string; courseId: string; courseTitle: string; duration: number; totalQuestions: number; status: string; deadline: string }) => void;
+  editingExamId: string | null;
+  examForm: PembimbingExamForm;
+  setExamForm: (form: PembimbingExamForm) => void;
   handleSaveExam: (e: React.FormEvent) => void;
+  examLoading?: boolean;
   availableCourses: PembimbingCourse[];
 
   deleteConfirm: { type: "kursus" | "ujian"; id: string } | null;
@@ -27,22 +30,24 @@ interface ModalsProps {
 export default function Modals({
   isCourseModalOpen,
   setIsCourseModalOpen,
-  editingCourse,
+  editingCourseId,
   courseForm,
   setCourseForm,
   handleSaveCourse,
+  courseLoading = false,
 
   isExamModalOpen,
   setIsExamModalOpen,
-  editingExam,
+  editingExamId,
   examForm,
   setExamForm,
   handleSaveExam,
+  examLoading = false,
   availableCourses,
 
   deleteConfirm,
   setDeleteConfirm,
-  handleConfirmDelete
+  handleConfirmDelete,
 }: ModalsProps) {
   return (
     <>
@@ -52,7 +57,7 @@ export default function Modals({
           <div className="relative bg-white rounded-3xl shadow-2xl p-6 w-full max-w-md z-10 flex flex-col gap-4 text-sm transform transition-all animate-scale-in">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-extrabold text-[#00172e]">
-                {editingCourse ? "Edit Kursus" : "Buat Kursus Baru"}
+                {editingCourseId ? "Edit Kursus" : "Buat Kursus Baru"}
               </h3>
               <button onClick={() => setIsCourseModalOpen(false)} className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
@@ -69,7 +74,7 @@ export default function Modals({
 
               <div className="flex flex-col gap-1.5">
                 <label className="font-bold text-slate-500">Deskripsi</label>
-                <textarea rows={2} required placeholder="Deskripsi singkat kursus ini..." value={courseForm.description}
+                <textarea rows={2} placeholder="Deskripsi singkat kursus ini..." value={courseForm.description}
                   onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })}
                   className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700 placeholder-slate-300 resize-none" />
               </div>
@@ -79,34 +84,64 @@ export default function Modals({
                   <label className="font-bold text-slate-500">Kategori</label>
                   <select value={courseForm.category} onChange={(e) => setCourseForm({ ...courseForm, category: e.target.value })}
                     className="w-full px-3 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 bg-white text-slate-700">
-                    <option value="Teknologi">Teknologi</option>
-                    <option value="Desain">Desain</option>
-                    <option value="Sains">Sains</option>
-                    <option value="Bisnis">Bisnis</option>
+                    <option value="technology">Teknologi</option>
+                    <option value="design">Desain</option>
+                    <option value="marine">Kelautan</option>
+                    <option value="language">Bahasa</option>
+                    <option value="science">Sains</option>
+                    <option value="business">Bisnis</option>
                   </select>
                 </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-bold text-slate-500">Tingkat</label>
+                  <select value={courseForm.difficulty} onChange={(e) => setCourseForm({ ...courseForm, difficulty: e.target.value })}
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 bg-white text-slate-700">
+                    <option value="beginner">Pemula</option>
+                    <option value="intermediate">Menengah</option>
+                    <option value="advanced">Mahir</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
                   <label className="font-bold text-slate-500">Status</label>
                   <select value={courseForm.status} onChange={(e) => setCourseForm({ ...courseForm, status: e.target.value })}
                     className="w-full px-3 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 bg-white text-slate-700">
-                    <option value="Terbit">Terbit</option>
-                    <option value="Draft">Draft</option>
+                    <option value="draft">Draft</option>
+                    <option value="published">Terbit</option>
+                    <option value="archived">Arsip</option>
                   </select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-bold text-slate-500">Durasi (menit)</label>
+                  <input type="number" min={0} value={courseForm.duration_minutes}
+                    onChange={(e) => setCourseForm({ ...courseForm, duration_minutes: parseInt(e.target.value) || 0 })}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700" />
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="font-bold text-slate-500">Jumlah Siswa</label>
-                <input type="number" min={0} value={courseForm.students}
-                  onChange={(e) => setCourseForm({ ...courseForm, students: parseInt(e.target.value) || 0 })}
+                <label className="font-bold text-slate-500">Hadiah Mutiara</label>
+                <input type="number" min={0} value={courseForm.pearls_reward}
+                  onChange={(e) => setCourseForm({ ...courseForm, pearls_reward: parseInt(e.target.value) || 0 })}
                   className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700" />
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 mt-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="font-bold text-slate-500">URL Thumbnail (opsional)</label>
+                <input type="url" placeholder="https://..." value={courseForm.thumbnail_url ?? ""}
+                  onChange={(e) => setCourseForm({ ...courseForm, thumbnail_url: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700 placeholder-slate-300" />
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 mt-2">
                 <button type="button" onClick={() => setIsCourseModalOpen(false)}
                   className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 font-bold transition-all cursor-pointer">Batal</button>
-                <button type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-[#0073e6] hover:bg-[#0052cc] text-white font-bold transition-all shadow-md cursor-pointer">Simpan</button>
+                <button type="submit" disabled={courseLoading}
+                  className="px-5 py-2.5 rounded-xl bg-[#0073e6] hover:bg-[#0052cc] text-white font-bold transition-all shadow-md cursor-pointer disabled:opacity-60">
+                  {courseLoading ? "Menyimpan..." : "Simpan"}
+                </button>
               </div>
             </form>
           </div>
@@ -119,7 +154,7 @@ export default function Modals({
           <div className="relative bg-white rounded-3xl shadow-2xl p-6 w-full max-w-md z-10 flex flex-col gap-4 text-sm transform transition-all animate-scale-in">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-extrabold text-[#00172e]">
-                {editingExam ? "Edit Ujian" : "Buat Ujian Baru"}
+                {editingExamId ? "Edit Ujian" : "Buat Ujian Baru"}
               </h3>
               <button onClick={() => setIsExamModalOpen(false)} className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
                 <X className="w-5 h-5" />
@@ -136,18 +171,10 @@ export default function Modals({
 
               <div className="flex flex-col gap-1.5">
                 <label className="font-bold text-slate-500">Kursus</label>
-                <select
-                  value={examForm.courseId}
-                  onChange={(e) => {
-                    const selected = availableCourses.find((c) => c.id === e.target.value);
-                    setExamForm({
-                      ...examForm,
-                      courseId: e.target.value,
-                      courseTitle: selected ? selected.title : ""
-                    });
-                  }}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 bg-white text-slate-700"
-                >
+                <select value={examForm.course_id}
+                  onChange={(e) => setExamForm({ ...examForm, course_id: e.target.value })}
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 bg-white text-slate-700">
+                  <option value="">-- Pilih Kursus --</option>
                   {availableCourses.map((c) => (
                     <option key={c.id} value={c.id}>{c.title}</option>
                   ))}
@@ -156,41 +183,41 @@ export default function Modals({
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <label className="font-bold text-slate-500">Durasi (menit)</label>
-                  <input type="number" min={1} required value={examForm.duration}
-                    onChange={(e) => setExamForm({ ...examForm, duration: parseInt(e.target.value) || 0 })}
+                  <label className="font-bold text-slate-500">Durasi (detik)</label>
+                  <input type="number" min={60} required value={examForm.time_limit_sec}
+                    onChange={(e) => setExamForm({ ...examForm, time_limit_sec: parseInt(e.target.value) || 3600 })}
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700" />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="font-bold text-slate-500">Jumlah Soal</label>
-                  <input type="number" min={1} required value={examForm.totalQuestions}
-                    onChange={(e) => setExamForm({ ...examForm, totalQuestions: parseInt(e.target.value) || 0 })}
+                  <label className="font-bold text-slate-500">Nilai Lulus (%)</label>
+                  <input type="number" min={0} max={100} required value={examForm.passing_score}
+                    onChange={(e) => setExamForm({ ...examForm, passing_score: parseInt(e.target.value) || 70 })}
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <label className="font-bold text-slate-500">Status</label>
-                  <select value={examForm.status} onChange={(e) => setExamForm({ ...examForm, status: e.target.value })}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 bg-white text-slate-700">
-                    <option value="Aktif">Aktif</option>
-                    <option value="Draft">Draft</option>
-                  </select>
+                  <label className="font-bold text-slate-500">Maks. Percobaan</label>
+                  <input type="number" min={1} required value={examForm.max_attempts}
+                    onChange={(e) => setExamForm({ ...examForm, max_attempts: parseInt(e.target.value) || 3 })}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700" />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="font-bold text-slate-500">Deadline</label>
-                  <input type="date" required value={examForm.deadline}
-                    onChange={(e) => setExamForm({ ...examForm, deadline: e.target.value })}
+                  <label className="font-bold text-slate-500">Hadiah Mutiara</label>
+                  <input type="number" min={0} value={examForm.pearls_reward}
+                    onChange={(e) => setExamForm({ ...examForm, pearls_reward: parseInt(e.target.value) || 0 })}
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700" />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 mt-4">
+              <div className="flex items-center justify-end gap-2.5 mt-2">
                 <button type="button" onClick={() => setIsExamModalOpen(false)}
                   className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 font-bold transition-all cursor-pointer">Batal</button>
-                <button type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-[#0073e6] hover:bg-[#0052cc] text-white font-bold transition-all shadow-md cursor-pointer">Simpan</button>
+                <button type="submit" disabled={examLoading}
+                  className="px-5 py-2.5 rounded-xl bg-[#0073e6] hover:bg-[#0052cc] text-white font-bold transition-all shadow-md cursor-pointer disabled:opacity-60">
+                  {examLoading ? "Menyimpan..." : "Simpan"}
+                </button>
               </div>
             </form>
           </div>

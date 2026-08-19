@@ -128,5 +128,44 @@ Halaman admin manajemen pengguna (`/admin/pengguna`) saat ini menggunakan data d
 
 ---
 
+## 5. [PEMBIMBING] Tidak Ada Endpoint `GET /api/v1/exams` untuk List Semua Ujian Milik Instructor
+
+**Endpoint yang dibutuhkan:** `GET /api/v1/exams` (dengan filter `instructor_id` atau scope berdasarkan user login)
+
+**Masalah:**
+Halaman pembimbing manajemen ujian (`/pembimbing/exam`) tidak dapat mengambil daftar ujian yang sudah dibuat oleh instructor dari backend. Saat ini ujian yang ditambah/edit hanya tersimpan di state lokal (in-memory), sehingga data hilang saat halaman di-refresh.
+
+Backend hanya punya:
+- `GET /api/v1/exams/{exam}` — show single exam (by ID)
+- `POST /api/v1/exams` — create exam ✅
+- `PUT /api/v1/exams/{exam}` — update exam ✅
+- `DELETE /api/v1/exams/{exam}` — delete exam ✅
+
+**Yang dibutuhkan frontend:**
+```json
+GET /api/v1/exams?course_id=xxx   (atau tanpa filter = semua ujian milik instructor)
+
+Response:
+{
+  "success": true,
+  "data": [
+    {
+      "id": "e1f2e3d4-...",
+      "title": "UTS Web Dev Dasar",
+      "course_id": "c1f2e3d4-...",
+      "course_title": "Web Dev Dasar",
+      "time_limit_sec": 3600,
+      "passing_score": 70,
+      "max_attempts": 3,
+      "pearls_reward": 10
+    }
+  ]
+}
+```
+
+**Tolong buatkan endpoint `GET /api/v1/exams` yang mengembalikan semua ujian milik instructor yang sedang login (scope by `instructor_id` via course ownership).**
+
+---
+
 *Dibuat oleh: Tim Frontend — `r\RAKHA`*
 *Tanggal: 19 Agustus 2026*
