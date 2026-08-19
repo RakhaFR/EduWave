@@ -99,6 +99,16 @@ class LeaderboardService
 
         $results = Redis::zrevrange($key, $start, $end, true);
 
+        // Some Redis clients return an empty range for a single-member sorted set.
+        // The ranked user must still appear in their own context leaderboard.
+        if (empty($results)) {
+            $score = Redis::zscore($key, $user->id);
+
+            if ($score !== null) {
+                $results = [$user->id => $score];
+            }
+        }
+
         return [
             'user_rank' => $rank + 1, // Convert to 1-indexed for display
             'neighbors' => $this->formatLeaderboardResults($results, $start),

@@ -1,0 +1,267 @@
+{
+  "info": {
+    "_postman_id": "c6f1f72a-0f54-4b9b-93fd-a41a6e7e93f8",
+    "name": "EduWave Leaderboard API Tests",
+    "description": "Run against a seeded EduWave API. The collection signs in as the seeded student and checks the global, weekly, and current-user leaderboard contracts.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "auth_user_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "1.1 Login Seeded Student",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"student@eduwave.id\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{base_url}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Login response supplies a token and user ID', function () {",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "    pm.expect(jsonData.data.token).to.be.a('string').and.not.empty;",
+                  "    pm.expect(jsonData.data.user.id).to.be.a('string').and.not.empty;",
+                  "});",
+                  "pm.collectionVariables.set('token', jsonData.data.token);",
+                  "pm.collectionVariables.set('auth_user_id', jsonData.data.user.id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Leaderboard",
+      "item": [
+        {
+          "name": "2.1 Global Leaderboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/leaderboard?page=1&per_page=10"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Global leaderboard has the documented envelope and pagination metadata', function () {",
+                  "    pm.expect(jsonData).to.have.all.keys('success', 'data', 'error', 'meta');",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "    pm.expect(jsonData.data.rankings).to.be.an('array');",
+                  "    pm.expect(jsonData.meta).to.include({ scope: 'global', current_page: 1, per_page: 10 });",
+                  "});",
+                  "pm.test('Every ranking has frontend-required fields and is sorted by XP', function () {",
+                  "    jsonData.data.rankings.forEach(function (entry, index, rankings) {",
+                  "        pm.expect(entry).to.have.all.keys('rank', 'user', 'xp', 'pearls');",
+                  "        pm.expect(entry.rank).to.be.a('number');",
+                  "        pm.expect(entry.user).to.include.all.keys('id', 'username', 'full_name', 'avatar_url', 'level');",
+                  "        pm.expect(entry.xp).to.be.a('number');",
+                  "        pm.expect(entry.pearls).to.be.a('number');",
+                  "        if (index > 0) { pm.expect(entry.xp).to.be.at.most(rankings[index - 1].xp); }",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.2 Weekly Leaderboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/leaderboard/weekly?page=1&per_page=10"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Weekly leaderboard has the documented response shape', function () {",
+                  "    pm.expect(jsonData).to.have.all.keys('success', 'data', 'error', 'meta');",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "    pm.expect(jsonData.data.rankings).to.be.an('array');",
+                  "    pm.expect(jsonData.meta).to.include({ scope: 'weekly', current_page: 1, per_page: 10 });",
+                  "    pm.expect(jsonData.meta.week).to.match(/^\\d{4}-W\\d{2}$/);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.3 My Global Rank and Neighbors",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/leaderboard/me?scope=global&neighbors=3"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('My global rank response is safe for ranked and unranked users', function () {",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "    pm.expect(jsonData.meta.scope).to.eql('global');",
+                  "    pm.expect(jsonData.data.neighbors).to.be.an('array');",
+                  "    if (jsonData.data.user_rank === null) {",
+                  "        pm.expect(jsonData.data.message).to.be.a('string').and.not.empty;",
+                  "    } else {",
+                  "        pm.expect(jsonData.data.user_rank).to.be.a('number').and.at.least(1);",
+                  "        pm.expect(jsonData.data.neighbors.length).to.be.at.least(1);",
+                  "        jsonData.data.neighbors.forEach(function (entry) {",
+                  "            pm.expect(entry).to.have.all.keys('rank', 'user', 'xp', 'pearls');",
+                  "            pm.expect(entry.user).to.include.all.keys('id', 'username', 'full_name', 'avatar_url', 'level');",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.4 My Weekly Rank and Neighbors",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/leaderboard/me?scope=weekly&neighbors=3"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('My weekly rank response uses weekly scope and an array of neighbors', function () {",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "    pm.expect(jsonData.meta.scope).to.eql('weekly');",
+                  "    pm.expect(jsonData.data.neighbors).to.be.an('array');",
+                  "    pm.expect(jsonData.data.user_rank === null || typeof jsonData.data.user_rank === 'number').to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Authentication Guard",
+      "item": [
+        {
+          "name": "3.1 Global Leaderboard Without Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/leaderboard"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () { pm.response.to.have.status(401); });",
+                  "pm.test('Unauthorized response has Laravel's authentication error shape', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql('Unauthenticated.');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

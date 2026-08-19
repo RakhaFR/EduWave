@@ -15,7 +15,11 @@ class EnrollmentAndActivitySeeder extends Seeder
 {
     public function run(): void
     {
-        $students = User::where('role', 'student')->get();
+        // Keep the fixed Postman account free of prior activity so its test flow
+        // starts from a predictable enrollment, progress, and attempt state.
+        $students = User::where('role', 'student')
+            ->where('email', '!=', 'student@eduwave.id')
+            ->get();
         $publishedCourses = Course::where('status', 'published')->with(['lessons', 'exams'])->get();
 
         if ($students->isEmpty() || $publishedCourses->isEmpty()) {

@@ -365,6 +365,21 @@ class LeaderboardTest extends TestCase
         $response->assertJsonPath('data.neighbors.0.rank', 1);
     }
 
+    public function test_leaderboard_me_includes_a_ranked_user_when_the_context_range_is_empty(): void
+    {
+        $user = User::factory()->create(['xp' => 150]);
+        $service = app(LeaderboardService::class);
+        $service->updateScore($user);
+
+        $this->actingAs($user)
+            ->getJson('/api/v1/leaderboard/me?scope=global&neighbors=3')
+            ->assertOk()
+            ->assertJsonPath('data.user_rank', 1)
+            ->assertJsonPath('data.neighbors.0.user.id', $user->id)
+            ->assertJsonPath('data.neighbors.0.xp', 150)
+            ->assertJsonPath('data.neighbors.0.rank', 1);
+    }
+
     public function test_global_leaderboard_supports_pagination(): void
     {
         $service = app(LeaderboardService::class);

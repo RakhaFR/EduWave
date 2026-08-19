@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -17,7 +18,7 @@ return new class extends Migration
             $table->uuid('exam_id');
             $table->decimal('score', 5, 2)->nullable();
             $table->boolean('passed')->default(false);
-            $table->json('answers')->default('[]');
+            $table->json('answers')->default(DB::raw("('[]')"));
             $table->timestamp('started_at')->useCurrent();
             $table->timestamp('submitted_at')->nullable();
             $table->timestamp('expires_at')->nullable();

@@ -20,7 +20,7 @@ class ExamSeeder extends Seeder
             'title' => 'Ujian Evaluasi Oceanografi & Navigasi Laut',
             'time_limit_sec' => 3600,
             'passing_score' => 70,
-            'max_attempts' => 3,
+            'max_attempts' => 2,
             'pearls_reward' => 50,
         ]);
 
@@ -120,7 +120,7 @@ class ExamSeeder extends Seeder
                     'exp' => 'Standar keselamatan dan integrasi navigasi merupakan prinsip paling mendasar.',
                 ],
                 [
-                    'text' => "Regulasi internasional mewajibkan setiap prosedur maritim mematuhi protokol baku.",
+                    'text' => 'Regulasi internasional mewajibkan setiap prosedur maritim mematuhi protokol baku.',
                     'type' => 'true_false',
                     'options' => [
                         ['key' => 'A', 'value' => 'Benar'],

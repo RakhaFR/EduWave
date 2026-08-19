@@ -1145,7 +1145,7 @@
                      "name":  "6. Attempts \u0026 Grading",
                      "item":  [
                                   {
-                                      "name":  "6.1 Submit Attempt 1 (Mixed Answers - 50% Score, Fail)",
+                                       "name":  "6.1 Submit Attempt 1 (Mixed Answers - 50% Score, Fail)",
                                       "request":  {
                                                       "method":  "POST",
                                                       "header":  [
@@ -1164,7 +1164,7 @@
                                                                  ],
                                                       "body":  {
                                                                    "mode":  "raw",
-                                                                   "raw":  "{\n  \"answers\": [\n    { \"question_id\": \"{{question_1_id}}\", \"selected_key\": \"B\" },\n    { \"question_id\": \"{{question_2_id}}\", \"selected_key\": \"B\" }\n  ]\n}"
+                                                                    "raw":  "{\n  \"answers\": [\n    { \"question_id\": \"{{question_1_id}}\", \"selected_key\": \"B\" },\n    { \"question_id\": \"{{question_2_id}}\", \"selected_key\": \"B\" },\n    { \"question_id\": \"{{question_3_id}}\", \"selected_key\": \"C\" },\n    { \"question_id\": \"{{question_4_id}}\", \"selected_key\": \"A\" }\n  ]\n}"
                                                                },
                                                       "url":  {
                                                                   "raw":  "{{base_url}}/exams/{{exam_id}}/attempts/{{attempt_id}}/submit",
@@ -1195,7 +1195,7 @@
                                                                                     "    var jsonData = pm.response.json();",
                                                                                     "    pm.expect(jsonData.data.score).to.eql(50);",
                                                                                     "    pm.expect(jsonData.data.passed).to.eql(false);",
-                                                                                    "    pm.expect(jsonData.data.correct_count).to.eql(1);",
+                                                                                     "    pm.expect(jsonData.data.correct_count).to.eql(2);",
                                                                                     "    pm.expect(jsonData.data.pearls_earned).to.eql(0);",
                                                                                     "});"
                                                                                 ],
@@ -1264,7 +1264,7 @@
                                                                  ],
                                                       "body":  {
                                                                    "mode":  "raw",
-                                                                   "raw":  "{\n  \"answers\": [\n    { \"question_id\": \"{{question_1_id}}\", \"selected_key\": \"B\" },\n    { \"question_id\": \"{{question_2_id}}\", \"selected_key\": \"A\" }\n  ]\n}"
+                                                                    "raw":  "{\n  \"answers\": [\n    { \"question_id\": \"{{question_1_id}}\", \"selected_key\": \"B\" },\n    { \"question_id\": \"{{question_2_id}}\", \"selected_key\": \"A\" },\n    { \"question_id\": \"{{question_3_id}}\", \"selected_key\": \"C\" },\n    { \"question_id\": \"{{question_4_id}}\", \"selected_key\": \"B\" }\n  ]\n}"
                                                                },
                                                       "url":  {
                                                                   "raw":  "{{base_url}}/exams/{{exam_id}}/attempts/{{attempt_2_id}}/submit",
@@ -1290,8 +1290,8 @@
                                                                                     "    var jsonData = pm.response.json();",
                                                                                     "    pm.expect(jsonData.data.score).to.eql(100);",
                                                                                     "    pm.expect(jsonData.data.passed).to.eql(true);",
-                                                                                    "    pm.expect(jsonData.data.correct_count).to.eql(2);",
-                                                                                    "    pm.expect(jsonData.data.pearls_earned).to.eql(40);",
+                                                                                     "    pm.expect(jsonData.data.correct_count).to.eql(4);",
+                                                                                     "    pm.expect(jsonData.data.pearls_earned).to.eql(50);",
                                                                                     "});"
                                                                                 ],
                                                                        "type":  "text/javascript"
@@ -1371,7 +1371,7 @@
                                                                                     "pm.test(\u0027Status code is 200 OK\u0027, function () { pm.response.to.have.status(200); });",
                                                                                     "pm.test(\u0027Attempt history contains 2 attempts\u0027, function () {",
                                                                                     "    var jsonData = pm.response.json();",
-                                                                                    "    pm.expect(jsonData.data.attempts.length).to.eql(2);",
+                                                                                     "    pm.expect(jsonData.data.length).to.eql(2);",
                                                                                     "});"
                                                                                 ],
                                                                        "type":  "text/javascript"
