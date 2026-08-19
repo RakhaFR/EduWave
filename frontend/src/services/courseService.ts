@@ -145,6 +145,11 @@ export const courseService = {
     return response.data;
   },
 
+  async getUserCourseProgress() {
+    const response = await api.get('/users/me/course-progress');
+    return response.data;
+  },
+
   async getLessonById(lessonId: string) {
     const response = await api.get(`/lessons/${lessonId}`);
     return response.data;
@@ -180,13 +185,13 @@ export const courseService = {
     return response.data;
   },
 
-  async getLeaderboard(limit: number = 50) {
-    const response = await api.get("/leaderboard", { params: { limit } });
+  async getLeaderboard(limit: number = 50, page: number = 1) {
+    const response = await api.get("/leaderboard", { params: { limit, per_page: limit, page } });
     return response.data;
   },
 
-  async getWeeklyLeaderboard(limit: number = 50) {
-    const response = await api.get("/leaderboard/weekly", { params: { limit } });
+  async getWeeklyLeaderboard(limit: number = 50, page: number = 1) {
+    const response = await api.get("/leaderboard/weekly", { params: { limit, per_page: limit, page } });
     return response.data;
   },
 

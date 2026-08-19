@@ -11,6 +11,7 @@ interface LeaderboardUser {
   name: string;
   xp: number;
   avatar: string;
+  avatarUrl?: string;
   change: number;
 }
 
@@ -41,13 +42,18 @@ export default function LeaderboardPublicPage() {
       try {
         const res = await courseService.getLeaderboard(10);
         const rawList = res?.data?.rankings || res?.data || res || [];
-        const formatted: LeaderboardUser[] = (Array.isArray(rawList) ? rawList : []).map((item: any, idx: number) => ({
-          rank: item.rank || idx + 1,
-          name: item.user?.full_name || item.user?.username || item.full_name || item.name || "Penyelam",
-          xp: item.xp !== undefined ? item.xp : item.total_xp || 0,
-          avatar: (item.user?.full_name || item.user?.username || item.full_name || item.name || "P")[0].toUpperCase(),
-          change: item.rank_change || 0,
-        }));
+        const formatted: LeaderboardUser[] = (Array.isArray(rawList) ? rawList : []).map((item: any, idx: number) => {
+          const userObj = item.user || item;
+          const fullName = userObj.full_name || userObj.username || item.full_name || item.name || "Penyelam";
+          return {
+            rank: item.rank || idx + 1,
+            name: fullName,
+            xp: item.xp !== undefined ? item.xp : item.total_xp || 0,
+            avatar: fullName[0].toUpperCase(),
+            avatarUrl: userObj.avatar_url || userObj.profile_photo_path || userObj.image || null,
+            change: item.rank_change || 0,
+          };
+        });
         setUsers(formatted);
       } catch (err) {
         console.error("Gagal memuat leaderboard public:", err);
@@ -92,9 +98,13 @@ export default function LeaderboardPublicPage() {
                     return (
                       <div key={cfg.pos} className="flex flex-col items-center gap-1.5">
                         {cfg.crown ? <Crown className="w-6 h-6 text-amber-400 fill-amber-400 -mb-1" /> : <div className="w-6 h-6" />}
-                        <div className={`w-11 h-11 md:w-14 md:h-14 rounded-full ${cfg.bg} ${cfg.ring} flex items-center justify-center text-sm md:text-lg font-extrabold ${cfg.text} shadow-md`}>
-                          {user.avatar}
-                        </div>
+                        {user.avatarUrl ? (
+                          <img src={user.avatarUrl} alt={user.name} className={`w-11 h-11 md:w-14 md:h-14 rounded-full object-cover ${cfg.ring} shadow-md`} />
+                        ) : (
+                          <div className={`w-11 h-11 md:w-14 md:h-14 rounded-full ${cfg.bg} ${cfg.ring} flex items-center justify-center text-sm md:text-lg font-extrabold ${cfg.text} shadow-md`}>
+                            {user.avatar}
+                          </div>
+                        )}
                         <p className={`text-[10px] md:text-xs font-bold ${cfg.text} text-center max-w-[64px] md:max-w-[80px] line-clamp-2 leading-tight`}>
                           {user.name}
                         </p>
@@ -137,9 +147,13 @@ export default function LeaderboardPublicPage() {
                           <span className="text-sm font-extrabold text-slate-400">{user.rank}</span>
                         </div>
                         <div className="col-span-7 sm:col-span-6 flex items-center gap-2 min-w-0">
-                          <div className={`w-8 h-8 rounded-full ${AVATAR_COLORS[user.rank % AVATAR_COLORS.length]} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
-                            {user.avatar}
-                          </div>
+                          {user.avatarUrl ? (
+                            <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full object-cover shrink-0 border border-slate-200" />
+                          ) : (
+                            <div className={`w-8 h-8 rounded-full ${AVATAR_COLORS[user.rank % AVATAR_COLORS.length]} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
+                              {user.avatar}
+                            </div>
+                          )}
                           <p className="text-xs md:text-sm font-semibold text-[#00172e] truncate">{user.name}</p>
                         </div>
                         <div className="col-span-4 sm:col-span-3 text-right">

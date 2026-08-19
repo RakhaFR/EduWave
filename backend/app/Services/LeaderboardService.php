@@ -67,7 +67,7 @@ class LeaderboardService
         $end = $offset + $limit - 1;
 
         // ZREVRANGE returns highest to lowest score
-        $results = Redis::zrevrange($key, $offset, $end, true);
+        $results = Redis::zrevrange($key, $offset, $end, ['WITHSCORES' => true]);
 
         return $this->formatLeaderboardResults($results, $offset);
     }
@@ -97,7 +97,7 @@ class LeaderboardService
         $start = max(0, $rank - $neighborsAbove);
         $end = $rank + $neighborsBelow;
 
-        $results = Redis::zrevrange($key, $start, $end, true);
+        $results = Redis::zrevrange($key, $start, $end, ['WITHSCORES' => true]);
 
         // Some Redis clients return an empty range for a single-member sorted set.
         // The ranked user must still appear in their own context leaderboard.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trophy, Medal, Crown, Flame, Star, ChevronUp, ChevronDown, Minus } from "lucide-react";
+import { Trophy, Medal, Crown, Flame, Star, ChevronUp, ChevronDown, Minus, ChevronLeft, ChevronRight } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { courseService } from "@/services/courseService";
 
@@ -14,6 +14,7 @@ interface LeaderboardUser {
   streak: number;
   courses: number;
   avatar: string;
+  avatarUrl?: string;
   change: number;
   me: boolean;
 }
@@ -39,8 +40,44 @@ const formatNumber = (num: number) => {
 export default function PelajarLeaderboardPage() {
   const [period, setPeriod] = useState<Period>("minggu");
   const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
-  const [myRank, setMyRank] = useState<{ rank: number; total_xp: number; name?: string } | null>(null);
+  const [top3, setTop3] = useState<LeaderboardUser[]>([]);
+  const [myRank, setMyRank] = useState<{ rank: number | string; total_xp: number; name?: string; avatarUrl?: string } | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const [page, setPage] = useState(1);
+  const perPage = 10;
+  const maxPages = 5; // Max 50 users (5 pages * 10)
+
+  useEffect(() => {
+    async function loadTop3() {
+      try {
+        const top3Res = period === "minggu"
+          ? await courseService.getWeeklyLeaderboard(3).catch(() => courseService.getLeaderboard(3))
+          : await courseService.getLeaderboard(3);
+
+        const rawTop3 = top3Res?.data?.rankings || top3Res?.data || top3Res || [];
+        const formattedTop3: LeaderboardUser[] = (Array.isArray(rawTop3) ? rawTop3 : []).map((item: any, index: number) => {
+          const userObj = item.user || item;
+          const fullName = userObj.full_name || userObj.username || item.full_name || item.name || "Penyelam";
+          return {
+            rank: item.rank || index + 1,
+            name: fullName,
+            xp: item.xp !== undefined ? item.xp : item.total_xp || 0,
+            streak: userObj.streak_days || item.streak_days || 0,
+            courses: userObj.completed_courses || item.completed_courses || 0,
+            avatar: fullName[0].toUpperCase(),
+            avatarUrl: userObj.avatar_url || userObj.profile_photo_path || userObj.image || null,
+            change: item.rank_change || 0,
+            me: item.is_me || false,
+          };
+        });
+        setTop3(formattedTop3);
+      } catch (err) {
+        console.error("Gagal memuat top 3:", err);
+      }
+    }
+    loadTop3();
+  }, [period]);
 
   useEffect(() => {
     async function loadData() {
@@ -48,34 +85,42 @@ export default function PelajarLeaderboardPage() {
       try {
         const [lbRes, meRes] = await Promise.all([
           period === "minggu"
-            ? courseService.getWeeklyLeaderboard(50).catch((err) => {
+            ? courseService.getWeeklyLeaderboard(perPage, page).catch((err) => {
                 console.error("Endpoint /leaderboard/weekly 500 error, fallback ke /leaderboard", err);
-                return courseService.getLeaderboard(50);
+                return courseService.getLeaderboard(perPage, page);
               })
-            : courseService.getLeaderboard(50),
+            : courseService.getLeaderboard(perPage, page),
           courseService.getMyRank().catch(() => null),
         ]);
 
         const rawList = lbRes?.data?.rankings || lbRes?.data || lbRes || [];
-        const formattedList: LeaderboardUser[] = (Array.isArray(rawList) ? rawList : []).map((item: any, index: number) => ({
-          rank: item.rank || index + 1,
-          name: item.user?.full_name || item.user?.username || item.full_name || item.name || "Penyelam",
-          xp: item.xp !== undefined ? item.xp : item.total_xp || 0,
-          streak: item.streak_days || item.streak || 0,
-          courses: item.completed_courses || item.courses || 0,
-          avatar: (item.user?.full_name || item.user?.username || item.full_name || item.name || "P")[0].toUpperCase(),
-          change: item.rank_change || 0,
-          me: item.is_me || false,
-        }));
+        const formattedList: LeaderboardUser[] = (Array.isArray(rawList) ? rawList : []).map((item: any, index: number) => {
+          const userObj = item.user || item;
+          const fullName = userObj.full_name || userObj.username || item.full_name || item.name || "Penyelam";
+          return {
+            rank: item.rank || (page - 1) * perPage + index + 1,
+            name: fullName,
+            xp: item.xp !== undefined ? item.xp : item.total_xp || 0,
+            streak: userObj.streak_days || item.streak_days || 0,
+            courses: userObj.completed_courses || item.completed_courses || 0,
+            avatar: fullName[0].toUpperCase(),
+            avatarUrl: userObj.avatar_url || userObj.profile_photo_path || userObj.image || null,
+            change: item.rank_change || 0,
+            me: item.is_me || false,
+          };
+        });
 
         setLeaderboard(formattedList);
+
         if (meRes?.data) {
           const userRank = meRes.data.user_rank;
           const myNeighbor = meRes.data.neighbors?.find((n: any) => n.user?.id || n.is_me);
+          const uObj = myNeighbor?.user || {};
           setMyRank({
             rank: userRank || "-",
             total_xp: myNeighbor?.xp || 0,
-            name: myNeighbor?.user?.full_name || myNeighbor?.user?.username || "Kamu",
+            name: uObj.full_name || uObj.username || "Kamu",
+            avatarUrl: uObj.avatar_url || uObj.profile_photo_path || uObj.image || null,
           });
         }
       } catch (err) {
@@ -86,14 +131,13 @@ export default function PelajarLeaderboardPage() {
     }
 
     loadData();
-  }, [period]);
+  }, [period, page]);
 
-  const top3 = leaderboard.slice(0, 3);
-  const rest = leaderboard.slice(3);
   const me = leaderboard.find((u) => u.me) || {
     rank: myRank?.rank || "-",
-    name: "Kamu",
+    name: myRank?.name || "Kamu",
     xp: myRank?.total_xp || 0,
+    avatarUrl: myRank?.avatarUrl,
   };
 
   return (
@@ -112,7 +156,7 @@ export default function PelajarLeaderboardPage() {
           {(["minggu", "semua"] as Period[]).map((p) => (
             <button
               key={p}
-              onClick={() => setPeriod(p)}
+              onClick={() => { setPeriod(p); setPage(1); }}
               className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
                 period === p
                   ? "bg-white text-[#008be3] shadow-md"
@@ -124,10 +168,14 @@ export default function PelajarLeaderboardPage() {
           ))}
         </div>
 
-        <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl px-4 py-3 mb-6 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#008be3] flex items-center justify-center text-white text-sm font-bold shrink-0">
-            {(me.name || "K")[0].toUpperCase()}
-          </div>
+        <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl px-4 py-3 mb-6 flex items-center gap-3 shadow-sm">
+          {me.avatarUrl ? (
+            <img src={me.avatarUrl} alt={me.name} className="w-9 h-9 rounded-full object-cover shrink-0 border border-white/40" />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-[#008be3] flex items-center justify-center text-white text-sm font-bold shrink-0">
+              {(me.name || "K")[0].toUpperCase()}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="text-[10px] text-white/60 font-medium uppercase tracking-wide">Posisiku</p>
             <p className="text-sm font-bold text-white truncate">{me.name}</p>
@@ -143,6 +191,43 @@ export default function PelajarLeaderboardPage() {
           </div>
         </div>
 
+        {/* Podium Top 3 */}
+        {top3.length > 0 && (
+          <div className="bg-white rounded-3xl p-5 md:p-8 mb-4 shadow-lg">
+            <div className="flex items-end justify-center gap-3 md:gap-8 mb-3 h-40 md:h-52">
+              {PODIUM.map((cfg) => {
+                const user = top3[cfg.pos];
+                if (!user) return null;
+                return (
+                  <div key={cfg.pos} className="flex flex-col items-center gap-1.5">
+                    {cfg.crown ? <Crown className="w-6 h-6 text-amber-400 fill-amber-400 -mb-1" /> : <div className="w-6 h-6" />}
+                    {user.avatarUrl ? (
+                      <img src={user.avatarUrl} alt={user.name} className={`w-11 h-11 md:w-14 md:h-14 rounded-full object-cover ${cfg.ring} shadow-md`} />
+                    ) : (
+                      <div className={`w-11 h-11 md:w-14 md:h-14 rounded-full ${cfg.bg} ${cfg.ring} flex items-center justify-center text-sm md:text-lg font-extrabold ${cfg.text} shadow-md`}>
+                        {user.avatar}
+                      </div>
+                    )}
+                    <p className={`text-[10px] md:text-xs font-bold ${cfg.text} text-center max-w-[64px] md:max-w-[80px] line-clamp-2 leading-tight`}>
+                      {user.name}
+                    </p>
+                    <div className={`w-14 md:w-20 ${cfg.h} ${cfg.bar} rounded-t-2xl flex flex-col items-center justify-center gap-1 shadow-inner`}>
+                      <span className={`text-base md:text-xl font-extrabold ${cfg.text}`}>{user.rank}</span>
+                      <span className={`text-[9px] font-semibold ${cfg.text} opacity-70 hidden md:block`}>{formatNumber(user.xp)} XP</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex justify-center gap-3 md:gap-8">
+              <div className="w-14 md:w-20 flex justify-center"><Medal className="w-4 h-4 text-slate-400" /></div>
+              <div className="w-14 md:w-20 flex justify-center"><Medal className="w-4 h-4 text-amber-400 fill-amber-400" /></div>
+              <div className="w-14 md:w-20 flex justify-center"><Medal className="w-4 h-4 text-orange-400 fill-orange-400" /></div>
+            </div>
+          </div>
+        )}
+
+        {/* Tabel Peringkat */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
@@ -152,99 +237,106 @@ export default function PelajarLeaderboardPage() {
             Belum ada data peringkat.
           </div>
         ) : (
-          <>
-            {top3.length > 0 && (
-              <div className="bg-white rounded-3xl p-5 md:p-8 mb-4 shadow-lg">
-                <div className="flex items-end justify-center gap-3 md:gap-8 mb-3 h-40 md:h-52">
-                  {PODIUM.map((cfg) => {
-                    const user = top3[cfg.pos];
-                    if (!user) return null;
-                    return (
-                      <div key={cfg.pos} className="flex flex-col items-center gap-1.5">
-                        {cfg.crown ? <Crown className="w-6 h-6 text-amber-400 fill-amber-400 -mb-1" /> : <div className="w-6 h-6" />}
-                        <div className={`w-11 h-11 md:w-14 md:h-14 rounded-full ${cfg.bg} ${cfg.ring} flex items-center justify-center text-sm md:text-lg font-extrabold ${cfg.text} shadow-md`}>
-                          {user.avatar}
-                        </div>
-                        <p className={`text-[10px] md:text-xs font-bold ${cfg.text} text-center max-w-[64px] md:max-w-[80px] line-clamp-2 leading-tight`}>
-                          {user.name}
-                        </p>
-                        <div className={`w-14 md:w-20 ${cfg.h} ${cfg.bar} rounded-t-2xl flex flex-col items-center justify-center gap-1 shadow-inner`}>
-                          <span className={`text-base md:text-xl font-extrabold ${cfg.text}`}>{user.rank}</span>
-                          <span className={`text-[9px] font-semibold ${cfg.text} opacity-70 hidden md:block`}>{formatNumber(user.xp)} XP</span>
-                        </div>
-                      </div>
-                    );
-                  })}
+          <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
+            <div className="grid grid-cols-12 px-4 py-3 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="col-span-1 text-center">#</div>
+              <div className="col-span-6 sm:col-span-5 md:col-span-4">Penyelam</div>
+              <div className="col-span-3 md:col-span-2 text-center hidden sm:block">Streak</div>
+              <div className="col-span-2 text-center hidden md:block">Kursus</div>
+              <div className="col-span-4 sm:col-span-3 md:col-span-2 text-right">XP</div>
+              <div className="col-span-1 text-center">Tren</div>
+            </div>
+
+            {leaderboard.map((user) => (
+              <div
+                key={user.rank}
+                className={`grid grid-cols-12 px-4 py-3.5 items-center border-b border-slate-100 last:border-0 transition-colors ${
+                  user.me
+                    ? "bg-[#e6f4ff] border-l-4 border-l-[#008be3] font-semibold"
+                    : "hover:bg-slate-50"
+                }`}
+              >
+                <div className="col-span-1 text-center">
+                  <span className={`text-sm font-extrabold ${user.me ? "text-[#008be3]" : "text-slate-400"}`}>{user.rank}</span>
                 </div>
-                <div className="flex justify-center gap-3 md:gap-8">
-                  <div className="w-14 md:w-20 flex justify-center"><Medal className="w-4 h-4 text-slate-400" /></div>
-                  <div className="w-14 md:w-20 flex justify-center"><Medal className="w-4 h-4 text-amber-400 fill-amber-400" /></div>
-                  <div className="w-14 md:w-20 flex justify-center"><Medal className="w-4 h-4 text-orange-400 fill-orange-400" /></div>
+
+                <div className="col-span-6 sm:col-span-5 md:col-span-4 flex items-center gap-2 min-w-0">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full object-cover shrink-0 border border-slate-200" />
+                  ) : (
+                    <div className={`w-8 h-8 rounded-full ${AVATAR_COLORS[user.rank % AVATAR_COLORS.length]} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
+                      {user.avatar}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className={`text-xs md:text-sm font-semibold truncate ${user.me ? "text-[#008be3] font-bold" : "text-[#00172e]"}`}>
+                      {user.name}
+                    </p>
+                    {user.me && (
+                      <span className="text-[9px] bg-[#008be3] text-white px-1.5 py-0.5 rounded-full font-bold inline-block">Kamu</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="col-span-3 md:col-span-2 text-center hidden sm:flex items-center justify-center gap-1">
+                  <Flame className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                  <span className="text-xs font-semibold text-slate-600">{user.streak}h</span>
+                </div>
+
+                <div className="col-span-2 text-center hidden md:flex items-center justify-center gap-1">
+                  <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0" />
+                  <span className="text-xs font-semibold text-slate-600">{user.courses}</span>
+                </div>
+
+                <div className="col-span-4 sm:col-span-3 md:col-span-2 text-right">
+                  <span className={`text-xs md:text-sm font-extrabold ${user.me ? "text-[#008be3]" : "text-[#00172e]"}`}>
+                    {formatNumber(user.xp)}
+                  </span>
+                  <span className="text-[10px] text-slate-400 ml-0.5">XP</span>
+                </div>
+
+                <div className="col-span-1 flex justify-center">
+                  <ChangeIcon change={user.change} />
                 </div>
               </div>
-            )}
+            ))}
 
-            {rest.length > 0 && (
-              <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
-                <div className="grid grid-cols-12 px-4 py-3 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  <div className="col-span-1 text-center">#</div>
-                  <div className="col-span-6 sm:col-span-5 md:col-span-4">Penyelam</div>
-                  <div className="col-span-3 md:col-span-2 text-center hidden sm:block">Streak</div>
-                  <div className="col-span-2 text-center hidden md:block">Kursus</div>
-                  <div className="col-span-4 sm:col-span-3 md:col-span-2 text-right">XP</div>
-                  <div className="col-span-1 text-center">Tren</div>
-                </div>
-
-                {rest.map((user) => (
-                  <div
-                    key={user.rank}
-                    className={`grid grid-cols-12 px-4 py-3.5 items-center border-b border-slate-50 last:border-0 transition-colors ${
-                      user.me ? "bg-[#f0f7ff]" : "hover:bg-slate-50"
+            {/* Pagination 5 Halaman */}
+            <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-t border-slate-100">
+              <span className="text-xs text-slate-500 font-medium">
+                Halaman {page} dari {maxPages} (Maks. 50 Penyelam)
+              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                {Array.from({ length: maxPages }, (_, i) => i + 1).map((pNum) => (
+                  <button
+                    key={pNum}
+                    onClick={() => setPage(pNum)}
+                    className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${
+                      page === pNum
+                        ? "bg-[#008be3] text-white shadow-sm"
+                        : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100"
                     }`}
                   >
-                    <div className="col-span-1 text-center">
-                      <span className={`text-sm font-extrabold ${user.me ? "text-[#008be3]" : "text-slate-400"}`}>{user.rank}</span>
-                    </div>
-
-                    <div className="col-span-6 sm:col-span-5 md:col-span-4 flex items-center gap-2 min-w-0">
-                      <div className={`w-8 h-8 rounded-full ${AVATAR_COLORS[user.rank % AVATAR_COLORS.length]} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
-                        {user.avatar}
-                      </div>
-                      <div className="min-w-0">
-                        <p className={`text-xs md:text-sm font-semibold truncate ${user.me ? "text-[#008be3]" : "text-[#00172e]"}`}>
-                          {user.name}
-                        </p>
-                        {user.me && (
-                          <span className="text-[9px] bg-[#008be3] text-white px-1.5 py-0.5 rounded-full font-bold">Kamu</span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="col-span-3 md:col-span-2 text-center hidden sm:flex items-center justify-center gap-1">
-                      <Flame className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-                      <span className="text-xs font-semibold text-slate-600">{user.streak}h</span>
-                    </div>
-
-                    <div className="col-span-2 text-center hidden md:flex items-center justify-center gap-1">
-                      <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0" />
-                      <span className="text-xs font-semibold text-slate-600">{user.courses}</span>
-                    </div>
-
-                    <div className="col-span-4 sm:col-span-3 md:col-span-2 text-right">
-                      <span className={`text-xs md:text-sm font-extrabold ${user.me ? "text-[#008be3]" : "text-[#00172e]"}`}>
-                        {formatNumber(user.xp)}
-                      </span>
-                      <span className="text-[10px] text-slate-400 ml-0.5">XP</span>
-                    </div>
-
-                    <div className="col-span-1 flex justify-center">
-                      <ChangeIcon change={user.change} />
-                    </div>
-                  </div>
+                    {pNum}
+                  </button>
                 ))}
+                <button
+                  onClick={() => setPage((p) => Math.min(maxPages, p + 1))}
+                  disabled={page === maxPages}
+                  className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
               </div>
-            )}
-          </>
+            </div>
+          </div>
         )}
       </main>
     </DashboardLayout>

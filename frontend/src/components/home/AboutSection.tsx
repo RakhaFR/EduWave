@@ -10,6 +10,8 @@ import {
   PenLine,
   Smartphone,
 } from "lucide-react";
+import { adminService } from "@/services/adminService";
+import { courseService } from "@/services/courseService";
 
 const FEATURES = [
   {
@@ -75,12 +77,39 @@ function CountUp({ target, suffix = "" }: { target: number; suffix?: string }) {
 }
 
 export default function AboutSection() {
-  // Real count dari database
-  const stats = [
-    { target: 1, label: "Penyelam Aktif", suffix: "" },
-    { target: 3, label: "Materi Khusus", suffix: "" },
-    { target: 1, label: "Ujian Interaktif", suffix: "" },
-  ];
+  const [statsData, setStatsData] = useState([
+    { target: 0, label: "Penyelam Aktif", suffix: "" },
+    { target: 0, label: "Materi Khusus", suffix: "" },
+    { target: 0, label: "Total Pendaftaran", suffix: "" },
+  ]);
+
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        const [overviewRes, coursesRes] = await Promise.all([
+          adminService.getAnalyticsOverview().catch(() => null),
+          courseService.getAllCourses().catch(() => null),
+        ]);
+
+        const overview = overviewRes?.data;
+        const courses = coursesRes?.data || [];
+
+        const studentCount = overview?.users_by_role?.student || 0;
+        const totalCourses = courses.length || overview?.total_courses || 0;
+        const totalEnrollments = overview?.total_enrollments || 0;
+
+        setStatsData([
+          { target: studentCount, label: "Penyelam Aktif", suffix: "" },
+          { target: totalCourses, label: "Materi Khusus", suffix: "" },
+          { target: totalEnrollments, label: "Total Pendaftaran", suffix: "" },
+        ]);
+      } catch (err) {
+        console.error("Gagal memuat stats about section:", err);
+      }
+    }
+
+    loadStats();
+  }, []);
 
   return (
     <section className="relative bg-white text-[#00172e] overflow-hidden">
@@ -200,7 +229,7 @@ export default function AboutSection() {
           data-aos="fade-up"
           className="grid grid-cols-1 sm:grid-cols-3 gap-6 border-t border-slate-100 pt-12 text-center"
         >
-          {stats.map((stat) => (
+          {statsData.map((stat) => (
             <div key={stat.label} className="p-4 rounded-2xl bg-slate-50/60 border border-slate-100/80">
               <div className="text-3xl sm:text-4xl font-extrabold text-[#008be3] mb-1">
                 <CountUp target={stat.target} suffix={stat.suffix} />

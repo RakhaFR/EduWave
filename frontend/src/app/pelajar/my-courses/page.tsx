@@ -13,28 +13,26 @@ export default function PelajarMyCoursesPage() {
   const fetchMyCourses = async () => {
     setLoading(true);
     try {
-      // Get all published courses first
-      const res = await courseService.getAllCourses();
-      if (res.success && res.data) {
-        const all: Course[] = res.data;
-        const enrolledList: (Course & { progress_pct: number })[] = [];
+      const [resCourses, resProgress] = await Promise.all([
+        courseService.getAllCourses().catch(() => null),
+        courseService.getUserCourseProgress().catch(() => null),
+      ]);
 
-        // Check progress / enrollment for each course
-        for (const course of all) {
-          try {
-            const progRes = await courseService.getCourseProgress(course.id);
-            if (progRes.success && progRes.data?.enrollment) {
-              enrolledList.push({
-                ...course,
-                progress_pct: progRes.data.enrollment.progress_pct || 0,
-              });
-            }
-          } catch (e) {
-            // User is not enrolled in this course
-          }
+      const allCourses: Course[] = resCourses?.success && resCourses.data ? resCourses.data : [];
+      const enrollments: any[] = resProgress?.success && resProgress.data?.enrollments ? resProgress.data.enrollments : [];
+
+      // Map progress to course data
+      const enrolledList: (Course & { progress_pct: number })[] = [];
+      for (const course of allCourses) {
+        const enr = enrollments.find((e: any) => e.course_id === course.id);
+        if (enr) {
+          enrolledList.push({
+            ...course,
+            progress_pct: enr.progress_pct || 0,
+          });
         }
-        setEnrolledCourses(enrolledList);
       }
+      setEnrolledCourses(enrolledList);
     } catch (err) {
       console.error("Gagal mengambil data My Courses:", err);
     } finally {

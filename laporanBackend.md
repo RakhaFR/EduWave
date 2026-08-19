@@ -45,5 +45,31 @@ if (! $user || ! in_array($user?->role, ['admin', 'instructor'])) {
 
 ---
 
+## 3. [ENROLLMENTS] Tidak Ada Endpoint `GET /api/v1/user/enrollments` untuk Mengambil Daftar Kursus yang Diikuti User
+
+**Endpoint yang dibutuhkan:** `GET /api/v1/user/enrollments` (atau `GET /api/v1/my-courses`)
+
+**Masalah (N+1 Request Issue):**
+Saat ini tidak ada endpoint tunggal untuk mengambil daftar kursus yang sedang diikuti oleh user yang login.
+Akibatnya, frontend terpaksa melakukan loop request `GET /api/v1/courses/{id}/progress` secara individual untuk setiap kursus hanya demi mengecek apakah user terdaftar atau belum. Hal ini menyebabkan puluhan network request simultan (N+1 query) yang memperlambat performa secara signifikan.
+
+**Solusi / Rekomendasi di Backend:**
+Tolong sediakan endpoint `GET /api/v1/user/enrollments` yang mengembalikan daftar kursus beserta progresnya sekaligus (`progress_pct`), contoh response:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "course_id": "44444444-...",
+      "course_title": "Web Dev Dasar",
+      "progress_pct": 75.00,
+      "status": "active"
+    }
+  ]
+}
+```
+
+---
+
 *Dibuat oleh: Tim Frontend — `r\RAKHA`*
 *Tanggal: 19 Agustus 2026*

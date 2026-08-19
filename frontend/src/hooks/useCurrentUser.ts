@@ -2,53 +2,89 @@ import { useState, useEffect } from 'react';
 import { authService } from '@/services/authService';
 import { UserProfile } from '@/types/auth';
 
+let cachedUserPromise: Promise<UserProfile | null> | null = null;
+let cachedUser: UserProfile | null = null;
+
+export function clearUserCache() {
+  cachedUserPromise = null;
+  cachedUser = null;
+}
+
 export function useCurrentUser() {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    if (cachedUser) return cachedUser;
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        try { return JSON.parse(stored); } catch (e) {}
+      }
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState<boolean>(!user);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchUser = async () => {
+  const fetchUser = async (force: boolean = false) => {
+    if (force) {
+      clearUserCache();
+    }
+    if (cachedUser && !force) {
+      setUser(cachedUser);
+      setLoading(false);
+      return;
+    }
+    if (cachedUserPromise && !force) {
+      const u = await cachedUserPromise;
+      setUser(u);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
-    try {
-      // 1. Panggil GET /api/v1/users/me (Tested: ☐)
-      const res = await authService.getUserMe();
-      if (res.success && res.data?.user) {
-        setUser(res.data.user);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('user', JSON.stringify(res.data.user));
+
+    cachedUserPromise = (async () => {
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        if (!token) {
+          return null;
         }
-      } else {
-        // 2. Fallback GET /api/v1/auth/me (Tested: ✓)
+        const res = await authService.getUserMe();
+        if (res.success && res.data?.user) {
+          cachedUser = res.data.user;
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('user', JSON.stringify(res.data.user));
+          }
+          return res.data.user;
+        }
         const authRes = await authService.getAuthMe();
         if (authRes.success && authRes.data?.user) {
-          setUser(authRes.data.user);
+          cachedUser = authRes.data.user;
           if (typeof window !== 'undefined') {
             localStorage.setItem('user', JSON.stringify(authRes.data.user));
           }
-        } else {
-          setError(res.error?.message || 'Gagal memuat profil');
+          return authRes.data.user;
         }
+      } catch (err: any) {
+        try {
+          const authRes = await authService.getAuthMe();
+          if (authRes.success && authRes.data?.user) {
+            cachedUser = authRes.data.user;
+            return authRes.data.user;
+          }
+        } catch (authErr: any) {}
       }
-    } catch (err: any) {
-      try {
-        const authRes = await authService.getAuthMe();
-        if (authRes.success && authRes.data?.user) {
-          setUser(authRes.data.user);
-        } else {
-          setError(err.response?.data?.error?.message || 'Gagal terhubung ke backend');
-        }
-      } catch (authErr: any) {
-        setError(err.response?.data?.error?.message || 'Gagal terhubung ke backend');
-      }
-    } finally {
-      setLoading(false);
-    }
+      return null;
+    })();
+
+    const result = await cachedUserPromise;
+    setUser(result);
+    setLoading(false);
   };
 
   useEffect(() => {
     fetchUser();
   }, []);
 
-  return { user, loading, error, refetch: fetchUser };
+  return { user, loading, error, refetch: () => fetchUser(true) };
 }

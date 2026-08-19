@@ -44,21 +44,21 @@ export default function DashboardHome() {
     async function loadDashboardData() {
       setLoadingCourses(true);
       try {
-        const [resCourses, resLb] = await Promise.all([
+        const [resCourses, resProgress, resLb] = await Promise.all([
           courseService.getAllCourses().catch(() => null),
+          courseService.getUserCourseProgress().catch(() => null),
           courseService.getLeaderboard(10).catch(() => null),
         ]);
 
         if (resCourses?.success && resCourses.data) {
+          const allCourses: Course[] = resCourses.data;
+          const enrollments: any[] = resProgress?.success && resProgress.data?.enrollments ? resProgress.data.enrollments : [];
+
           const list: (Course & { progress_pct: number })[] = [];
-          for (const c of resCourses.data) {
-            try {
-              const p = await courseService.getCourseProgress(c.id);
-              if (p.success && p.data?.enrollment) {
-                list.push({ ...c, progress_pct: p.data.enrollment.progress_pct || 0 });
-              }
-            } catch (e) {
-              // Not enrolled
+          for (const c of allCourses) {
+            const enr = enrollments.find((e: any) => e.course_id === c.id);
+            if (enr) {
+              list.push({ ...c, progress_pct: enr.progress_pct || 0 });
             }
           }
           setMyCourses(list);
