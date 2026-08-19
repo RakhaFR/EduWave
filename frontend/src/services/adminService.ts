@@ -127,4 +127,40 @@ export const adminService = {
     const response = await api.get("/admin/analytics/overview");
     return response.data;
   },
+
+  // Lessons
+  async createLesson(form: {
+    course_id: string;
+    title: string;
+    type: string;
+    content?: string;
+    video_url?: string;
+    duration_minutes?: number;
+    order: number;
+    xp_reward?: number;
+    is_preview?: boolean;
+  }) {
+    const response = await api.post("/lessons", form);
+    return response.data;
+  },
+
+  async updateLesson(id: string, form: {
+    course_id?: string;
+    title?: string;
+    type?: string;
+    content?: string;
+    video_url?: string;
+    duration_minutes?: number;
+    order?: number;
+    xp_reward?: number;
+    is_preview?: boolean;
+  }) {
+    const response = await api.put(`/lessons/${id}`, form);
+    return response.data;
+  },
+
+  async deleteLesson(id: string) {
+    const response = await api.delete(`/lessons/${id}`);
+    return response.data;
+  },
 };

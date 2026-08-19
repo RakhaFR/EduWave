@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Plus, Edit, Trash, X, ChevronLeft, ChevronRight, Loader2, BookOpen, Users, Clock } from "lucide-react";
+import { Search, Plus, Edit, Trash, X, ChevronLeft, ChevronRight, Loader2, BookOpen, Users, Clock, List } from "lucide-react";
 import { Course } from "./types";
+import Link from "next/link";
 
 interface CourseTableProps {
   courses: Course[];
@@ -180,6 +181,13 @@ export default function CourseTable({
                       </td>
                       <td className="py-3.5 px-5">
                         <div className="flex items-center justify-center gap-1.5">
+                          <Link
+                            href={`/admin/course/${c.id}/lessons`}
+                            className="px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-600 hover:bg-emerald-50 transition-all flex items-center gap-1 border border-transparent hover:border-emerald-100 cursor-pointer"
+                          >
+                            <List className="w-3.5 h-3.5" />
+                            <span>Lesson</span>
+                          </Link>
                           <button
                             onClick={() => onEditClick(c)}
                             className="px-2.5 py-1 rounded-lg text-xs font-bold text-[#0073e6] hover:bg-blue-50 transition-all flex items-center gap-1 border border-transparent hover:border-blue-100 cursor-pointer"
