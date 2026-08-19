@@ -56,21 +56,27 @@ export default function PelajarLeaderboardPage() {
           courseService.getMyRank().catch(() => null),
         ]);
 
-        const rawList = lbRes?.data || lbRes || [];
+        const rawList = lbRes?.data?.rankings || lbRes?.data || lbRes || [];
         const formattedList: LeaderboardUser[] = (Array.isArray(rawList) ? rawList : []).map((item: any, index: number) => ({
           rank: item.rank || index + 1,
-          name: item.full_name || item.name || "Penyelam",
-          xp: item.total_xp || item.xp || 0,
+          name: item.user?.full_name || item.user?.username || item.full_name || item.name || "Penyelam",
+          xp: item.xp !== undefined ? item.xp : item.total_xp || 0,
           streak: item.streak_days || item.streak || 0,
           courses: item.completed_courses || item.courses || 0,
-          avatar: (item.full_name || item.name || "P")[0].toUpperCase(),
+          avatar: (item.user?.full_name || item.user?.username || item.full_name || item.name || "P")[0].toUpperCase(),
           change: item.rank_change || 0,
           me: item.is_me || false,
         }));
 
         setLeaderboard(formattedList);
         if (meRes?.data) {
-          setMyRank(meRes.data);
+          const userRank = meRes.data.user_rank;
+          const myNeighbor = meRes.data.neighbors?.find((n: any) => n.user?.id || n.is_me);
+          setMyRank({
+            rank: userRank || "-",
+            total_xp: myNeighbor?.xp || 0,
+            name: myNeighbor?.user?.full_name || myNeighbor?.user?.username || "Kamu",
+          });
         }
       } catch (err) {
         console.error("Gagal memuat leaderboard:", err);

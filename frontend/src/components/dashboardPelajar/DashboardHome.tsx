@@ -34,19 +34,24 @@ export default function DashboardHome() {
 
   const [myCourses, setMyCourses] = useState<(Course & { progress_pct: number })[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
+  const [topPenyelam, setTopPenyelam] = useState<{ rank: number; name: string; xp: number; me: boolean }[]>([]);
 
   // Dynamic XP progress percentage (target level 1000 XP)
   const xpVal = user?.xp ?? 0;
   const xpPct = Math.min(100, Math.max(0, Math.round((xpVal % 1000) / 10)));
 
   useEffect(() => {
-    async function loadMyCourses() {
+    async function loadDashboardData() {
       setLoadingCourses(true);
       try {
-        const res = await courseService.getAllCourses();
-        if (res.success && res.data) {
+        const [resCourses, resLb] = await Promise.all([
+          courseService.getAllCourses().catch(() => null),
+          courseService.getLeaderboard(10).catch(() => null),
+        ]);
+
+        if (resCourses?.success && resCourses.data) {
           const list: (Course & { progress_pct: number })[] = [];
-          for (const c of res.data) {
+          for (const c of resCourses.data) {
             try {
               const p = await courseService.getCourseProgress(c.id);
               if (p.success && p.data?.enrollment) {
@@ -58,14 +63,25 @@ export default function DashboardHome() {
           }
           setMyCourses(list);
         }
+
+        const rawLb = resLb?.data?.rankings || resLb?.data || [];
+        if (Array.isArray(rawLb) && rawLb.length > 0) {
+          const formattedLb = rawLb.map((item: any, idx: number) => ({
+            rank: item.rank || idx + 1,
+            name: item.user?.full_name || item.user?.username || item.full_name || item.name || "Penyelam",
+            xp: item.xp !== undefined ? item.xp : item.total_xp || 0,
+            me: item.is_me || (user?.id && item.user?.id === user.id) || false,
+          }));
+          setTopPenyelam(formattedLb);
+        }
       } catch (err) {
-        console.error("Gagal memuat kursus pengguna:", err);
+        console.error("Gagal memuat data dashboard:", err);
       } finally {
         setLoadingCourses(false);
       }
     }
-    loadMyCourses();
-  }, []);
+    loadDashboardData();
+  }, [user]);
 
   const completedCount = myCourses.filter((c) => c.progress_pct >= 100).length;
 
@@ -217,26 +233,48 @@ export default function DashboardHome() {
                 <Trophy className="w-4 h-4 text-amber-400" />
                 <p className="text-xs font-bold text-[#00172e]">Top Penyelam</p>
               </div>
-              <div className="flex items-end justify-center gap-3 mb-4 h-20">
-                {TOP3.map((t) => (
-                  <div key={t.rank} className="flex flex-col items-center gap-1">
-                    <div className={`w-8 h-8 rounded-full ${t.color} flex items-center justify-center text-xs font-bold ${t.textColor}`}>{t.name[0]}</div>
-                    <div className={`w-14 ${t.h} rounded-t-lg ${t.color} flex items-center justify-center`}>
-                      <span className={`text-xs font-bold ${t.textColor}`}>{t.rank}</span>
-                    </div>
+
+              {topPenyelam.length === 0 ? (
+                <p className="text-xs text-slate-400 text-center py-4">Belum ada data penyelam.</p>
+              ) : (
+                <>
+                  <div className="flex items-end justify-center gap-3 mb-4 h-20">
+                    {[
+                      { pos: 1, color: "bg-slate-300", textColor: "text-slate-600", h: "h-10" },
+                      { pos: 0, color: "bg-amber-300", textColor: "text-amber-800", h: "h-16" },
+                      { pos: 2, color: "bg-orange-200", textColor: "text-orange-700", h: "h-8" },
+                    ].map((cfg) => {
+                      const item = topPenyelam[cfg.pos];
+                      if (!item) return null;
+                      return (
+                        <div key={cfg.pos} className="flex flex-col items-center gap-1">
+                          <div className={`w-8 h-8 rounded-full ${cfg.color} flex items-center justify-center text-xs font-bold ${cfg.textColor}`}>
+                            {(item.name || "P")[0].toUpperCase()}
+                          </div>
+                          <div className={`w-14 ${cfg.h} rounded-t-lg ${cfg.color} flex items-center justify-center`}>
+                            <span className={`text-xs font-bold ${cfg.textColor}`}>{item.rank}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
-              <div className="flex flex-col gap-1.5">
-                {LEADERBOARD.map((item) => (
-                  <div key={item.rank}
-                    className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs ${item.me ? "bg-[#f0f7ff]" : "text-slate-600"}`}>
-                    <span className="w-4 text-center font-semibold">{item.rank}.</span>
-                    <span className="flex-1 truncate">{item.name}</span>
-                    <span className="text-[10px] text-slate-400">{formatNumber(item.xp)} XP</span>
+                  <div className="flex flex-col gap-1.5">
+                    {topPenyelam.slice(3, 7).map((item) => (
+                      <div
+                        key={item.rank}
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs ${
+                          item.me ? "bg-[#f0f7ff] font-bold text-[#008be3]" : "text-slate-600"
+                        }`}
+                      >
+                        <span className="w-4 text-center font-semibold">{item.rank}.</span>
+                        <span className="flex-1 truncate">{item.name}</span>
+                        <span className="text-[10px] text-slate-400">{formatNumber(item.xp)} XP</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </>
+              )}
+
               <Link href="/pelajar/leaderboard" className="mt-3 flex items-center justify-center gap-1 text-xs text-[#008be3] font-semibold hover:underline">
                 Lihat semua <ChevronRight className="w-3 h-3" />
               </Link>
