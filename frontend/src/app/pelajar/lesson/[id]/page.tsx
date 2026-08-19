@@ -20,9 +20,9 @@ export default function PelajarLessonDetailPage() {
       if (!params.id) return;
       try {
         const response = await courseService.getLessonById(params.id);
-        const data = response.data || response;
-        setLesson(data);
-        setIsCompleted(Boolean(data.is_completed));
+        const lessonData = response.data?.lesson ?? response.lesson ?? response.data ?? response;
+        setLesson(lessonData);
+        setIsCompleted(Boolean(lessonData.is_completed));
       } catch (err: any) {
         setMessage(err?.response?.data?.message || "Gagal memuat materi lesson.");
       } finally {
