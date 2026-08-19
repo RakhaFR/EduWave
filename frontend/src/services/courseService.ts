@@ -52,23 +52,71 @@ export interface EnrollmentProgress {
   completed_at: string | null;
 }
 
+export interface ExamQuestionOption {
+  key: string;
+  value: string;
+}
+
 export interface ExamQuestion {
   id: string;
   question_text: string;
-  options: string[]; // parsed json or string[]
+  type: string;
+  options: ExamQuestionOption[];
   points: number;
+  order: number;
 }
 
 export interface Exam {
   id: string;
   course_id: string;
-  lesson_id: string;
+  lesson_id: string | null;
   title: string;
   time_limit_sec: number;
   passing_score: number;
   max_attempts: number;
   pearls_reward: number;
   questions?: ExamQuestion[];
+}
+
+export interface ExamAttempt {
+  attempt_id: string;
+  exam: {
+    id: string;
+    title: string;
+    time_limit_sec: number;
+    question_count: number;
+    passing_score: number;
+  };
+  questions: ExamQuestion[];
+  started_at: string;
+  expires_at: string;
+}
+
+export interface ExamAttemptResult {
+  attempt_id: string;
+  score: number;
+  passed: boolean;
+  passing_score: number;
+  pearls_earned: number;
+  xp_earned: number;
+  correct_count: number;
+  total_count: number;
+  time_taken_seconds: number;
+  results: {
+    question_id: string;
+    is_correct: boolean;
+    your_answer: string;
+    correct_answer: string;
+    explanation: string;
+  }[];
+}
+
+export interface ExamAttemptHistory {
+  id: string;
+  score: number | null;
+  passed: boolean | null;
+  submitted_at: string | null;
+  started_at: string;
 }
 
 export const courseService = {
@@ -112,13 +160,23 @@ export const courseService = {
     return response.data;
   },
 
-  async submitExamAttempt(examId: string, attemptId: string, answers: Record<string, any>) {
+  async startExamAttempt(examId: string) {
+    const response = await api.post(`/exams/${examId}/attempts`);
+    return response.data;
+  },
+
+  async submitExamAttempt(examId: string, attemptId: string, answers: { question_id: string; selected_key: string }[]) {
     const response = await api.post(`/exams/${examId}/attempts/${attemptId}/submit`, { answers });
     return response.data;
   },
 
-  async startExamAttempt(examId: string) {
-    const response = await api.post(`/exams/${examId}/attempts`);
+  async getExamAttempts(examId: string) {
+    const response = await api.get(`/exams/${examId}/attempts`);
     return response.data;
-  }
+  },
+
+  async getExamAttemptDetail(examId: string, attemptId: string) {
+    const response = await api.get(`/exams/${examId}/attempts/${attemptId}`);
+    return response.data;
+  },
 };
