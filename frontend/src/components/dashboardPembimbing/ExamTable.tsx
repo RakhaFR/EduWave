@@ -12,14 +12,14 @@ interface ExamTableProps {
   searchGlobal: string;
 }
 
-const ITEMS_PER_PAGE = 3;
+const ITEMS_PER_PAGE = 5;
 
 export default function ExamTable({
   exams,
   onAddClick,
   onEditClick,
   onDeleteClick,
-  searchGlobal
+  searchGlobal,
 }: ExamTableProps) {
   const [searchLocal, setSearchLocal] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,12 +37,12 @@ export default function ExamTable({
     return exams.filter((e) => {
       const matchQuery =
         e.title.toLowerCase().includes(searchLocal.toLowerCase()) ||
-        e.courseTitle.toLowerCase().includes(searchLocal.toLowerCase()) ||
+        e.course_title.toLowerCase().includes(searchLocal.toLowerCase()) ||
         e.id.toLowerCase().includes(searchLocal.toLowerCase());
 
       const matchGlobal = searchGlobal
         ? e.title.toLowerCase().includes(searchGlobal.toLowerCase()) ||
-          e.courseTitle.toLowerCase().includes(searchGlobal.toLowerCase())
+          e.course_title.toLowerCase().includes(searchGlobal.toLowerCase())
         : true;
 
       return matchQuery && matchGlobal;
@@ -55,14 +55,6 @@ export default function ExamTable({
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredExams.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredExams, currentPage]);
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -99,12 +91,11 @@ export default function ExamTable({
         <table className="w-full min-w-[700px] border-collapse text-left text-xs sm:text-sm">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-100 font-semibold text-slate-500">
-              <th className="py-4 px-5 w-20">ID</th>
               <th className="py-4 px-5">Judul Ujian</th>
               <th className="py-4 px-5">Kursus</th>
-              <th className="py-4 px-5 w-24 text-center">Durasi</th>
-              <th className="py-4 px-5 w-24 text-center">Soal</th>
-              <th className="py-4 px-5 w-28 text-center">Status</th>
+              <th className="py-4 px-5 w-28 text-center">Durasi</th>
+              <th className="py-4 px-5 w-24 text-center">Nilai Lulus</th>
+              <th className="py-4 px-5 w-24 text-center">Maks. Coba</th>
               <th className="py-4 px-5 w-32 text-center">Aksi</th>
             </tr>
           </thead>
@@ -112,25 +103,16 @@ export default function ExamTable({
             {paginatedExams.length > 0 ? (
               paginatedExams.map((e) => (
                 <tr key={e.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="py-3.5 px-5 font-mono text-slate-400">{e.id}</td>
                   <td className="py-3.5 px-5">
                     <p className="font-bold text-[#00172e]">{e.title}</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Deadline: {e.deadline}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5 font-mono">{e.pearls_reward} mutiara</p>
                   </td>
-                  <td className="py-3.5 px-5 text-slate-600 font-medium">{e.courseTitle}</td>
-                  <td className="py-3.5 px-5 text-center font-semibold text-[#00172e]">{e.duration} mnt</td>
-                  <td className="py-3.5 px-5 text-center font-semibold text-[#00172e]">{e.totalQuestions}</td>
-                  <td className="py-3.5 px-5 text-center">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        e.status === "Aktif"
-                          ? "bg-green-50 text-green-600"
-                          : "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      {e.status}
-                    </span>
+                  <td className="py-3.5 px-5 text-slate-600 font-medium">{e.course_title}</td>
+                  <td className="py-3.5 px-5 text-center font-semibold text-[#00172e]">
+                    {Math.round(e.time_limit_sec / 60)} mnt
                   </td>
+                  <td className="py-3.5 px-5 text-center font-semibold text-[#00172e]">{e.passing_score}%</td>
+                  <td className="py-3.5 px-5 text-center font-semibold text-[#00172e]">{e.max_attempts}x</td>
                   <td className="py-3.5 px-5">
                     <div className="flex items-center justify-center gap-1.5">
                       <button
@@ -153,8 +135,8 @@ export default function ExamTable({
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-slate-400 font-medium">
-                  Tidak ada data ujian yang sesuai.
+                <td colSpan={6} className="py-8 text-center text-slate-400 font-medium">
+                  Tidak ada data ujian. Buat ujian baru di atas.
                 </td>
               </tr>
             )}
@@ -169,42 +151,28 @@ export default function ExamTable({
           </p>
           <div className="flex items-center gap-1">
             <button
-              onClick={handlePrevPage}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className={`p-1.5 rounded-lg border text-slate-500 transition-all flex items-center justify-center ${
-                currentPage === 1
-                  ? "opacity-40 cursor-not-allowed border-slate-100"
-                  : "hover:bg-slate-50 border-slate-200 active:scale-95 cursor-pointer"
-              }`}
+              className={`p-1.5 rounded-lg border text-slate-500 transition-all flex items-center justify-center ${currentPage === 1 ? "opacity-40 cursor-not-allowed border-slate-100" : "hover:bg-slate-50 border-slate-200 active:scale-95 cursor-pointer"}`}
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-
             {Array.from({ length: totalPages }).map((_, i) => {
               const pageNum = i + 1;
               return (
                 <button
                   key={pageNum}
                   onClick={() => setCurrentPage(pageNum)}
-                  className={`w-8 h-8 rounded-lg border text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${
-                    currentPage === pageNum
-                      ? "bg-[#0073e6] border-[#0073e6] text-white shadow-sm shadow-blue-100"
-                      : "border-slate-200 text-slate-500 hover:bg-slate-50"
-                  }`}
+                  className={`w-8 h-8 rounded-lg border text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${currentPage === pageNum ? "bg-[#0073e6] border-[#0073e6] text-white shadow-sm shadow-blue-100" : "border-slate-200 text-slate-500 hover:bg-slate-50"}`}
                 >
                   {pageNum}
                 </button>
               );
             })}
-
             <button
-              onClick={handleNextPage}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className={`p-1.5 rounded-lg border text-slate-500 transition-all flex items-center justify-center ${
-                currentPage === totalPages
-                  ? "opacity-40 cursor-not-allowed border-slate-100"
-                  : "hover:bg-slate-50 border-slate-200 active:scale-95 cursor-pointer"
-              }`}
+              className={`p-1.5 rounded-lg border text-slate-500 transition-all flex items-center justify-center ${currentPage === totalPages ? "opacity-40 cursor-not-allowed border-slate-100" : "hover:bg-slate-50 border-slate-200 active:scale-95 cursor-pointer"}`}
             >
               <ChevronRight className="w-4 h-4" />
             </button>
