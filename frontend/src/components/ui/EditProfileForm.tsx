@@ -8,9 +8,11 @@ export default function EditProfileForm() {
   const { user, refetch } = useCurrentUser();
   const [form, setForm] = useState({
     full_name: "",
+    username: "",
     email: "",
     bio: "",
     avatar_url: "",
+    current_password: "",
   });
   const [passwordForm, setPasswordForm] = useState({
     current_password: "",
@@ -25,9 +27,11 @@ export default function EditProfileForm() {
 
   const values = {
     full_name: form.full_name || user.full_name,
+    username: form.username || user.username || "",
     email: form.email || user.email || "",
     bio: form.bio || user.bio || "",
     avatar_url: form.avatar_url || user.avatar_url || "",
+    ...(form.current_password ? { current_password: form.current_password } : {}),
   };
 
   const handleSaveProfile = async () => {
@@ -121,6 +125,20 @@ export default function EditProfileForm() {
           onChange={(e) => setForm({ ...form, avatar_url: e.target.value })}
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-cyan-400"
           placeholder="https://..."
+        />
+      </div>
+
+      {/* Current Password for Username/Email Change */}
+      <div>
+        <label className="text-[11px] font-semibold text-slate-500 block mb-1">
+          Password anda sekarang (hanya digunakan jika mengganti email atau username)
+        </label>
+        <input
+          type="password"
+          value={form.current_password}
+          onChange={(e) => setForm({ ...form, current_password: e.target.value })}
+          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-cyan-400"
+          placeholder="Password saat ini"
         />
       </div>
 

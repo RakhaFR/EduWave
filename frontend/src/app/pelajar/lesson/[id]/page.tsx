@@ -9,39 +9,14 @@ import {
   FileText, Video, List,
 } from "lucide-react";
 import { courseService, Lesson } from "@/services/courseService";
-import { marked } from "marked";
-
-marked.setOptions({ breaks: true, gfm: true } as any);
 
 function MarkdownRenderer({ content }: { content: string }) {
-  const html = useMemo(() => {
-    try {
-      return marked.parse(content) as string;
-    } catch {
-      return content;
-    }
-  }, [content]);
-
   return (
     <div
-      className="prose prose-slate max-w-none text-sm leading-relaxed
-        prose-headings:text-[#00172e] prose-headings:font-extrabold
-        prose-h1:text-2xl prose-h1:mt-6 prose-h1:mb-3
-        prose-h2:text-xl prose-h2:mt-5 prose-h2:mb-2
-        prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2
-        prose-p:text-slate-600 prose-p:leading-7 prose-p:my-2
-        prose-a:text-[#008be3] prose-a:no-underline hover:prose-a:underline
-        prose-strong:text-[#00172e] prose-strong:font-bold
-        prose-em:text-slate-500 prose-em:italic
-        prose-code:bg-slate-100 prose-code:text-[#008be3] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono
-        prose-pre:bg-[#0f1b2d] prose-pre:text-slate-100 prose-pre:rounded-2xl prose-pre:p-4 prose-pre:overflow-x-auto prose-pre:text-xs
-        prose-ul:my-3 prose-ul:pl-5 prose-li:text-slate-600 prose-li:my-1 prose-li:leading-6
-        prose-ol:my-3 prose-ol:pl-5
-        prose-blockquote:border-l-4 prose-blockquote:border-[#008be3] prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-slate-500 prose-blockquote:bg-[#f0f7ff] prose-blockquote:rounded-r-xl prose-blockquote:py-1
-        prose-hr:border-slate-200 prose-hr:my-6
-        prose-table:text-xs prose-th:bg-slate-50 prose-th:font-bold prose-td:border prose-td:border-slate-200 prose-th:border prose-th:border-slate-200"
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
+      className="prose prose-slate max-w-none text-sm leading-relaxed whitespace-pre-wrap"
+    >
+      {content}
+    </div>
   );
 }
 
