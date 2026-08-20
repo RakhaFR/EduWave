@@ -93,7 +93,7 @@ Base URL: `/api/v1`
 
 ### Test Suite Status
 
-All implemented non-deferred endpoints are covered by feature tests in `tests/Feature/` passing in automated runs: **156 tests, 724 assertions**.
+All implemented non-deferred endpoints are covered by feature tests in `tests/Feature/` passing in automated runs: **157 tests, 728 assertions**.
 
 The table below reflects confirmed implementation status and auth boundaries:
 
@@ -840,7 +840,7 @@ Get the authenticated user's active course enrollments and aggregate progress in
 ### 5. Lesson Endpoints (`/api/v1/lessons`)
 
 #### `GET /api/v1/lessons/{lesson}`
-View lesson content. Access granted if lesson `is_preview` is `true`, user is enrolled, or user is staff (`admin`/`instructor`).
+View lesson content. Access granted if lesson `is_preview` is `true`, user is enrolled, or user is staff (`admin`/`instructor`). Enforces sequential prerequisite ordering (all prior lessons must be completed).
 
 * **Headers:** `Authorization: Bearer <token>`
 * **Success Response (`200 OK`):**
@@ -862,6 +862,19 @@ View lesson content. Access granted if lesson `is_preview` is `true`, user is en
     }
   },
   "error": null,
+  "meta": null
+}
+```
+* **Error Response (`403 Forbidden` if prior lesson not completed):**
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "LESSON_LOCKED",
+    "message": "Selesaikan lesson sebelumnya terlebih dahulu sebelum mengakses lesson ini.",
+    "details": null
+  },
   "meta": null
 }
 ```

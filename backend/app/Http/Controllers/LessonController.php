@@ -40,6 +40,7 @@ class LessonController extends ApiController
     /**
      * Show a single lesson.
      * Requires enrollment unless lesson is_preview or user is admin/instructor.
+     * Also checks sequential prerequisite order for enrolled students.
      */
     public function show(Request $request, Lesson $lesson): JsonResponse
     {
@@ -56,6 +57,22 @@ class LessonController extends ApiController
                 return $this->error(
                     'LESSON_ACCESS_DENIED',
                     'Anda harus mendaftar ke kursus ini untuk mengakses pelajaran ini.',
+                    403
+                );
+            }
+
+            // Sequential lock check: ensure all prior lessons in the course are completed
+            $uncompletedPriorCount = Lesson::where('course_id', $lesson->course_id)
+                ->where('order', '<', $lesson->order)
+                ->whereDoesntHave('lessonProgress', function ($query) use ($user) {
+                    $query->where('user_id', $user->id)->whereNotNull('completed_at');
+                })
+                ->count();
+
+            if ($uncompletedPriorCount > 0) {
+                return $this->error(
+                    'LESSON_LOCKED',
+                    'Selesaikan lesson sebelumnya terlebih dahulu sebelum mengakses lesson ini.',
                     403
                 );
             }
@@ -88,6 +105,24 @@ class LessonController extends ApiController
                 'Anda harus mendaftar ke kursus ini untuk menyelesaikan pelajaran.',
                 403
             );
+        }
+
+        // Sequential check on complete endpoint as well
+        if (! $isStaff) {
+            $uncompletedPriorCount = Lesson::where('course_id', $lesson->course_id)
+                ->where('order', '<', $lesson->order)
+                ->whereDoesntHave('lessonProgress', function ($query) use ($user) {
+                    $query->where('user_id', $user->id)->whereNotNull('completed_at');
+                })
+                ->count();
+
+            if ($uncompletedPriorCount > 0) {
+                return $this->error(
+                    'LESSON_LOCKED',
+                    'Selesaikan lesson sebelumnya terlebih dahulu sebelum mengakses lesson ini.',
+                    403
+                );
+            }
         }
 
         $request->validate([

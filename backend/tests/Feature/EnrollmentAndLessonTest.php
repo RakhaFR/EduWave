@@ -147,6 +147,29 @@ class EnrollmentAndLessonTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $student->id, 'xp' => 30]);
     }
 
+    public function test_accessing_out_of_order_lesson_returns_403_lesson_locked(): void
+    {
+        $student = $this->student();
+        $course = $this->publishedCourse();
+
+        $lesson1 = Lesson::factory()->create(['course_id' => $course->id, 'order' => 1, 'is_preview' => false]);
+        $lesson2 = Lesson::factory()->create(['course_id' => $course->id, 'order' => 2, 'is_preview' => false]);
+
+        Enrollment::factory()->create(['user_id' => $student->id, 'course_id' => $course->id, 'status' => 'enrolled']);
+
+        // Attempt to access lesson 2 before completing lesson 1
+        $res = $this->actingAs($student)->getJson("/api/v1/lessons/{$lesson2->id}");
+        $res->assertStatus(403)
+            ->assertJsonPath('error.code', 'LESSON_LOCKED');
+
+        // Complete lesson 1
+        $this->actingAs($student)->postJson("/api/v1/lessons/{$lesson1->id}/complete")->assertStatus(200);
+
+        // Now lesson 2 should be unlocked
+        $res2 = $this->actingAs($student)->getJson("/api/v1/lessons/{$lesson2->id}");
+        $res2->assertStatus(200);
+    }
+
     // ──────────────────────────────────────────────────────────────────────────
     // 3. Idempotent course completion pearls
     // ──────────────────────────────────────────────────────────────────────────
