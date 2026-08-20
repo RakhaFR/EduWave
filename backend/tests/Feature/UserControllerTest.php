@@ -44,12 +44,15 @@ class UserControllerTest extends TestCase
     public function test_update_profile_bio_and_avatar_without_password()
     {
         $user = User::factory()->create([
+            'username' => 'sameusername',
             'full_name' => 'Old Name',
             'bio' => 'Old bio',
             'email' => 'test@example.com',
         ]);
 
         $response = $this->actingAs($user)->putJson('/api/v1/users/me', [
+            'username' => 'sameusername',
+            'email' => 'test@example.com',
             'full_name' => 'New Name',
             'bio' => 'New bio',
             'avatar_url' => 'https://example.com/avatar.jpg',

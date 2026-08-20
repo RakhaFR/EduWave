@@ -28,15 +28,18 @@ class UpdateProfileRequest extends BaseRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
-            $changingEmailOrUsername = $this->has('email') || $this->has('username');
+            $user = $this->user();
 
-            if ($changingEmailOrUsername) {
+            $emailChanged = $this->has('email') && $this->input('email') !== $user?->email;
+            $usernameChanged = $this->has('username') && $this->input('username') !== $user?->username;
+
+            if ($emailChanged || $usernameChanged) {
                 if (! $this->has('current_password')) {
                     $validator->errors()->add(
                         'current_password',
                         'Kata sandi saat ini diperlukan untuk mengubah email atau username.'
                     );
-                } elseif (! Hash::check($this->input('current_password'), $this->user()->password)) {
+                } elseif (! Hash::check($this->input('current_password'), $user->password)) {
                     $validator->errors()->add(
                         'current_password',
                         'Kata sandi saat ini salah.'
