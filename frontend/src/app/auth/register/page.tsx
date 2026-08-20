@@ -95,8 +95,9 @@ export default function RegisterPage() {
         email: cleanEmail,
         password: cleanPassword,
         password_confirmation: cleanConfirmPassword,
-        full_name: cleanFullName,
-      });
+         full_name: cleanFullName,
+         role: role === "pengajar" ? "instructor" : "student",
+       });
 
       if (res.success && res.data) {
         authRateLimiter.resetAttempts("register_attempt");
