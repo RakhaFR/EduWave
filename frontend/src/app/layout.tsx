@@ -20,9 +20,9 @@ export const metadata: Metadata = {
   },
   description: "Platform pembelajaran digital EduWave",
   icons: {
-    icon: "/logo-eduwave.png",
-    shortcut: "/logo-eduwave.png",
-    apple: "/logo-eduwave.png",
+    icon: "/logo-eduwave.webp",
+    shortcut: "/logo-eduwave.webp",
+    apple: "/logo-eduwave.webp",
   },
 };
 
