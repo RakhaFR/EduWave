@@ -49,6 +49,30 @@ export default function DashboardHome() {
   const xpPct = Math.min(100, Math.max(0, Math.round((xpVal % 1000) / 10)));
 
   useEffect(() => {
+    // Check cached active mascot from localStorage first
+    try {
+      const cached = localStorage.getItem("active_mascot");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        setActiveMascot(parsed);
+      }
+    } catch {
+      // ignore
+    }
+
+    const handleMascotUpdate = () => {
+      try {
+        const cached = localStorage.getItem("active_mascot");
+        if (cached) {
+          setActiveMascot(JSON.parse(cached));
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    window.addEventListener("active_mascot_updated", handleMascotUpdate);
+
     async function loadDashboardData() {
       setLoadingCourses(true);
       try {
@@ -62,8 +86,12 @@ export default function DashboardHome() {
         if (resMascots?.success && resMascots.data) {
           const mascots = resMascots.data.mascots;
           const index = mascots.findIndex((mascot) => mascot.is_active);
-          setActiveMascot(index >= 0 ? mascots[index] : null);
+          const currentActive = index >= 0 ? mascots[index] : null;
+          setActiveMascot(currentActive);
           setActiveMascotIndex(index >= 0 ? index : 0);
+          if (currentActive) {
+            localStorage.setItem("active_mascot", JSON.stringify(currentActive));
+          }
         }
 
         if (resCourses?.success && resCourses.data) {
@@ -97,6 +125,10 @@ export default function DashboardHome() {
       }
     }
     loadDashboardData();
+
+    return () => {
+      window.removeEventListener("active_mascot_updated", handleMascotUpdate);
+    };
   }, [user]);
 
   const completedCount = myCourses.filter((c) => c.progress_pct >= 100).length;

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
-import { Loader2, ShoppingCart, CheckCircle, Zap, Star, Crown, Gem } from "lucide-react";
+import { Loader2, ShoppingCart, CheckCircle, Zap, Star, Crown, Gem, ChevronLeft, ChevronRight } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { mascotService, MascotItem, InventoryMascot } from "@/services/mascotService";
 import { UserProfile } from "@/types/auth";
@@ -20,6 +20,8 @@ const QULI_VARIANTS = [
   "/biru/biru3.webp",
   "/biru/biru4.webp",
 ];
+
+const ITEMS_PER_PAGE = 8;
 
 function getMascotImage(mascot: MascotItem, index: number): string {
   if (mascot.avatar_url) {
@@ -68,8 +70,10 @@ export default function MascotCustomizeComponent() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [, setUser] = useState<UserProfile | null>(null);
   const [pearls, setPearls] = useState<number>(0);
+  const [catalogPage, setCatalogPage] = useState(1);
+  const [inventoryPage, setInventoryPage] = useState(1);
   const [accessories, setAccessories] = useState<Record<AccessoryKey, string>>({
     hat: "none",
     glasses: "none",
@@ -89,8 +93,17 @@ export default function MascotCustomizeComponent() {
         mascotService.getCatalog(),
         mascotService.getInventory(),
       ]);
-      if (catRes.success && catRes.data) setCatalog(catRes.data.mascots);
-      if (invRes.success && invRes.data) setInventory(invRes.data.mascots);
+      const invMascots = invRes.success && invRes.data ? invRes.data.mascots : [];
+      const invIds = new Set(invMascots.map((m) => m.id));
+
+      if (catRes.success && catRes.data) {
+        // Filter out mascots that are already in inventory/owned
+        const availableCatalog = catRes.data.mascots.filter(
+          (m) => !m.is_owned && !invIds.has(m.id)
+        );
+        setCatalog(availableCatalog);
+      }
+      setInventory(invMascots);
     } catch {
       showToast("Gagal memuat data maskot.", "error");
     } finally {
@@ -115,19 +128,33 @@ export default function MascotCustomizeComponent() {
       if (res.success && res.data) {
         showToast(`${mascot.name} berhasil dibeli!`);
         setPearls(res.data.pearls_remaining);
+
+        // Update localStorage
         const stored = localStorage.getItem("user");
         if (stored) {
           const u = JSON.parse(stored);
           u.pearls = res.data.pearls_remaining;
           localStorage.setItem("user", JSON.stringify(u));
         }
-        await loadData();
+
+        // Local state update: remove from catalog, add to inventory without loading re-fetch
+        setCatalog((prev) => prev.filter((item) => item.id !== mascot.id));
+        const newInventoryItem: InventoryMascot = {
+          ...mascot,
+          is_owned: true,
+          is_active: false,
+          accessories: null,
+          unlocked_at: new Date().toISOString(),
+        };
+        setInventory((prev) => [...prev, newInventoryItem]);
       } else {
         if (res.error?.code === "INSUFFICIENT_PEARLS") {
           const d = res.error.details;
           showToast(`Mutiara tidak cukup. Butuh ${d?.required}, kamu punya ${d?.available}.`, "error");
         } else if (res.error?.code === "MASCOT_ALREADY_OWNED") {
           showToast("Maskot ini sudah kamu miliki.", "error");
+          // Remove from catalog if already owned
+          setCatalog((prev) => prev.filter((item) => item.id !== mascot.id));
         } else {
           showToast(res.error?.message ?? "Gagal membeli maskot.", "error");
         }
@@ -145,7 +172,20 @@ export default function MascotCustomizeComponent() {
       const res = await mascotService.equip(mascot.id, accessories);
       if (res.success) {
         showToast(`${mascot.name} sekarang aktif dengan kustomisasi pilihanmu!`);
-        await loadData();
+        // Local update for active status
+        const updatedInventory = inventory.map((item) => ({
+          ...item,
+          is_active: item.id === mascot.id,
+          accessories: item.id === mascot.id ? accessories : item.accessories,
+        }));
+        setInventory(updatedInventory);
+
+        // Broadcast or save active mascot to localStorage for instant UI sync in dashboard banner
+        const active = updatedInventory.find((item) => item.id === mascot.id);
+        if (active) {
+          localStorage.setItem("active_mascot", JSON.stringify(active));
+          window.dispatchEvent(new Event("active_mascot_updated"));
+        }
       } else {
         showToast(res.error?.message ?? "Gagal equip maskot.", "error");
       }
@@ -158,6 +198,19 @@ export default function MascotCustomizeComponent() {
 
   const activeMascot = inventory.find((m) => m.is_active);
   const activeMascotIdx = inventory.findIndex((m) => m.is_active);
+
+  // Pagination calculations
+  const catalogTotalPages = Math.max(1, Math.ceil(catalog.length / ITEMS_PER_PAGE));
+  const currentCatalog = catalog.slice(
+    (catalogPage - 1) * ITEMS_PER_PAGE,
+    catalogPage * ITEMS_PER_PAGE
+  );
+
+  const inventoryTotalPages = Math.max(1, Math.ceil(inventory.length / ITEMS_PER_PAGE));
+  const currentInventory = inventory.slice(
+    (inventoryPage - 1) * ITEMS_PER_PAGE,
+    inventoryPage * ITEMS_PER_PAGE
+  );
 
   return (
     <DashboardLayout searchPlaceholder="Cari maskot...">
@@ -250,72 +303,95 @@ export default function MascotCustomizeComponent() {
             <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
           </div>
         ) : tab === "katalog" ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {catalog.map((mascot, idx) => {
-              const rarity = RARITY_CONFIG[mascot.rarity] ?? RARITY_CONFIG.common;
-              const RarityIcon = rarity.icon;
-              const owned = mascot.is_owned || inventory.some((m) => m.id === mascot.id);
-              const isLoading = actionLoading === mascot.id;
+          <>
+            {catalog.length === 0 ? (
+              <div className="text-center py-16 bg-white/5 rounded-3xl border border-white/10">
+                <p className="text-slate-300 font-semibold">Semua maskot katalog sudah kamu miliki!</p>
+                <p className="text-slate-400 text-sm mt-1">Cek tab Inventori untuk memasang maskotmu.</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {currentCatalog.map((mascot, idx) => {
+                    const rarity = RARITY_CONFIG[mascot.rarity] ?? RARITY_CONFIG.common;
+                    const RarityIcon = rarity.icon;
+                    const isLoading = actionLoading === mascot.id;
+                    const globalIdx = (catalogPage - 1) * ITEMS_PER_PAGE + idx;
 
-              return (
-                <div
-                  key={mascot.id}
-                  className={`bg-white rounded-2xl border-2 ${rarity.border} shadow-md ${rarity.glow} flex flex-col items-center p-4 gap-3 transition-all hover:shadow-lg`}
-                >
-                  <div className="relative w-20 h-20">
-                    <Image
-                      src={getMascotImage(mascot, idx)}
-                      alt={mascot.name}
-                      fill
-                      className="object-contain"
-                    />
-                    {owned && (
-                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center shadow">
-                        <CheckCircle className="w-4 h-4 text-white" />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="text-center w-full">
-                    <p className="font-extrabold text-[#00172e] text-xs leading-tight">{mascot.name}</p>
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold mt-1 ${rarity.color}`}>
-                      <RarityIcon className="w-3 h-3" />
-                      {rarity.label}
-                    </span>
-                    <p className="text-[10px] text-slate-400 mt-1.5 line-clamp-2 leading-relaxed">{mascot.description}</p>
-                  </div>
-
-                  <div className="w-full mt-auto">
-                    {owned ? (
-                      <div className="w-full py-2 rounded-xl bg-emerald-50 text-emerald-600 text-xs font-bold text-center border border-emerald-100">
-                        Dimiliki ✓
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => handlePurchase(mascot)}
-                        disabled={isLoading || pearls < mascot.unlock_cost}
-                        className={`w-full py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer
-                          ${pearls >= mascot.unlock_cost
-                            ? "bg-[#0073e6] hover:bg-[#0052cc] text-white shadow-md shadow-blue-200 active:scale-95"
-                            : "bg-slate-100 text-slate-400 cursor-not-allowed"
-                          } disabled:opacity-60`}
+                    return (
+                      <div
+                        key={mascot.id}
+                        className={`bg-white rounded-2xl border-2 ${rarity.border} shadow-md ${rarity.glow} flex flex-col items-center p-4 gap-3 transition-all hover:shadow-lg`}
                       >
-                        {isLoading ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <>
-                            <ShoppingCart className="w-3.5 h-3.5" />
-                            <Image src="/pearl.webp" alt="" width={14} height={14} />
-                            {mascot.unlock_cost.toLocaleString("id-ID")}
-                          </>
-                        )}
-                      </button>
-                    )}
-                  </div>
+                        <div className="relative w-20 h-20">
+                          <Image
+                            src={getMascotImage(mascot, globalIdx)}
+                            alt={mascot.name}
+                            fill
+                            className="object-contain"
+                          />
+                        </div>
+
+                        <div className="text-center w-full">
+                          <p className="font-extrabold text-[#00172e] text-xs leading-tight">{mascot.name}</p>
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold mt-1 ${rarity.color}`}>
+                            <RarityIcon className="w-3 h-3" />
+                            {rarity.label}
+                          </span>
+                          <p className="text-[10px] text-slate-400 mt-1.5 line-clamp-2 leading-relaxed">{mascot.description}</p>
+                        </div>
+
+                        <div className="w-full mt-auto">
+                          <button
+                            onClick={() => handlePurchase(mascot)}
+                            disabled={isLoading || pearls < mascot.unlock_cost}
+                            className={`w-full py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer
+                              ${pearls >= mascot.unlock_cost
+                                ? "bg-[#0073e6] hover:bg-[#0052cc] text-white shadow-md shadow-blue-200 active:scale-95"
+                                : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                              } disabled:opacity-60`}
+                          >
+                            {isLoading ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <>
+                                <ShoppingCart className="w-3.5 h-3.5" />
+                                <Image src="/pearl.webp" alt="" width={14} height={14} />
+                                {mascot.unlock_cost.toLocaleString("id-ID")}
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
+
+                {/* Catalog Pagination */}
+                {catalogTotalPages > 1 && (
+                  <div className="flex items-center justify-between mt-6 bg-white/10 backdrop-blur px-4 py-3 rounded-2xl border border-white/20">
+                    <button
+                      onClick={() => setCatalogPage((p) => Math.max(1, p - 1))}
+                      disabled={catalogPage === 1}
+                      className="flex items-center gap-1 text-xs font-bold text-white disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft className="w-4 h-4" /> Sebelumnya
+                    </button>
+                    <span className="text-xs font-semibold text-slate-200">
+                      Halaman {catalogPage} dari {catalogTotalPages}
+                    </span>
+                    <button
+                      onClick={() => setCatalogPage((p) => Math.min(catalogTotalPages, p + 1))}
+                      disabled={catalogPage === catalogTotalPages}
+                      className="flex items-center gap-1 text-xs font-bold text-white disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      Selanjutnya <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </>
         ) : (
           <div>
             {inventory.length === 0 ? (
@@ -327,65 +403,91 @@ export default function MascotCustomizeComponent() {
                 <p className="text-slate-400 text-sm mt-1">Beli maskot di tab Katalog</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {inventory.map((mascot, idx) => {
-                  const rarity = RARITY_CONFIG[mascot.rarity] ?? RARITY_CONFIG.common;
-                  const RarityIcon = rarity.icon;
-                  const isLoading = actionLoading === mascot.id;
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {currentInventory.map((mascot, idx) => {
+                    const rarity = RARITY_CONFIG[mascot.rarity] ?? RARITY_CONFIG.common;
+                    const RarityIcon = rarity.icon;
+                    const isLoading = actionLoading === mascot.id;
+                    const globalIdx = (inventoryPage - 1) * ITEMS_PER_PAGE + idx;
 
-                  return (
-                    <div
-                      key={mascot.id}
-                      className={`bg-white rounded-2xl border-2 flex flex-col items-center p-4 gap-3 transition-all hover:shadow-lg ${mascot.is_active ? "border-cyan-400 shadow-cyan-100 shadow-md ring-2 ring-cyan-300/40" : rarity.border}`}
+                    return (
+                      <div
+                        key={mascot.id}
+                        className={`bg-white rounded-2xl border-2 flex flex-col items-center p-4 gap-3 transition-all hover:shadow-lg ${mascot.is_active ? "border-cyan-400 shadow-cyan-100 shadow-md ring-2 ring-cyan-300/40" : rarity.border}`}
+                      >
+                        <div className="relative w-20 h-20">
+                          <Image
+                            src={getInventoryImage(mascot, globalIdx)}
+                            alt={mascot.name}
+                            fill
+                            className="object-contain"
+                          />
+                          {mascot.is_active && (
+                            <div className="absolute -top-1 -right-1 w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center shadow">
+                              <CheckCircle className="w-4 h-4 text-white" />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="text-center w-full">
+                          <p className="font-extrabold text-[#00172e] text-xs leading-tight">{mascot.name}</p>
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold mt-1 ${rarity.color}`}>
+                            <RarityIcon className="w-3 h-3" />
+                            {rarity.label}
+                          </span>
+                          {mascot.is_active && (
+                            <p className="text-[10px] text-cyan-600 font-bold mt-1">Sedang Dipakai</p>
+                          )}
+                        </div>
+
+                        <div className="w-full mt-auto">
+                          {mascot.is_active ? (
+                            <button
+                              onClick={() => handleEquip(mascot)}
+                              disabled={isLoading}
+                              className="w-full py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-600 text-white shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60"
+                            >
+                              {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Simpan kustomisasi"}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleEquip(mascot)}
+                              disabled={isLoading}
+                              className="w-full py-2 rounded-xl text-xs font-bold bg-[#0073e6] hover:bg-[#0052cc] text-white shadow-md shadow-blue-200 transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60"
+                            >
+                              {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Pasang"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Inventory Pagination */}
+                {inventoryTotalPages > 1 && (
+                  <div className="flex items-center justify-between mt-6 bg-white/10 backdrop-blur px-4 py-3 rounded-2xl border border-white/20">
+                    <button
+                      onClick={() => setInventoryPage((p) => Math.max(1, p - 1))}
+                      disabled={inventoryPage === 1}
+                      className="flex items-center gap-1 text-xs font-bold text-white disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
                     >
-                      <div className="relative w-20 h-20">
-                        <Image
-                          src={getInventoryImage(mascot, idx)}
-                          alt={mascot.name}
-                          fill
-                          className="object-contain"
-                        />
-                        {mascot.is_active && (
-                          <div className="absolute -top-1 -right-1 w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center shadow">
-                            <CheckCircle className="w-4 h-4 text-white" />
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="text-center w-full">
-                        <p className="font-extrabold text-[#00172e] text-xs leading-tight">{mascot.name}</p>
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold mt-1 ${rarity.color}`}>
-                          <RarityIcon className="w-3 h-3" />
-                          {rarity.label}
-                        </span>
-                        {mascot.is_active && (
-                          <p className="text-[10px] text-cyan-600 font-bold mt-1">Sedang Dipakai</p>
-                        )}
-                      </div>
-
-                      <div className="w-full mt-auto">
-                        {mascot.is_active ? (
-                          <button
-                            onClick={() => handleEquip(mascot)}
-                            disabled={isLoading}
-                            className="w-full py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-600 text-white shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60"
-                          >
-                            {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Simpan kustomisasi"}
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleEquip(mascot)}
-                            disabled={isLoading}
-                            className="w-full py-2 rounded-xl text-xs font-bold bg-[#0073e6] hover:bg-[#0052cc] text-white shadow-md shadow-blue-200 transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60"
-                          >
-                            {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Pasang"}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                      <ChevronLeft className="w-4 h-4" /> Sebelumnya
+                    </button>
+                    <span className="text-xs font-semibold text-slate-200">
+                      Halaman {inventoryPage} dari {inventoryTotalPages}
+                    </span>
+                    <button
+                      onClick={() => setInventoryPage((p) => Math.min(inventoryTotalPages, p + 1))}
+                      disabled={inventoryPage === inventoryTotalPages}
+                      className="flex items-center gap-1 text-xs font-bold text-white disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      Selanjutnya <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
