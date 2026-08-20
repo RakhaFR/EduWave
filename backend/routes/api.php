@@ -9,6 +9,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\ExamController;
+use App\Http\Controllers\ExamQuestionController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\MascotController;
@@ -138,6 +139,13 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::post('exams', [ExamController::class, 'store'])->name('exams.store');
             Route::put('exams/{exam}', [ExamController::class, 'update'])->name('exams.update');
             Route::delete('exams/{exam}', [ExamController::class, 'destroy'])->name('exams.destroy');
+
+            // Exam question management
+            Route::get('exams/{exam}/questions', [ExamQuestionController::class, 'index'])->name('exams.questions.index');
+            Route::post('exams/{exam}/questions', [ExamQuestionController::class, 'store'])->name('exams.questions.store');
+            Route::get('exams/{exam}/questions/{question}', [ExamQuestionController::class, 'show'])->name('exams.questions.show');
+            Route::put('exams/{exam}/questions/{question}', [ExamQuestionController::class, 'update'])->name('exams.questions.update');
+            Route::delete('exams/{exam}/questions/{question}', [ExamQuestionController::class, 'destroy'])->name('exams.questions.destroy');
         });
 
         // Admin only — user management, course moderation, analytics

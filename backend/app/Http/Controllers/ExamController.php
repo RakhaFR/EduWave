@@ -9,6 +9,7 @@ use App\Models\Exam;
 use App\Services\ExamService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 
 class ExamController extends ApiController
 {
@@ -80,7 +81,17 @@ class ExamController extends ApiController
             return $this->error('EXAM_FORBIDDEN', 'Anda tidak memiliki izin untuk menambah ujian ke kursus ini.', 403);
         }
 
-        $exam = Exam::create($validated);
+        $exam = Exam::create(Arr::except($validated, ['questions']));
+
+        if (! empty($validated['questions'])) {
+            foreach ($validated['questions'] as $index => $qData) {
+                $exam->questions()->create(array_merge([
+                    'order' => $index + 1,
+                    'type' => 'multiple_choice',
+                    'points' => 10,
+                ], $qData));
+            }
+        }
 
         return $this->success([
             'id' => $exam->id,
@@ -111,7 +122,21 @@ class ExamController extends ApiController
             }
         }
 
-        $exam->update($validated);
+        $exam->update(Arr::except($validated, ['questions']));
+
+        if (isset($validated['questions'])) {
+            foreach ($validated['questions'] as $index => $qData) {
+                if (! empty($qData['id'])) {
+                    $exam->questions()->where('id', $qData['id'])->update(Arr::except($qData, ['id']));
+                } else {
+                    $exam->questions()->create(array_merge([
+                        'order' => $index + 1,
+                        'type' => 'multiple_choice',
+                        'points' => 10,
+                    ], $qData));
+                }
+            }
+        }
 
         return $this->success([
             'id' => $exam->id,

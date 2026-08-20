@@ -93,7 +93,7 @@ Base URL: `/api/v1`
 
 ### Test Suite Status
 
-All implemented non-deferred endpoints are covered by feature tests in `tests/Feature/` passing in automated runs: **144 tests, 667 assertions**.
+All implemented non-deferred endpoints are covered by feature tests in `tests/Feature/` passing in automated runs: **152 tests, 711 assertions**.
 
 The table below reflects confirmed implementation status and auth boundaries:
 
@@ -157,6 +157,11 @@ The table below reflects confirmed implementation status and auth boundaries:
 | **Instructor** | `GET` | `/api/v1/instructors` | Public | List active instructors directory with course & student counts | Yes |
 | **Instructor** | `GET` | `/api/v1/instructor/courses` | Instructor | List all courses owned by authenticated instructor | Yes |
 | **Exam** | `GET` | `/api/v1/exams` | Admin/Instructor | List all exams (filtered by ownership for instructors) | Yes |
+| **Exam Question** | `GET` | `/api/v1/exams/{exam}/questions` | Admin/Instructor | List questions for an exam with full answer keys | Yes |
+| **Exam Question** | `POST` | `/api/v1/exams/{exam}/questions` | Admin/Instructor | Add a new question to an exam | Yes |
+| **Exam Question** | `GET` | `/api/v1/exams/{exam}/questions/{question}` | Admin/Instructor | Get single question details with answer key | Yes |
+| **Exam Question** | `PUT` | `/api/v1/exams/{exam}/questions/{question}` | Admin/Instructor | Update an individual exam question | Yes |
+| **Exam Question** | `DELETE` | `/api/v1/exams/{exam}/questions/{question}` | Admin/Instructor | Delete an individual exam question | Yes |
 | **Admin** | `GET` | `/api/v1/admin/users` | Admin | List all users with filters and pagination | Yes |
 | **Admin** | `PUT` | `/api/v1/admin/users/{user}/role` | Admin | Update user role | Yes |
 | **Admin** | `DELETE` | `/api/v1/admin/users/{user}` | Admin | Soft-delete a user (except admins) | Yes |
@@ -1241,6 +1246,64 @@ List exams for management screens.
 * **Headers:** `Authorization: Bearer <token>`
 * **Authorization:** Admin or instructor. Instructors receive only exams belonging to their own courses.
 * **Success Response (`200 OK`):** Returns the standard response envelope with `data` as an array. Each exam includes `id`, `title`, `course_id`, `course_title`, `lesson_id`, `time_limit_sec`, `passing_score`, `max_attempts`, and `pearls_reward`.
+
+---
+
+#### `GET /api/v1/exams/{exam}/questions`
+List questions for a specific exam (Management view).
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Authorization:** Admin or course owner instructor.
+* **Success Response (`200 OK`):** Returns array of question objects including `correct_answer` and `explanation`.
+
+---
+
+#### `POST /api/v1/exams/{exam}/questions`
+Add a new question to an exam.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Authorization:** Admin or course owner instructor.
+* **Request Body:**
+```json
+{
+  "question_text": "Apa fungsi middleware di Laravel?",
+  "type": "multiple_choice",
+  "options": ["Filtering HTTP request", "Query database", "Styling UI"],
+  "correct_answer": "Filtering HTTP request",
+  "explanation": "Middleware menyaring HTTP request yang masuk ke aplikasi.",
+  "points": 10,
+  "order": 1
+}
+```
+* **Success Response (`201 Created`):** Returns created question object.
+
+---
+
+#### `GET /api/v1/exams/{exam}/questions/{question}`
+Get single question details with answer key.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Authorization:** Admin or course owner instructor.
+* **Success Response (`200 OK`):** Returns question object with `correct_answer` and `explanation`.
+
+---
+
+#### `PUT /api/v1/exams/{exam}/questions/{question}`
+Update an individual exam question.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Authorization:** Admin or course owner instructor.
+* **Request Body:** Partial fields supported (`question_text`, `type`, `options`, `correct_answer`, `explanation`, `points`, `order`).
+* **Success Response (`200 OK`):** Returns updated question object.
+
+---
+
+#### `DELETE /api/v1/exams/{exam}/questions/{question}`
+Delete an individual exam question.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Authorization:** Admin or course owner instructor.
+* **Success Response (`200 OK`):** Returns empty data object.
 
 ---
 
