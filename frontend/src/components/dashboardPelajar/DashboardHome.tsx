@@ -28,7 +28,7 @@ export default function DashboardHome() {
 
   const [myCourses, setMyCourses] = useState<(Course & { progress_pct: number })[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
-  const [topPenyelam, setTopPenyelam] = useState<{ rank: number; name: string; xp: number; me: boolean }[]>([]);
+  const [topPenyelam, setTopPenyelam] = useState<{ rank: number; name: string; xp: number; me: boolean; avatarUrl?: string | null }[]>([]);
   const [activeMascot, setActiveMascot] = useState<InventoryMascot | null>(null);
   const [activeMascotIndex, setActiveMascotIndex] = useState(0);
 
@@ -98,12 +98,16 @@ export default function DashboardHome() {
 
         const rawLb = resLb?.data?.rankings || resLb?.data || [];
         if (Array.isArray(rawLb) && rawLb.length > 0) {
-          const formattedLb = rawLb.map((item: any, idx: number) => ({
-            rank: item.rank || idx + 1,
-            name: item.user?.full_name || item.user?.username || item.full_name || item.name || "Penyelam",
-            xp: item.xp !== undefined ? item.xp : item.total_xp || 0,
-            me: item.is_me || (user?.id && item.user?.id === user.id) || false,
-          }));
+          const formattedLb = rawLb.map((item: any, idx: number) => {
+            const u = item.user || item;
+            return {
+              rank: item.rank || idx + 1,
+              name: u.full_name || u.username || item.full_name || item.name || "Penyelam",
+              xp: item.xp !== undefined ? item.xp : item.total_xp || 0,
+              me: item.is_me || (user?.id && u.id === user.id) || false,
+              avatarUrl: u.avatar_url || item.avatar_url || u.profile_photo_path || null,
+            };
+          });
           setTopPenyelam(formattedLb);
         }
       } catch (err) {
@@ -290,10 +294,14 @@ export default function DashboardHome() {
                       if (!item) return null;
                       return (
                         <div key={cfg.pos} className="flex flex-col items-center gap-1">
-                          <div className={`w-8 h-8 rounded-full ${cfg.color} flex items-center justify-center text-xs font-bold ${cfg.textColor}`}>
-                            {(item.name || "P")[0].toUpperCase()}
+                          <div className={`w-8 h-8 rounded-full overflow-hidden border border-white shadow-sm flex items-center justify-center shrink-0 ${cfg.color}`}>
+                            {item.avatarUrl ? (
+                              <img src={item.avatarUrl} alt={item.name} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLElement).style.display = "none"; }} />
+                            ) : (
+                              <span className={`text-xs font-bold ${cfg.textColor}`}>{(item.name || "P")[0].toUpperCase()}</span>
+                            )}
                           </div>
-                          <div className={`w-14 ${cfg.h} rounded-t-lg ${cfg.color} flex items-center justify-center`}>
+                          <div className={`w-14 ${cfg.h} rounded-t-lg ${cfg.color} flex items-center justify-center shadow-inner`}>
                             <span className={`text-xs font-bold ${cfg.textColor}`}>{item.rank}</span>
                           </div>
                         </div>
@@ -309,6 +317,13 @@ export default function DashboardHome() {
                         }`}
                       >
                         <span className="w-4 text-center font-semibold">{item.rank}.</span>
+                        <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center shrink-0">
+                          {item.avatarUrl ? (
+                            <img src={item.avatarUrl} alt={item.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-[9px] font-bold text-slate-500">{(item.name || "P")[0].toUpperCase()}</span>
+                          )}
+                        </div>
                         <span className="flex-1 truncate">{item.name}</span>
                         <span className="text-[10px] text-slate-400">{formatNumber(item.xp)} XP</span>
                       </div>

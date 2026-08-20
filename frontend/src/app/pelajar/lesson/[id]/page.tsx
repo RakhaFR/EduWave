@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -38,6 +38,40 @@ export default function PelajarLessonDetailPage() {
   const [courseTitle, setCourseTitle] = useState("");
   const [courseId, setCourseId] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Tracking: Minimal 5 menit (300 detik) & Scroll hingga dasar konten
+  const REQUIRED_TIME_SEC = 300; // 5 Menit
+  const [secondsSpent, setSecondsSpent] = useState(0);
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const contentAreaRef = useRef<HTMLDivElement>(null);
+
+  // Timer counter
+  useEffect(() => {
+    if (isCompleted) return;
+    const interval = setInterval(() => {
+      setSecondsSpent((prev) => {
+        if (prev >= REQUIRED_TIME_SEC) {
+          clearInterval(interval);
+          return REQUIRED_TIME_SEC;
+        }
+        return prev + 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isCompleted]);
+
+  // Scroll listener
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (isCompleted || hasScrolledToBottom) return;
+    const target = e.currentTarget;
+    const isBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
+    if (isBottom) {
+      setHasScrolledToBottom(true);
+    }
+  };
+
+  const isEligibleToComplete = isCompleted || (secondsSpent >= REQUIRED_TIME_SEC && (hasScrolledToBottom || !lesson?.content));
 
   useEffect(() => {
     async function loadLesson() {
@@ -297,7 +331,11 @@ export default function PelajarLessonDetailPage() {
         </aside>
 
         {/* ── Main Content ── */}
-        <main className="flex-1 min-w-0 overflow-y-auto">
+        <main
+          ref={contentAreaRef}
+          onScroll={handleScroll}
+          className="flex-1 min-w-0 overflow-y-auto"
+        >
           <div className="max-w-3xl mx-auto px-4 py-6 md:px-8">
 
             {/* Video */}
@@ -373,31 +411,72 @@ export default function PelajarLessonDetailPage() {
             )}
 
             {/* Complete bar */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 md:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
-              <div className="flex items-center gap-3">
-                {isCompleted
-                  ? <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
-                  : <PlayCircle className="w-6 h-6 text-[#008be3] shrink-0" />
-                }
-                <div>
-                  <p className="font-bold text-sm">
-                    {isCompleted ? "Lesson Telah Selesai!" : "Sudah Selesai Membaca & Memahami?"}
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    {isCompleted
-                      ? `Kamu telah memperoleh +${lesson.xp_reward} XP dari lesson ini.`
-                      : `Klik tombol untuk mengklaim +${lesson.xp_reward} XP.`
-                    }
-                  </p>
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 md:p-5 flex flex-col gap-4 mb-6">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  {isCompleted
+                    ? <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
+                    : <PlayCircle className="w-6 h-6 text-[#008be3] shrink-0" />
+                  }
+                  <div>
+                    <p className="font-bold text-sm">
+                      {isCompleted ? "Lesson Telah Selesai!" : "Sudah Selesai Membaca & Memahami?"}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {isCompleted
+                        ? `Kamu telah memperoleh +${lesson.xp_reward} XP dari lesson ini.`
+                        : `Selesaikan syarat membaca untuk mengklaim +${lesson.xp_reward} XP.`
+                      }
+                    </p>
+                  </div>
                 </div>
+
+                <button
+                  disabled={!isEligibleToComplete || completing}
+                  onClick={handleComplete}
+                  className={`w-full sm:w-auto rounded-full px-6 py-2.5 text-xs font-bold transition-all shadow-md
+                    ${isCompleted
+                      ? "bg-emerald-500 text-white cursor-default"
+                      : isEligibleToComplete
+                      ? "bg-[#008be3] text-white hover:bg-[#0078c8] shadow-[#008be3]/20 cursor-pointer active:scale-95"
+                      : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                    }
+                  `}
+                >
+                  {isCompleted ? "Selesai ✓" : completing ? "Memproses..." : isEligibleToComplete ? "Tandai Selesai" : "Belum Memenuhi Syarat"}
+                </button>
               </div>
-              <button
-                disabled={isCompleted || completing}
-                onClick={handleComplete}
-                className="w-full sm:w-auto rounded-full bg-[#008be3] px-6 py-2.5 text-xs font-bold text-white hover:bg-[#0078c8] disabled:bg-slate-200 disabled:text-slate-400 transition-colors shadow-md shadow-[#008be3]/20"
-              >
-                {isCompleted ? "Selesai ✓" : completing ? "Memproses..." : "Tandai Selesai"}
-              </button>
+
+              {/* Syarat Membaca Tracker jika belum selesai */}
+              {!isCompleted && (
+                <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs bg-slate-50 p-3 rounded-xl">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    {/* Timer tracker */}
+                    <div className="flex items-center gap-1.5 font-semibold">
+                      <Clock className={`w-3.5 h-3.5 ${secondsSpent >= REQUIRED_TIME_SEC ? "text-emerald-500" : "text-amber-500"}`} />
+                      <span className={secondsSpent >= REQUIRED_TIME_SEC ? "text-emerald-600 font-bold" : "text-slate-600"}>
+                        Waktu Baca: {Math.floor(secondsSpent / 60).toString().padStart(2, '0')}:{(secondsSpent % 60).toString().padStart(2, '0')} / 05:00
+                      </span>
+                    </div>
+
+                    {/* Scroll tracker */}
+                    {lesson.content && (
+                      <div className="flex items-center gap-1.5 font-semibold">
+                        <span className={`w-2 h-2 rounded-full ${hasScrolledToBottom ? "bg-emerald-500" : "bg-amber-400 animate-pulse"}`} />
+                        <span className={hasScrolledToBottom ? "text-emerald-600 font-bold" : "text-slate-600"}>
+                          {hasScrolledToBottom ? "Sudah scroll ke akhir materi ✓" : "Scroll ke akhir materi"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {!isEligibleToComplete && (
+                    <span className="text-[10px] text-amber-600 font-medium bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+                      Baca minimal 5 menit & scroll sampai bawah untuk membuka tombol
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Prev / Next navigation */}

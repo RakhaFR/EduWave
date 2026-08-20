@@ -151,43 +151,64 @@ export default function CourseDetailPage() {
           </div>
         </section>
         <section className="rounded-3xl bg-white p-5 shadow-sm md:p-7"><div className="mb-5 flex items-center justify-between"><div><h2 className="font-extrabold">Daftar Lesson</h2><p className="text-xs text-slate-400">{completedLessons} dari {lessons.length} lesson selesai</p></div><span className="text-sm font-extrabold text-[#008be3]">{Math.round(progress)}%</span></div><div className="mb-6 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#008be3] transition-all" style={{ width: `${Math.min(100, progress)}%` }} /></div>              <div className="divide-y divide-slate-100">
-                {lessons.map((lesson) => (
-                  <div key={lesson.id} className="flex items-center gap-3 py-4">
-                    <div className="shrink-0">
-                      {lesson.is_completed ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                      ) : (
-                        <PlayCircle className="w-5 h-5 text-[#008be3]" />
-                      )}
+                {lessons.map((lesson, idx) => {
+                  const isLocked = idx > 0 && !lessons[idx - 1].is_completed && !lesson.is_completed;
+
+                  return (
+                    <div key={lesson.id} className="flex items-center gap-3 py-4">
+                      <div className="shrink-0">
+                        {lesson.is_completed ? (
+                          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                        ) : isLocked ? (
+                          <div className="w-5 h-5 flex items-center justify-center text-slate-400 text-xs">🔒</div>
+                        ) : (
+                          <PlayCircle className="w-5 h-5 text-[#008be3]" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        {isLocked ? (
+                          <span className="font-bold text-sm text-slate-400 cursor-not-allowed select-none">
+                            {lesson.order}. {lesson.title}
+                          </span>
+                        ) : (
+                          <Link href={`/pelajar/lesson/${lesson.id}`} className="font-bold text-sm text-[#00172e] hover:text-[#008be3] hover:underline">
+                            {lesson.order}. {lesson.title}
+                          </Link>
+                        )}
+                        <p className="text-xs text-slate-400">
+                          {lesson.type} · {lesson.duration_minutes} menit · +{lesson.xp_reward} XP
+                          {isLocked && " · Terkunci"}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {lesson.exam_id && !isLocked && (
+                          <Link
+                            href={`/pelajar/exam/${lesson.exam_id}`}
+                            className="flex items-center gap-1 rounded-full bg-amber-500/10 px-3 py-1.5 text-[11px] font-bold text-amber-600 hover:bg-amber-500/20"
+                          >
+                            <Trophy className="w-3 h-3" />
+                            Ujian
+                          </Link>
+                        )}
+                        {isLocked ? (
+                          <button
+                            disabled
+                            className="rounded-full bg-slate-100 text-slate-400 px-4 py-1.5 text-[11px] font-bold cursor-not-allowed border border-slate-200"
+                          >
+                            Terkunci 🔒
+                          </button>
+                        ) : (
+                          <Link
+                            href={`/pelajar/lesson/${lesson.id}`}
+                            className="rounded-full bg-[#008be3] hover:bg-[#0078c8] px-4 py-1.5 text-[11px] font-bold text-white shadow-sm transition-all active:scale-95"
+                          >
+                            Enter Lesson
+                          </Link>
+                        )}
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <Link href={`/pelajar/lesson/${lesson.id}`} className="font-bold text-sm hover:text-[#008be3] hover:underline">
-                        {lesson.order}. {lesson.title}
-                      </Link>
-                      <p className="text-xs text-slate-400">
-                        {lesson.type} · {lesson.duration_minutes} menit · +{lesson.xp_reward} XP
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {lesson.exam_id && (
-                        <Link
-                          href={`/pelajar/exam/${lesson.exam_id}`}
-                          className="flex items-center gap-1 rounded-full bg-amber-500/10 px-3 py-1.5 text-[11px] font-bold text-amber-600 hover:bg-amber-500/20"
-                        >
-                          <Trophy className="w-3 h-3" />
-                          Ujian
-                        </Link>
-                      )}
-                      <button
-                        disabled={Boolean(lesson.is_completed) || completing === lesson.id}
-                        onClick={() => completeLesson(lesson)}
-                        className="rounded-full bg-[#008be3] px-3 py-1.5 text-[11px] font-bold text-white disabled:bg-slate-200 disabled:text-slate-400"
-                      >
-                        {lesson.is_completed ? "Selesai" : completing === lesson.id ? "Memproses..." : "Selesaikan"}
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>{message && <p className="mt-4 rounded-xl bg-red-50 p-3 text-xs text-red-500">{message}</p>}</section>
       </main>
     </div>

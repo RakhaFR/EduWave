@@ -86,8 +86,8 @@ export default function ProfileComponent() {
                   <p className="text-base font-extrabold text-amber-800">{user?.xp ?? 0}</p>
                 </div>
 
-                <div className="bg-teal-50/80 p-3 rounded-2xl text-center border border-teal-100">
-                  <Shield className="w-5 h-5 mx-auto text-teal-600 mb-1" />
+                <div className="bg-teal-50/80 p-3 rounded-2xl text-center border border-teal-100 flex flex-col items-center justify-center">
+                  <img src="/pearl.webp" alt="Mutiara" className="w-5 h-5 mb-1 object-contain" />
                   <p className="text-[10px] text-slate-500 font-medium">Mutiara</p>
                   <p className="text-base font-extrabold text-teal-900">{user?.pearls ?? 0}</p>
                 </div>
