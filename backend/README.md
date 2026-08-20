@@ -1245,16 +1245,56 @@ List exams for management screens.
 
 * **Headers:** `Authorization: Bearer <token>`
 * **Authorization:** Admin or instructor. Instructors receive only exams belonging to their own courses.
-* **Success Response (`200 OK`):** Returns the standard response envelope with `data` as an array. Each exam includes `id`, `title`, `course_id`, `course_title`, `lesson_id`, `time_limit_sec`, `passing_score`, `max_attempts`, and `pearls_reward`.
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "x1f2e3d4-5678-90ab-cdef-1234567890ab",
+      "title": "Ujian Akhir: Oceanografi Dasar",
+      "course_id": "c1f2e3d4-5678-90ab-cdef-1234567890ab",
+      "course_title": "Dasar Oceanografi",
+      "lesson_id": null,
+      "time_limit_sec": 3600,
+      "passing_score": 70,
+      "max_attempts": 3,
+      "pearls_reward": 30
+    }
+  ],
+  "error": null,
+  "meta": null
+}
+```
 
 ---
 
 #### `GET /api/v1/exams/{exam}/questions`
-List questions for a specific exam (Management view).
+List questions for a specific exam with full answer keys (Management view).
 
 * **Headers:** `Authorization: Bearer <token>`
 * **Authorization:** Admin or course owner instructor.
-* **Success Response (`200 OK`):** Returns array of question objects including `correct_answer` and `explanation`.
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "q1f2e3d4-5678-90ab-cdef-1234567890ab",
+      "exam_id": "x1f2e3d4-5678-90ab-cdef-1234567890ab",
+      "question_text": "Apa zona laut yang paling dalam?",
+      "type": "multiple_choice",
+      "options": ["Pelagis", "Hadapelagis", "Mesopelagis"],
+      "correct_answer": "Hadapelagis",
+      "explanation": "Zona Hadapelagis (Palung Laut) adalah zona terdalam.",
+      "points": 10,
+      "order": 1
+    }
+  ],
+  "error": null,
+  "meta": null
+}
+```
 
 ---
 
@@ -1275,7 +1315,25 @@ Add a new question to an exam.
   "order": 1
 }
 ```
-* **Success Response (`201 Created`):** Returns created question object.
+* **Success Response (`201 Created`):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "q2f3e4d5-6789-01ab-cdef-2345678901bc",
+    "exam_id": "x1f2e3d4-5678-90ab-cdef-1234567890ab",
+    "question_text": "Apa fungsi middleware di Laravel?",
+    "type": "multiple_choice",
+    "options": ["Filtering HTTP request", "Query database", "Styling UI"],
+    "correct_answer": "Filtering HTTP request",
+    "explanation": "Middleware menyaring HTTP request yang masuk ke aplikasi.",
+    "points": 10,
+    "order": 1
+  },
+  "error": null,
+  "meta": null
+}
+```
 
 ---
 
@@ -1284,7 +1342,25 @@ Get single question details with answer key.
 
 * **Headers:** `Authorization: Bearer <token>`
 * **Authorization:** Admin or course owner instructor.
-* **Success Response (`200 OK`):** Returns question object with `correct_answer` and `explanation`.
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "q1f2e3d4-5678-90ab-cdef-1234567890ab",
+    "exam_id": "x1f2e3d4-5678-90ab-cdef-1234567890ab",
+    "question_text": "Apa zona laut yang paling dalam?",
+    "type": "multiple_choice",
+    "options": ["Pelagis", "Hadapelagis", "Mesopelagis"],
+    "correct_answer": "Hadapelagis",
+    "explanation": "Zona Hadapelagis (Palung Laut) adalah zona terdalam.",
+    "points": 10,
+    "order": 1
+  },
+  "error": null,
+  "meta": null
+}
+```
 
 ---
 
@@ -1293,8 +1369,33 @@ Update an individual exam question.
 
 * **Headers:** `Authorization: Bearer <token>`
 * **Authorization:** Admin or course owner instructor.
-* **Request Body:** Partial fields supported (`question_text`, `type`, `options`, `correct_answer`, `explanation`, `points`, `order`).
-* **Success Response (`200 OK`):** Returns updated question object.
+* **Request Body:**
+```json
+{
+  "question_text": "Apa zona laut terdalam di samudra?",
+  "correct_answer": "Hadapelagis",
+  "points": 15
+}
+```
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "q1f2e3d4-5678-90ab-cdef-1234567890ab",
+    "exam_id": "x1f2e3d4-5678-90ab-cdef-1234567890ab",
+    "question_text": "Apa zona laut terdalam di samudra?",
+    "type": "multiple_choice",
+    "options": ["Pelagis", "Hadapelagis", "Mesopelagis"],
+    "correct_answer": "Hadapelagis",
+    "explanation": "Zona Hadapelagis (Palung Laut) adalah zona terdalam.",
+    "points": 15,
+    "order": 1
+  },
+  "error": null,
+  "meta": null
+}
+```
 
 ---
 
@@ -1303,7 +1404,15 @@ Delete an individual exam question.
 
 * **Headers:** `Authorization: Bearer <token>`
 * **Authorization:** Admin or course owner instructor.
-* **Success Response (`200 OK`):** Returns empty data object.
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": [],
+  "error": null,
+  "meta": null
+}
+```
 
 ---
 
