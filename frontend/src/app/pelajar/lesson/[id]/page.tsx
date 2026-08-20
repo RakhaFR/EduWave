@@ -45,29 +45,63 @@ export default function PelajarLessonDetailPage() {
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const contentAreaRef = useRef<HTMLDivElement>(null);
 
-  // Timer counter
+  // Load saved time & scroll status on lesson change
   useEffect(() => {
-    if (isCompleted) return;
+    if (!params.id) return;
+    try {
+      const savedTime = localStorage.getItem(`lesson_time_${params.id}`);
+      if (savedTime) {
+        setSecondsSpent(Math.min(REQUIRED_TIME_SEC, parseInt(savedTime, 10) || 0));
+      } else {
+        setSecondsSpent(0);
+      }
+
+      const savedScroll = localStorage.getItem(`lesson_scrolled_${params.id}`);
+      if (savedScroll === "true") {
+        setHasScrolledToBottom(true);
+      } else {
+        setHasScrolledToBottom(false);
+      }
+    } catch {
+      // ignore
+    }
+  }, [params.id]);
+
+  // Timer counter + persist to localStorage
+  useEffect(() => {
+    if (isCompleted || !params.id) return;
     const interval = setInterval(() => {
       setSecondsSpent((prev) => {
-        if (prev >= REQUIRED_TIME_SEC) {
-          clearInterval(interval);
-          return REQUIRED_TIME_SEC;
+        const nextVal = prev >= REQUIRED_TIME_SEC ? REQUIRED_TIME_SEC : prev + 1;
+        try {
+          localStorage.setItem(`lesson_time_${params.id}`, nextVal.toString());
+        } catch {
+          // ignore
         }
-        return prev + 1;
+        if (nextVal >= REQUIRED_TIME_SEC) {
+          clearInterval(interval);
+        }
+        return nextVal;
       });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isCompleted]);
+  }, [isCompleted, params.id]);
 
-  // Scroll listener
+  // Scroll listener + persist to localStorage
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (isCompleted || hasScrolledToBottom) return;
     const target = e.currentTarget;
     const isBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
     if (isBottom) {
       setHasScrolledToBottom(true);
+      if (params.id) {
+        try {
+          localStorage.setItem(`lesson_scrolled_${params.id}`, "true");
+        } catch {
+          // ignore
+        }
+      }
     }
   };
 
