@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import {
   Trophy,
@@ -53,8 +53,33 @@ const FEATURES = [
 
 function CountUp({ target, suffix = "" }: { target: number; suffix?: string }) {
   const [count, setCount] = useState(0);
+  const [hasStarted, setHasStarted] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !hasStarted) {
+          setHasStarted(true);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current);
+      }
+    };
+  }, [hasStarted]);
+
+  useEffect(() => {
+    if (!hasStarted) return;
+
     let current = 0;
     const steps = Math.max(10, target * 3);
     const intervalTime = 1200 / steps;
@@ -70,9 +95,9 @@ function CountUp({ target, suffix = "" }: { target: number; suffix?: string }) {
     }, intervalTime);
 
     return () => clearInterval(timer);
-  }, [target]);
+  }, [target, hasStarted]);
 
-  return <span>{count.toLocaleString()}{suffix}</span>;
+  return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
 }
 
 export default function AboutSection() {
@@ -152,7 +177,7 @@ export default function AboutSection() {
               </div>
 
               {/* HP mockup (mobileAbout.webp) - floating di tengah dengan shadow bulat putih */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-[45%] sm:w-[40%]">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-[60%] sm:w-[55%]">
                 {/* Shadow bulat putih di belakang */}
                 <div className="absolute inset-0 -z-10 scale-110 blur-3xl bg-white/80 rounded-full" />
                 <div className="relative aspect-[9/19]">
@@ -160,7 +185,7 @@ export default function AboutSection() {
                     src="/mobileAbout.webp"
                     alt="EduWave Mobile App"
                     fill
-                    sizes="(max-width: 768px) 45vw, 20vw"
+                    sizes="(max-width: 768px) 60vw, 30vw"
                     className="object-contain drop-shadow-2xl"
                   />
                 </div>

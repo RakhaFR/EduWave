@@ -17,6 +17,22 @@ export interface InstructorDirectoryEntry {
   categories: string[];
 }
 
+export interface PublicCourse {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  difficulty: string;
+  duration_minutes: number;
+  enrolled_count: number;
+  thumbnail_url: string | null;
+  instructor: {
+    id: string;
+    full_name: string;
+  } | null;
+  status: string;
+}
+
 export const publicService = {
   async getStats() {
     const response = await api.get("/public/stats");
@@ -26,5 +42,10 @@ export const publicService = {
   async getInstructors(params?: { category?: string; search?: string }) {
     const response = await api.get("/instructors", { params });
     return response.data;
+  },
+
+  async getCourses(params?: { category?: string; search?: string }) {
+    const response = await api.get("/courses", { params });
+    return response.data as { success: boolean; data: PublicCourse[] };
   },
 };
