@@ -54,12 +54,18 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         const courseData: Course[] = coursesRes.data;
         setCourses(courseData);
 
-        // Calculate Categories count dynamically based on actual courses in database
+        // Calculate Categories count dynamically based on actual courses in database + saved custom categories
         const catMap: Record<string, number> = {};
         courseData.forEach((c) => {
           const catKey = c.category || "lainnya";
           catMap[catKey] = (catMap[catKey] || 0) + 1;
         });
+
+        const storedCatsStr = localStorage.getItem("custom_categories");
+        let storedCats: Category[] = [];
+        if (storedCatsStr) {
+          try { storedCats = JSON.parse(storedCatsStr); } catch { storedCats = []; }
+        }
 
         const categoryList: Category[] = Object.entries(catMap).map(([name, courseCount]) => ({
           id: name,
@@ -68,6 +74,21 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
           courseCount,
           icon: "📁",
         }));
+
+        // Merge stored custom categories
+        const catIds = new Set(categoryList.map((c) => c.id));
+        storedCats.forEach((sc) => {
+          if (!catIds.has(sc.id)) {
+            categoryList.push(sc);
+          } else {
+            // Update custom data
+            const idx = categoryList.findIndex((c) => c.id === sc.id);
+            if (idx >= 0) {
+              categoryList[idx] = { ...categoryList[idx], name: sc.name, description: sc.description, icon: sc.icon };
+            }
+          }
+        });
+
         setCategories(categoryList);
       }
 

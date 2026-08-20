@@ -7,6 +7,7 @@ import UserTable from "@/components/dashboardAdmin/UserTable";
 import Modals from "@/components/dashboardAdmin/Modals";
 import { useAdmin } from "@/components/dashboardAdmin/AdminContext";
 import { adminService } from "@/services/adminService";
+import { authService } from "@/services/authService";
 import { UserType } from "@/components/dashboardAdmin/types";
 
 export default function AdminUsersPage() {
@@ -54,13 +55,51 @@ export default function AdminUsersPage() {
     if (editingUser) {
       try {
         await adminService.updateUserRole(editingUser.id, backendRole);
-        setUsers(users.map((u) => (u.id === editingUser.id ? { ...u, role: userForm.role, status: userForm.status } : u)));
-        showToast("Role pengguna berhasil diperbarui di database!");
+        setUsers(
+          users.map((u) =>
+            u.id === editingUser.id
+              ? {
+                  ...u,
+                  name: userForm.name,
+                  email: userForm.email,
+                  role: userForm.role,
+                  status: userForm.status,
+                }
+              : u
+          )
+        );
+        showToast("Pengguna berhasil diperbarui di database!");
       } catch {
         showToast("Gagal mengupdate role pengguna di server.", "error");
       }
     } else {
-      showToast("Untuk membuat pengguna baru, pengguna dapat mendaftar via halaman registrasi.", "error");
+      try {
+        const usernameGenerated = userForm.email.split("@")[0] + "_" + Math.floor(Math.random() * 1000);
+        const res = await authService.register({
+          username: usernameGenerated,
+          email: userForm.email,
+          password: "password123",
+          password_confirmation: "password123",
+          full_name: userForm.name,
+          role: backendRole,
+        });
+
+        if (res.success && res.data?.user) {
+          const newUser: UserType = {
+            id: res.data.user.id,
+            name: res.data.user.full_name || userForm.name,
+            email: res.data.user.email || userForm.email,
+            role: userForm.role,
+            status: userForm.status,
+          };
+          setUsers([newUser, ...users]);
+          showToast(`Pengguna baru ${userForm.name} berhasil dibuat! (Password default: password123)`);
+        } else {
+          showToast(res.error?.message || "Gagal membuat pengguna baru.", "error");
+        }
+      } catch (err: any) {
+        showToast(err?.response?.data?.error?.message || "Gagal membuat pengguna baru.", "error");
+      }
     }
     setIsUserModalOpen(false);
   };

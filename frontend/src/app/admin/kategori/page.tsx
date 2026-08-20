@@ -46,23 +46,25 @@ export default function AdminCategoryPage() {
       return;
     }
 
+    let updatedCats: Category[] = [];
     if (editingCategory) {
-      setCategories(
-        categories.map((c) =>
-          c.id === editingCategory.id ? { ...c, ...categoryForm } : c
-        )
+      updatedCats = categories.map((c) =>
+        c.id === editingCategory.id ? { ...c, ...categoryForm } : c
       );
       showToast("Kategori berhasil diperbarui!");
     } else {
-      const newId = `KAT-0${categories.length + 1}`;
+      const newId = categoryForm.name.toLowerCase().replace(/\s+/g, "-");
       const newCat: Category = {
         id: newId,
         ...categoryForm,
         courseCount: 0,
       };
-      setCategories([...categories, newCat]);
+      updatedCats = [...categories, newCat];
       showToast("Kategori baru berhasil ditambahkan!");
     }
+
+    setCategories(updatedCats);
+    localStorage.setItem("custom_categories", JSON.stringify(updatedCats));
     setIsCategoryModalOpen(false);
   };
 

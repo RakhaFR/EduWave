@@ -103,7 +103,11 @@ export default function PelajarLessonDetailPage() {
           }
         }
       } catch (err: any) {
-        setMessage(err?.response?.data?.message || "Gagal memuat materi lesson.");
+        if (err?.response?.status === 403 || err?.response?.data?.error?.code === "LESSON_LOCKED") {
+          setMessage(err?.response?.data?.error?.message || "Selesaikan lesson sebelumnya terlebih dahulu sebelum mengakses lesson ini.");
+        } else {
+          setMessage(err?.response?.data?.message || err?.response?.data?.error?.message || "Gagal memuat materi lesson.");
+        }
       } finally {
         setLoading(false);
       }
@@ -249,6 +253,26 @@ export default function PelajarLessonDetailPage() {
             ) : (
               courseLessons.map((item, idx) => {
                 const isActive = item.id === lesson.id;
+                // Lock if previous lesson is not completed
+                const isLocked = idx > 0 && !courseLessons[idx - 1].is_completed && !item.is_completed;
+
+                if (isLocked) {
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex items-start gap-3 px-4 py-3 mx-2 my-0.5 rounded-xl text-slate-400 opacity-60 bg-slate-50 border border-transparent cursor-not-allowed select-none"
+                    >
+                      <div className="shrink-0 w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-extrabold mt-0.5 text-slate-400">
+                        🔒
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold leading-snug truncate">{item.title}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Terkunci (Selesaikan modul {idx})</p>
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <Link
                     key={item.id}

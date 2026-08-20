@@ -130,15 +130,6 @@ export default function Topbar({
               >
                 <User className="w-4 h-4" /> Profil Saya
               </Link>
-              <button
-                onClick={() => {
-                  setProfileDropdownOpen(false);
-                  showToast("Navigasi ke Pengaturan");
-                }}
-                className="w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-600 transition-colors flex items-center gap-2 cursor-pointer"
-              >
-                <Settings className="w-4 h-4" /> Pengaturan
-              </button>
               <div className="border-t border-slate-100 my-1" />
               <Link
                 href="/auth/login"
