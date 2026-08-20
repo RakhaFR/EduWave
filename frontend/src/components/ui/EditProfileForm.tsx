@@ -38,16 +38,22 @@ export default function EditProfileForm() {
     setSaving(true);
     setMessage(null);
     try {
-      // Send only updated or explicitly filled fields
+      const usernameChanged = form.username.trim() !== "" && form.username.trim() !== user.username;
+      const emailChanged = form.email.trim() !== "" && form.email.trim() !== user.email;
+      const credentialsChanged = usernameChanged || emailChanged;
+
+      if (credentialsChanged && !form.current_password) {
+        throw new Error("Mohon masukkan password jika anda mengubah email dan/atau username anda");
+      }
+
       const payload: Record<string, any> = {};
       if (form.full_name.trim()) payload.full_name = form.full_name.trim();
-      if (form.username.trim() && form.username.trim() !== user.username) payload.username = form.username.trim();
-      if (form.email.trim() && form.email.trim() !== user.email) payload.email = form.email.trim();
+      if (usernameChanged) payload.username = form.username.trim();
+      if (emailChanged) payload.email = form.email.trim();
       if (form.bio !== "") payload.bio = form.bio;
       if (form.avatar_url !== "") payload.avatar_url = form.avatar_url;
       if (form.current_password) payload.current_password = form.current_password;
 
-      // 1. Update basic profile
       const response = await authService.updateProfile(payload);
       if (!response.success) {
         throw new Error(response.error?.message || "Gagal menyimpan profil.");
@@ -78,10 +84,15 @@ export default function EditProfileForm() {
       await refetch();
       setMessage({ text: "Profil berhasil diperbarui!", type: "success" });
     } catch (error) {
-      setMessage({
-        text: error instanceof Error ? error.message : "Gagal menyimpan profil.",
-        type: "error",
-      });
+      const apiError = error as { response?: { status?: number; data?: { error?: { code?: string; message?: string } } } };
+      const errorCode = apiError.response?.data?.error?.code;
+      const errorMessage = apiError.response?.data?.error?.message;
+      const text = errorCode === "INVALID_CURRENT_PASSWORD"
+        ? "Password yang anda masukkan salah"
+        : errorCode === "CURRENT_PASSWORD_REQUIRED" || apiError.response?.status === 422
+        ? "Mohon masukkan password jika anda mengubah email dan/atau username anda"
+        : errorMessage || (error instanceof Error ? error.message : "Gagal menyimpan profil.");
+      setMessage({ text, type: "error" });
     } finally {
       setSaving(false);
     }
