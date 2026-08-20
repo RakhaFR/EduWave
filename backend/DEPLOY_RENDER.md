@@ -50,7 +50,7 @@ Do not change `DB_PORT`; `render.yaml` sets it to `4000`.
 
 ## 4. Seed the production database once
 
-The Render deployment automatically runs migrations on each deploy. Seed only once after the first successful deploy:
+The Render deployment automatically runs migrations on each deploy. If a deployment stops during migration, fix the failing migration and redeploy; Laravel resumes from the first migration that was not recorded in the `migrations` table. Seed only once after the first successful deploy:
 
 1. Open the Render service dashboard.
 2. Open **Shell**.
