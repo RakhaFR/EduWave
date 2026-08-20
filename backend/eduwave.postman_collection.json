@@ -2100,53 +2100,141 @@
                                                      }
                                                  ]
                                    },
-                                   {
-                                       "name":  "9.4 Filter Achievements by Type",
-                                       "request":  {
-                                                       "method":  "GET",
-                                                       "header":  [
-                                                                      {
-                                                                          "key":  "Authorization",
-                                                                          "value":  "Bearer {{token}}"
-                                                                      },
-                                                                      {
-                                                                          "key":  "Accept",
-                                                                          "value":  "application/json"
-                                                                      }
-                                                                  ],
-                                                       "url":  {
-                                                                   "raw":  "{{base_url}}/achievements?type=lesson_completion",
-                                                                   "host":  [
-                                                                                "{{base_url}}"
-                                                                            ],
-                                                                   "path":  [
-                                                                                "achievements"
-                                                                            ],
-                                                                   "query":  [
-                                                                                 {
-                                                                                     "key":  "type",
-                                                                                     "value":  "lesson_completion"
-                                                                                 }
+                                    {
+                                        "name":  "9.4 Filter Achievements by Type",
+                                        "request":  {
+                                                        "method":  "GET",
+                                                        "header":  [
+                                                                       {
+                                                                           "key":  "Authorization",
+                                                                           "value":  "Bearer {{token}}"
+                                                                       },
+                                                                       {
+                                                                           "key":  "Accept",
+                                                                           "value":  "application/json"
+                                                                       }
+                                                                   ],
+                                                        "url":  {
+                                                                    "raw":  "{{base_url}}/achievements?type=lesson_completion",
+                                                                    "host":  [
+                                                                                 "{{base_url}}"
+                                                                             ],
+                                                                    "path":  [
+                                                                                 "achievements"
+                                                                             ],
+                                                                    "query":  [
+                                                                                  {
+                                                                                      "key":  "type",
+                                                                                      "value":  "lesson_completion"
+                                                                                  }
+                                                                              ]
+                                                                }
+                                                    },
+                                        "event":  [
+                                                      {
+                                                          "listen":  "test",
+                                                          "script":  {
+                                                                         "exec":  [
+                                                                                      "pm.test(\u0027Status code is 200 OK\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                      "pm.test(\u0027Filtered achievements returned\u0027, function () {",
+                                                                                      "    var jsonData = pm.response.json();",
+                                                                                      "    pm.expect(jsonData.success).to.eql(true);",
+                                                                                      "    pm.expect(jsonData.data.achievements).to.be.an(\u0027array\u0027);",
+                                                                                      "});"
+                                                                                  ],
+                                                                         "type":  "text/javascript"
+                                                                     }
+                                                      }
+                                                  ]
+                                    },
+                                    {
+                                        "name":  "9.5 Auto-Check & Award Achievements",
+                                        "request":  {
+                                                        "method":  "POST",
+                                                        "header":  [
+                                                                       {
+                                                                           "key":  "Authorization",
+                                                                           "value":  "Bearer {{token}}"
+                                                                       },
+                                                                       {
+                                                                           "key":  "Accept",
+                                                                           "value":  "application/json"
+                                                                       }
+                                                                   ],
+                                                        "url":  {
+                                                                    "raw":  "{{base_url}}/achievements/check",
+                                                                    "host":  [
+                                                                                 "{{base_url}}"
+                                                                             ],
+                                                                    "path":  [
+                                                                                 "achievements",
+                                                                                 "check"
                                                                              ]
-                                                               }
-                                                   },
-                                       "event":  [
-                                                     {
-                                                         "listen":  "test",
-                                                         "script":  {
-                                                                        "exec":  [
-                                                                                     "pm.test(\u0027Status code is 200 OK\u0027, function () { pm.response.to.have.status(200); });",
-                                                                                     "pm.test(\u0027Filtered achievements returned\u0027, function () {",
-                                                                                     "    var jsonData = pm.response.json();",
-                                                                                     "    pm.expect(jsonData.success).to.eql(true);",
-                                                                                     "    pm.expect(jsonData.data.achievements).to.be.an(\u0027array\u0027);",
-                                                                                     "});"
-                                                                                 ],
-                                                                        "type":  "text/javascript"
-                                                                    }
-                                                     }
-                                                 ]
-                                   }
+                                                                }
+                                                    },
+                                        "event":  [
+                                                      {
+                                                          "listen":  "test",
+                                                          "script":  {
+                                                                         "exec":  [
+                                                                                      "pm.test(\u0027Status code is 200 OK\u0027, function () { pm.response.to.have.status(200); });",
+                                                                                      "pm.test(\u0027Response envelope structure\u0027, function () {",
+                                                                                      "    var jsonData = pm.response.json();",
+                                                                                      "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                      "    pm.expect(jsonData.success).to.eql(true);",
+                                                                                      "    pm.expect(jsonData.data).to.have.property(\u0027newly_awarded\u0027);",
+                                                                                      "    pm.expect(jsonData.data).to.have.property(\u0027current_pearls\u0027);",
+                                                                                      "});"
+                                                                                  ],
+                                                                         "type":  "text/javascript"
+                                                                     }
+                                                      }
+                                                  ]
+                                    },
+                                    {
+                                        "name":  "9.6 Manually Claim Achievement",
+                                        "request":  {
+                                                        "method":  "POST",
+                                                        "header":  [
+                                                                       {
+                                                                           "key":  "Authorization",
+                                                                           "value":  "Bearer {{token}}"
+                                                                       },
+                                                                       {
+                                                                           "key":  "Accept",
+                                                                           "value":  "application/json"
+                                                                       }
+                                                                   ],
+                                                        "url":  {
+                                                                    "raw":  "{{base_url}}/achievements/{{achievement_id}}/claim",
+                                                                    "host":  [
+                                                                                 "{{base_url}}"
+                                                                             ],
+                                                                    "path":  [
+                                                                                 "achievements",
+                                                                                 "{{achievement_id}}",
+                                                                                 "claim"
+                                                                             ]
+                                                                }
+                                                    },
+                                        "event":  [
+                                                      {
+                                                          "listen":  "test",
+                                                          "script":  {
+                                                                         "exec":  [
+                                                                                      "pm.test(\u0027Status code is 200 OK or 400 Bad Request\u0027, function () {",
+                                                                                      "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                                                                                      "});",
+                                                                                      "pm.test(\u0027Response envelope structure\u0027, function () {",
+                                                                                      "    var jsonData = pm.response.json();",
+                                                                                      "    pm.expect(jsonData).to.have.all.keys(\u0027success\u0027, \u0027data\u0027, \u0027error\u0027, \u0027meta\u0027);",
+                                                                                      "});"
+                                                                                  ],
+                                                                         "type":  "text/javascript"
+                                                                     }
+                                                      }
+                                                  ]
+                                    }
                                ]
                   },
                   {

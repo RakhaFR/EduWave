@@ -7,7 +7,7 @@ use App\Services\GamificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class AchievementController extends Controller
+class AchievementController extends ApiController
 {
     public function __construct(
         protected GamificationService $gamificationService
@@ -172,5 +172,88 @@ class AchievementController extends Controller
             'target' => $target,
             'percentage' => $percentage,
         ];
+    }
+
+    /**
+     * POST /api/v1/achievements/check
+     *
+     * Evaluate user progress and automatically award any newly completed achievements & pearls.
+     */
+    public function check(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $courseAchievements = $this->gamificationService->checkCourseCompletionAchievements($user);
+        $lessonAchievements = $this->gamificationService->checkLessonCompletionAchievements($user);
+        $examAchievements = $this->gamificationService->checkExamPassAchievements($user);
+        $xpAchievements = $this->gamificationService->checkXpAchievements($user);
+        $streakAchievements = $this->gamificationService->checkStreakAchievements($user);
+
+        $newlyAwarded = array_merge(
+            $courseAchievements,
+            $lessonAchievements,
+            $examAchievements,
+            $xpAchievements,
+            $streakAchievements
+        );
+
+        $totalPearlsEarned = array_sum(array_column($newlyAwarded, 'pearls_reward'));
+
+        return $this->success([
+            'newly_awarded' => $newlyAwarded,
+            'count' => count($newlyAwarded),
+            'pearls_earned' => $totalPearlsEarned,
+            'current_pearls' => $user->fresh()->pearls,
+        ]);
+    }
+
+    /**
+     * POST /api/v1/achievements/{achievement}/claim
+     *
+     * Manually claim an achievement if the condition is met and grant its pearls reward.
+     */
+    public function claim(Request $request, Achievement $achievement): JsonResponse
+    {
+        $user = $request->user();
+
+        // 1. Check if already earned
+        if ($user->achievements()->where('achievement_id', $achievement->id)->exists()) {
+            return $this->error('ACHIEVEMENT_ALREADY_CLAIMED', 'Achievement ini sudah pernah diklaim.', 400);
+        }
+
+        // 2. Evaluate requirement
+        $progress = $this->calculateProgress($user, $achievement);
+
+        if ($progress['current'] < $progress['target']) {
+            return $this->error('ACHIEVEMENT_NOT_UNLOCKED', 'Persyaratan achievement belum terpenuhi.', 400, [
+                'current' => $progress['current'],
+                'target' => $progress['target'],
+                'percentage' => $progress['percentage'],
+            ]);
+        }
+
+        // 3. Attach achievement and award pearls
+        $user->achievements()->attach($achievement->id, [
+            'earned_at' => now(),
+        ]);
+
+        $pearlsEarned = 0;
+        if ($achievement->pearls_reward > 0) {
+            $pearlsEarned = $achievement->pearls_reward;
+            $this->gamificationService->awardPearls($user, $pearlsEarned, "Claimed Achievement: {$achievement->name}");
+        }
+
+        return $this->success([
+            'achievement' => [
+                'id' => $achievement->id,
+                'name' => $achievement->name,
+                'description' => $achievement->description,
+                'icon_url' => $achievement->icon_url,
+                'pearls_reward' => $achievement->pearls_reward,
+                'earned_at' => now()->toIso8601String(),
+            ],
+            'pearls_earned' => $pearlsEarned,
+            'current_pearls' => $user->fresh()->pearls,
+        ], 'Achievement berhasil diklaim.');
     }
 }

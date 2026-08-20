@@ -108,6 +108,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         // Achievements
         Route::get('achievements', [AchievementController::class, 'index'])->name('achievements.index');
         Route::get('achievements/me', [AchievementController::class, 'myAchievements'])->name('achievements.me');
+        Route::post('achievements/check', [AchievementController::class, 'check'])->name('achievements.check');
+        Route::post('achievements/{achievement}/claim', [AchievementController::class, 'claim'])->name('achievements.claim');
         Route::get('achievements/{achievement}', [AchievementController::class, 'show'])->name('achievements.show');
 
         // Study Rooms

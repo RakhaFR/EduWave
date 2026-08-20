@@ -138,7 +138,7 @@ class GamificationService
      */
     public function checkLessonCompletionAchievements(User $user): array
     {
-        $completedCount = $user->completedLessons()->count();
+        $completedCount = $user->lessonProgress()->whereNotNull('completed_at')->count();
 
         return $this->checkAchievements($user, 'lesson_completion', $completedCount);
     }
@@ -148,7 +148,7 @@ class GamificationService
      */
     public function checkExamPassAchievements(User $user): array
     {
-        $passedCount = $user->examAttempts()->where('passed', true)->distinct('exam_id')->count('exam_id');
+        $passedCount = $user->attempts()->where('passed', true)->distinct('exam_id')->count('exam_id');
 
         return $this->checkAchievements($user, 'exam_pass', $passedCount);
     }

@@ -93,7 +93,7 @@ Base URL: `/api/v1`
 
 ### Test Suite Status
 
-All implemented non-deferred endpoints are covered by feature tests in `tests/Feature/` passing in automated runs: **152 tests, 711 assertions**.
+All implemented non-deferred endpoints are covered by feature tests in `tests/Feature/` passing in automated runs: **156 tests, 724 assertions**.
 
 The table below reflects confirmed implementation status and auth boundaries:
 
@@ -152,6 +152,8 @@ The table below reflects confirmed implementation status and auth boundaries:
 | **Mascot** | `PUT` | `/api/v1/mascots/equip` | Bearer | Equip a mascot and customize accessories | Yes |
 | **Achievement** | `GET` | `/api/v1/achievements` | Bearer | List all available achievements | Yes |
 | **Achievement** | `GET` | `/api/v1/achievements/me` | Bearer | Get authenticated user's earned achievements | Yes |
+| **Achievement** | `POST` | `/api/v1/achievements/check` | Bearer | Evaluate progress and auto-award all newly completed achievements | Yes |
+| **Achievement** | `POST` | `/api/v1/achievements/claim` | Bearer | Manually claim a specific achievement and receive pearls reward | Yes |
 | **Achievement** | `GET` | `/api/v1/achievements/{achievement}` | Bearer | Get achievement details with progress | Yes |
 | **Public** | `GET` | `/api/v1/public/stats` | Public | Get high-level platform stats (active students, published courses, enrollments) | Yes |
 | **Instructor** | `GET` | `/api/v1/instructors` | Public | List active instructors directory with course & student counts | Yes |
@@ -2470,6 +2472,92 @@ Get authenticated user's earned achievements.
     "total_pearls_earned": 350
   },
   "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `POST /api/v1/achievements/check`
+Evaluate user progress across all categories (`course_completion`, `lesson_completion`, `exam_pass`, `xp_milestone`, `streak_days`) and automatically award any newly completed achievements and pearls rewards.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "newly_awarded": [
+      {
+        "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "name": "Master XP",
+        "description": "Mencapai 500 XP",
+        "icon_url": "https://example.com/badges/xp-500.png",
+        "pearls_reward": 200
+      }
+    ],
+    "count": 1,
+    "pearls_earned": 200,
+    "current_pearls": 250
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+---
+
+#### `POST /api/v1/achievements/{achievement}/claim`
+Manually claim a specific achievement when its condition is met and receive its pearls reward.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "achievement": {
+      "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "name": "Master XP",
+      "description": "Mencapai 500 XP",
+      "icon_url": "https://example.com/badges/xp-500.png",
+      "pearls_reward": 200,
+      "earned_at": "2026-08-20T05:00:00.000000Z"
+    },
+    "pearls_earned": 200,
+    "current_pearls": 250
+  },
+  "error": null,
+  "meta": null
+}
+```
+* **Error Response (`400 Bad Request` if requirements not met):**
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "ACHIEVEMENT_NOT_UNLOCKED",
+    "message": "Persyaratan achievement belum terpenuhi.",
+    "details": {
+      "current": 50,
+      "target": 500,
+      "percentage": 10.0
+    }
+  },
+  "meta": null
+}
+```
+* **Error Response (`400 Bad Request` if already claimed):**
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "ACHIEVEMENT_ALREADY_CLAIMED",
+    "message": "Achievement ini sudah pernah diklaim.",
+    "details": null
+  },
   "meta": null
 }
 ```
