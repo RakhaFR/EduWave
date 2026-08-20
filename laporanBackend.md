@@ -71,5 +71,26 @@ Tolong sediakan endpoint `GET /api/v1/user/enrollments` yang mengembalikan dafta
 
 ---
 
+## 4. [USERS / PROFILE] Requiring `current_password` when `email` / `username` Are Sent Unchanged (Equal to Existing Value)
+
+**Endpoint:** `PUT /api/v1/users/me`
+
+**Masalah:**
+Dokumentasi menyatakan `current_password` hanya wajib jika user **mengubah** email atau username.
+Namun, jika frontend mengirimkan payload yang memuat field `email` atau `username` dengan value yang **sama persis** seperti data user saat ini (tidak ada perubahan email/username), backend tetap memvalidasi bahwa `current_password` wajib diisi.
+
+**Solusi / Rekomendasi di Backend:**
+Pada `UserController.php` (atau FormRequest `UpdateProfileRequest.php`), sebaiknya pengecekan keharusan `current_password` memperhitungkan apakah value email/username benar-benar berubah dari database:
+```php
+$emailChanged = $request->has('email') && $request->email !== $user->email;
+$usernameChanged = $request->has('username') && $request->username !== $user->username;
+
+if (($emailChanged || $usernameChanged) && !$request->filled('current_password')) {
+    // Return validation error current_password required
+}
+```
+
+---
+
 *Dibuat oleh: Tim Frontend — `r\RAKHA`*
-*Tanggal: 19 Agustus 2026*
+*Tanggal: 20 Agustus 2026*

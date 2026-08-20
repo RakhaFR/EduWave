@@ -38,8 +38,17 @@ export default function EditProfileForm() {
     setSaving(true);
     setMessage(null);
     try {
+      // Send only updated or explicitly filled fields
+      const payload: Record<string, any> = {};
+      if (form.full_name.trim()) payload.full_name = form.full_name.trim();
+      if (form.username.trim() && form.username.trim() !== user.username) payload.username = form.username.trim();
+      if (form.email.trim() && form.email.trim() !== user.email) payload.email = form.email.trim();
+      if (form.bio !== "") payload.bio = form.bio;
+      if (form.avatar_url !== "") payload.avatar_url = form.avatar_url;
+      if (form.current_password) payload.current_password = form.current_password;
+
       // 1. Update basic profile
-      const response = await authService.updateProfile(values);
+      const response = await authService.updateProfile(payload);
       if (!response.success) {
         throw new Error(response.error?.message || "Gagal menyimpan profil.");
       }
