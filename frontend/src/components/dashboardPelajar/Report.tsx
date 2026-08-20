@@ -27,11 +27,18 @@ const formatNumber = (num: number) => {
 
 export default function ReportComponent() {
   const [tab, setTab] = useState<Tab>("ringkasan");
-  const { user } = useCurrentUser();
+  const { user, refetch: refreshUser } = useCurrentUser();
   const [allAchievements, setAllAchievements] = useState<Achievement[]>([]);
   const [myAchievements, setMyAchievements] = useState<Achievement[]>([]);
   const [achLoading, setAchLoading] = useState(true);
   const [totalPearlsFromAch, setTotalPearlsFromAch] = useState(0);
+  const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [claimToast, setClaimToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
+
+  const userXP = user?.xp || 0;
+  const userLevel = user?.level || 1;
+  const streakDays = user?.streak_days || 0;
+  const pearls = user?.pearls || 0;
 
   // Real DB state
   const [myRank, setMyRank] = useState<number | string>("-");
@@ -71,10 +78,25 @@ export default function ReportComponent() {
     }).finally(() => setAchLoading(false));
   }, []);
 
-  const userXP = user?.xp || 0;
-  const userLevel = user?.level || 1;
-  const streakDays = user?.streak_days || 0;
-  const pearls = user?.pearls || 0;
+  const handleClaim = async (achievement: Achievement) => {
+    setClaimingId(achievement.id);
+    try {
+      const res = await achievementService.claimAchievement(achievement.id);
+      if (res.success && res.data) {
+        setClaimToast({ msg: `Berhasil mengklaim "${achievement.name}"! +${res.data.pearls_earned} mutiara`, type: "success" });
+        setMyAchievements((prev) => [...prev, res.data!.achievement || achievement]);
+        setTotalPearlsFromAch((prev) => prev + (res.data!.pearls_earned || achievement.pearls_reward));
+        if (refreshUser) refreshUser();
+      } else {
+        setClaimToast({ msg: res.error?.message || "Gagal mengklaim pencapaian.", type: "error" });
+      }
+    } catch (err: any) {
+      setClaimToast({ msg: err?.response?.data?.error?.message || "Persyaratan achievement belum terpenuhi.", type: "error" });
+    } finally {
+      setClaimingId(null);
+      setTimeout(() => setClaimToast(null), 3500);
+    }
+  };
 
   const nextLevelXP = userLevel * 1000;
   const currentLevelBaseXP = (userLevel - 1) * 1000;
@@ -83,6 +105,11 @@ export default function ReportComponent() {
 
   return (
     <DashboardLayout searchPlaceholder="Cari laporan...">
+      {claimToast && (
+        <div className={`fixed top-5 right-5 z-50 px-5 py-3 rounded-2xl text-sm font-semibold shadow-xl transition-all ${claimToast.type === "success" ? "bg-emerald-500 text-white" : "bg-red-500 text-white"}`}>
+          {claimToast.msg}
+        </div>
+      )}
       <main className="w-full max-w-4xl mx-auto px-3 sm:px-5 md:px-8 py-4 md:py-6 flex flex-col gap-4 sm:gap-5">
 
         {/* Header */}
@@ -300,12 +327,18 @@ export default function ReportComponent() {
                               <p className="text-[11px] text-slate-400 truncate">{ach.description}</p>
                               <p className="text-[10px] text-slate-300 mt-0.5">Target: {ach.condition_value} {ach.condition_type.replace(/_/g, " ")}</p>
                             </div>
-                            <div className="text-right shrink-0">
-                              <span className="text-xs font-semibold text-slate-400 inline-flex items-center gap-1">
+                            <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                              <span className="text-xs font-semibold text-slate-500 inline-flex items-center gap-1">
                                 +{ach.pearls_reward}
-                                <img src="/pearl.webp" alt="Mutiara" className="w-3.5 h-3.5 object-contain inline-block opacity-60" />
+                                <img src="/pearl.webp" alt="Mutiara" className="w-3.5 h-3.5 object-contain inline-block" />
                               </span>
-                              <p className="text-[10px] text-slate-300 font-medium mt-0.5">Belum</p>
+                              <button
+                                onClick={() => handleClaim(ach)}
+                                disabled={claimingId === ach.id}
+                                className="px-3 py-1 rounded-full text-xs font-bold bg-[#008be3] text-white hover:bg-[#0078c8] disabled:opacity-50 shadow-sm cursor-pointer transition-all active:scale-95"
+                              >
+                                {claimingId === ach.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Klaim"}
+                              </button>
                             </div>
                           </div>
                         ))}

@@ -106,7 +106,7 @@ export default function DashboardHome() {
               list.push({ ...c, progress_pct: enr.progress_pct || 0 });
             }
           }
-          setMyCourses(list);
+          setMyCourses(list.slice(0, 4));
         }
 
         const rawLb = resLb?.data?.rankings || resLb?.data || [];

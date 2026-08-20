@@ -133,7 +133,7 @@ export default function PelajarLessonDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-[#00172e] flex flex-col">
+    <div className="min-h-screen bg-slate-50 text-[#00172e] flex flex-col max-w-full overflow-x-hidden">
 
       {/* Overlay mobile */}
       {sidebarOpen && (
@@ -374,26 +374,26 @@ export default function PelajarLessonDetailPage() {
             </div>
 
             {/* Prev / Next navigation */}
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 overflow-hidden">
               {prevLesson ? (
                 <Link
                   href={`/pelajar/lesson/${prevLesson.id}`}
-                  className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-600 hover:border-[#008be3]/30 hover:text-[#008be3] transition-all shadow-sm flex-1"
+                  className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-600 hover:border-[#008be3]/30 hover:text-[#008be3] transition-all shadow-sm flex-1 min-w-0"
                 >
                   <ChevronLeft className="w-4 h-4 shrink-0" />
                   <span className="truncate">{prevLesson.title}</span>
                 </Link>
-              ) : <div className="flex-1" />}
+              ) : <div className="hidden sm:block flex-1" />}
 
               {nextLesson ? (
                 <Link
                   href={`/pelajar/lesson/${nextLesson.id}`}
-                  className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-600 hover:border-[#008be3]/30 hover:text-[#008be3] transition-all shadow-sm flex-1 justify-end"
+                  className="flex items-center justify-end gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-600 hover:border-[#008be3]/30 hover:text-[#008be3] transition-all shadow-sm flex-1 min-w-0"
                 >
                   <span className="truncate">{nextLesson.title}</span>
                   <ChevronRight className="w-4 h-4 shrink-0" />
                 </Link>
-              ) : <div className="flex-1" />}
+              ) : <div className="hidden sm:block flex-1" />}
             </div>
 
             {message && (

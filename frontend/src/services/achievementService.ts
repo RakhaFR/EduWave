@@ -50,4 +50,17 @@ export const achievementService = {
       return null;
     }
   },
+
+  async claimAchievement(achievementId: string) {
+    const response = await api.post(`/achievements/${achievementId}/claim`);
+    return response.data as {
+      success: boolean;
+      data: {
+        achievement: Achievement;
+        pearls_earned: number;
+        current_pearls: number;
+      } | null;
+      error: { code: string; message: string; details?: any } | null;
+    };
+  },
 };
