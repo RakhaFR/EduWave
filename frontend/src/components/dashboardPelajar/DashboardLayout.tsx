@@ -3,10 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Home, BookOpen, Bookmark, Users, Users2, Trophy, BarChart2, GraduationCap,
-  Play, Bell, Search, ChevronRight, Palette,
+  Play, Bell, Search, ChevronRight,
   LogOut, ChevronDown, Menu, X,
 } from "lucide-react";
 import FloatingBubbles from "@/components/ui/FloatingBubbles";
@@ -17,11 +17,10 @@ const NAV_ITEMS = [
   { icon: <BookOpen className="w-5 h-5" />,       label: "All Course",  href: "/pelajar/all-course" },
   { icon: <Bookmark className="w-5 h-5" />,       label: "My Courses",  href: "/pelajar/my-courses" },
   { icon: <Play className="w-5 h-5" />,           label: "Live Class",  href: "/pelajar/liveClass" },
-  { icon: <Users2 className="w-5 h-5" />,         label: "Study Room",  href: "/pelajar/study-room" },
+  { icon: <Users2 className="w-5 h-5" />,         label: "Study Forum", href: "/pelajar/study-room" },
   { icon: <Trophy className="w-5 h-5" />,         label: "Leaderboard", href: "/pelajar/leaderboard" },
   { icon: <GraduationCap className="w-5 h-5" />,  label: "Pembimbing",  href: "/pelajar/pembimbing" },
   { icon: <BarChart2 className="w-5 h-5" />,      label: "Report",      href: "/pelajar/report" },
-  { icon: <Palette className="w-5 h-5" />,         label: "Customize Mascot", href: "/pelajar/mascot-customize" },
 ];
 
 // Bottom nav mobile — item utama (tanpa admin items)
@@ -40,9 +39,12 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children, searchPlaceholder = "Search..." }: DashboardLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [search, setSearch] = useState("");
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const { user } = useCurrentUser();
 
   const displayName = user?.full_name || user?.username || "Pelajar";
@@ -120,16 +122,25 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
           {/* Search */}
           <div className="relative hidden sm:block w-48 md:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input type="text" placeholder={searchPlaceholder}
+            <input type="text" placeholder={searchPlaceholder} value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onKeyDown={(event) => { if (event.key === "Enter" && search.trim()) router.push(`/pelajar/all-course?search=${encodeURIComponent(search.trim())}`); }}
               className="w-full pl-9 pr-4 py-2 md:py-2.5 rounded-full bg-white text-sm text-slate-700 placeholder-slate-400 outline-none shadow-sm focus:ring-2 focus:ring-[#008be3]/30" />
           </div>
 
           {/* Right */}
           <div className="flex items-center gap-2 md:gap-4 ml-auto">
-            <button className="relative w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20 hover:bg-white/30 transition-colors">
-              <Bell className="w-4 h-4 text-white" />
-              <span className="absolute top-1 right-1 md:top-1.5 md:right-1.5 w-2 h-2 rounded-full bg-red-400" />
-            </button>
+            <div className="relative">
+              <button onClick={() => setNotificationsOpen((open) => !open)} className="relative w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20 hover:bg-white/30 transition-colors">
+                <Bell className="w-4 h-4 text-white" />
+                <span className="absolute top-1 right-1 md:top-1.5 md:right-1.5 w-2 h-2 rounded-full bg-red-400" />
+              </button>
+              {notificationsOpen && <div className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white p-4 shadow-xl z-50 text-slate-700">
+                <p className="text-sm font-bold">Notifikasi</p>
+                <p className="mt-2 text-xs text-slate-500">Belum ada notifikasi baru.</p>
+                <Link href="/pelajar/report" onClick={() => setNotificationsOpen(false)} className="mt-3 block text-xs font-bold text-[#008be3]">Lihat laporan belajar</Link>
+              </div>}
+            </div>
 
             {/* Avatar dropdown */}
             <div className="relative">

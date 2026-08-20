@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Users, Bell, BookOpen, Clock, MessageSquare, Headphones } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 
@@ -11,15 +12,16 @@ const FEATURES = [
 ];
 
 export default function StudyRoomComponent() {
+  const [reminded, setReminded] = useState(false);
   return (
-    <DashboardLayout searchPlaceholder="Cari study room...">
+    <DashboardLayout searchPlaceholder="Cari study forum...">
       <main className="px-4 md:px-8 py-4 md:py-6 flex flex-col gap-6 max-w-2xl mx-auto">
 
         {/* Header */}
         <div className="text-center">
           <div className="flex items-center justify-center gap-2 mb-1">
             <Users className="w-5 h-5 text-white" />
-            <h1 className="text-xl md:text-2xl font-extrabold text-white">Study Room</h1>
+            <h1 className="text-xl md:text-2xl font-extrabold text-white">Study Forum</h1>
           </div>
           <p className="text-sm text-white/70">Belajar lebih seru bersama teman satu kapal</p>
         </div>
@@ -61,9 +63,9 @@ export default function StudyRoomComponent() {
           </div>
 
           {/* Notify button */}
-          <button className="inline-flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white text-sm font-bold px-6 py-2.5 rounded-xl transition-colors shadow-md shadow-purple-400/30">
+          <button onClick={() => setReminded(true)} className={`inline-flex items-center gap-2 ${reminded ? "bg-green-500" : "bg-purple-500 hover:bg-purple-600"} text-white text-sm font-bold px-6 py-2.5 rounded-xl transition-colors shadow-md`}>
             <Bell className="w-4 h-4" />
-            Ingatkan Saya
+            {reminded ? "Pengingat Aktif" : "Ingatkan Saya"}
           </button>
         </div>
 

@@ -27,6 +27,7 @@ export default function Topbar({
   showToast
 }: TopbarProps) {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
   const { user } = useCurrentUser();
 
@@ -67,13 +68,13 @@ export default function Topbar({
       </div>
 
       <div className="flex items-center gap-3">
-        <button
-          onClick={() => showToast("Anda memiliki 2 notifikasi baru!")}
-          className="relative w-10 h-10 rounded-full bg-white/15 border border-white/25 flex items-center justify-center text-white hover:bg-white/25 transition-all shadow-md cursor-pointer"
-        >
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-2 right-2.5 w-2 h-2 rounded-full bg-red-400 border border-[#0073e6]" />
-        </button>
+        <div className="relative">
+          <button onClick={() => setNotificationsOpen((open) => !open)} className="relative w-10 h-10 rounded-full bg-white/15 border border-white/25 flex items-center justify-center text-white hover:bg-white/25 transition-all shadow-md cursor-pointer">
+            <Bell className="w-5 h-5" />
+            <span className="absolute top-2 right-2.5 w-2 h-2 rounded-full bg-red-400 border border-[#0073e6]" />
+          </button>
+          {notificationsOpen && <div className="absolute right-0 top-full mt-2 z-50 w-64 rounded-2xl bg-white p-4 shadow-xl text-slate-700"><p className="text-sm font-bold">Notifikasi Pembimbing</p><p className="mt-2 text-xs text-slate-500">Data kursus dan ujian telah dimuat.</p><Link href="/pembimbing" onClick={() => setNotificationsOpen(false)} className="mt-3 block text-xs font-bold text-[#0073e6]">Buka dashboard</Link></div>}
+        </div>
 
         <div className="relative">
           <button

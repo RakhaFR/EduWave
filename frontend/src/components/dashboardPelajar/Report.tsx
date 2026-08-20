@@ -45,7 +45,11 @@ export default function ReportComponent() {
       courseService.getMyRank().catch(() => null),
       courseService.getUserCourseProgress().catch(() => null),
     ]).then(([allRes, myRes, rankRes, progressRes]) => {
-      if (allRes?.success && allRes.data) setAllAchievements(allRes.data.achievements);
+      if (allRes?.success && allRes.data) {
+        setAllAchievements(allRes.data.achievements);
+        const earnedFromCatalog = allRes.data.achievements.filter((achievement) => achievement.is_earned);
+        if (earnedFromCatalog.length > 0 && (!myRes?.success || !myRes.data?.achievements?.length)) setMyAchievements(earnedFromCatalog);
+      }
       if (myRes?.success && myRes.data) {
         setMyAchievements(myRes.data.achievements);
         setTotalPearlsFromAch(myRes.data.total_pearls_earned);

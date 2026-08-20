@@ -3,8 +3,22 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2, PlayCircle, Trophy, Clock, BookOpen, Sparkles } from "lucide-react";
+import { ArrowLeft, CheckCircle2, PlayCircle, Trophy, Clock, BookOpen, Sparkles, Menu, X } from "lucide-react";
 import { courseService, Lesson } from "@/services/courseService";
+
+function MarkdownContent({ content }: { content: string }) {
+  const lines = content.split("\\n");
+  return <div className="space-y-3">{lines.map((line, index) => {
+    if (line.startsWith("### ")) return <h3 key={index} className="text-lg font-extrabold text-[#00172e]">{line.slice(4)}</h3>;
+    if (line.startsWith("## ")) return <h2 key={index} className="mt-5 text-xl font-extrabold text-[#00172e]">{line.slice(3)}</h2>;
+    if (line.startsWith("# ")) return <h1 key={index} className="text-2xl font-extrabold text-[#00172e]">{line.slice(2)}</h1>;
+    if (/^---+$/.test(line.trim())) return <hr key={index} className="border-slate-200" />;
+    if (line.startsWith("* ") || line.startsWith("- ")) return <li key={index} className="ml-5 list-disc">{line.slice(2)}</li>;
+    if (line.startsWith("```") || line.trim() === "```") return <div key={index} className="h-2" />;
+    if (!line.trim()) return <div key={index} className="h-1" />;
+    return <p key={index}>{line.replace(/\\*([^*]+)\\*/g, "$1")}</p>;
+  })}</div>;
+}
 
 export default function PelajarLessonDetailPage() {
   const params = useParams<{ id: string }>();
@@ -14,6 +28,8 @@ export default function PelajarLessonDetailPage() {
   const [completing, setCompleting] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [message, setMessage] = useState("");
+  const [courseLessons, setCourseLessons] = useState<Lesson[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     async function loadLesson() {
@@ -21,8 +37,13 @@ export default function PelajarLessonDetailPage() {
       try {
         const response = await courseService.getLessonById(params.id);
         const lessonData = response.data?.lesson ?? response.lesson ?? response.data ?? response;
-        setLesson(lessonData);
-        setIsCompleted(Boolean(lessonData.is_completed));
+         setLesson(lessonData);
+         setIsCompleted(Boolean(lessonData.is_completed));
+         if (lessonData.course_id) {
+           const courseResponse = await courseService.getCourseById(lessonData.course_id);
+           const courseData = courseResponse.data?.course ?? courseResponse.data ?? courseResponse;
+           setCourseLessons(courseData?.lessons ?? []);
+         }
       } catch (err: any) {
         setMessage(err?.response?.data?.message || "Gagal memuat materi lesson.");
       } finally {
@@ -71,8 +92,14 @@ export default function PelajarLessonDetailPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-[#00172e]">
+      {sidebarOpen && <div className="fixed inset-0 z-30 bg-black/30 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+      <aside className={`fixed left-0 top-0 bottom-0 z-40 w-72 bg-white p-5 shadow-xl transition-transform lg:sticky lg:top-0 lg:block lg:h-screen lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="mb-5 flex items-center justify-between"><p className="font-extrabold text-[#00172e]">Bab & Materi</p><button className="lg:hidden" onClick={() => setSidebarOpen(false)}><X className="w-5 h-5" /></button></div>
+        <div className="space-y-2 overflow-y-auto">{courseLessons.map((item) => <Link key={item.id} href={`/pelajar/lesson/${item.id}`} onClick={() => setSidebarOpen(false)} className={`block rounded-xl p-3 text-xs font-semibold ${item.id === lesson.id ? "bg-[#008be3]/10 text-[#008be3]" : "text-slate-600 hover:bg-slate-50"}`}>{item.order}. {item.title}</Link>)}</div>
+      </aside>
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-100 bg-white px-4 py-3 md:px-8">
         <div className="flex items-center gap-3">
+          <button onClick={() => setSidebarOpen(true)} className="rounded-full p-2 hover:bg-slate-100 lg:hidden"><Menu className="w-5 h-5" /></button>
           <button
             onClick={() => router.back()}
             className="rounded-full p-2 hover:bg-slate-100"
@@ -139,7 +166,7 @@ export default function PelajarLessonDetailPage() {
             <h3 className="mb-3 text-base font-bold">Ringkasan Materi</h3>
             <div className="prose prose-slate text-sm leading-relaxed text-slate-600">
               {lesson.content ? (
-                <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+                <MarkdownContent content={lesson.content} />
               ) : (
                 <p>Pelajari seluruh materi ini dengan seksama untuk mempersiapkan diri sebelum mengambil ujian akhir lesson.</p>
               )}

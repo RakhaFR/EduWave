@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Play, Bell, Calendar, Clock, Wifi } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 
@@ -37,6 +38,7 @@ const UPCOMING_CLASSES = [
 ];
 
 export default function LiveClassComponent() {
+  const [reminded, setReminded] = useState(false);
   return (
     <DashboardLayout searchPlaceholder="Cari live class...">
       <main className="px-4 md:px-8 py-4 md:py-6 flex flex-col gap-6 max-w-3xl mx-auto">
@@ -83,9 +85,9 @@ export default function LiveClassComponent() {
           </div>
 
           {/* Notify button */}
-          <button className="inline-flex items-center gap-2 bg-[#008be3] hover:bg-[#0078c8] text-white text-sm font-bold px-6 py-2.5 rounded-xl transition-colors shadow-md shadow-[#008be3]/30">
+          <button onClick={() => setReminded(true)} className={`inline-flex items-center gap-2 ${reminded ? "bg-green-500" : "bg-[#008be3] hover:bg-[#0078c8]"} text-white text-sm font-bold px-6 py-2.5 rounded-xl transition-colors shadow-md`}>
             <Bell className="w-4 h-4" />
-            Ingatkan Saya
+            {reminded ? "Pengingat Aktif" : "Ingatkan Saya"}
           </button>
         </div>
 

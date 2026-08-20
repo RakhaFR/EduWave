@@ -5,6 +5,7 @@ import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { User, Mail, Shield, Award, Zap, Flame, Loader2, Trophy } from "lucide-react";
 import { achievementService, Achievement } from "@/services/achievementService";
+import EditProfileForm from "@/components/ui/EditProfileForm";
 
 export default function ProfileComponent() {
   const { user, loading } = useCurrentUser();
@@ -99,6 +100,8 @@ export default function ProfileComponent() {
                   </div>
                 </div>
               </div>
+
+              <EditProfileForm />
 
               {/* Achievements */}
               <div>

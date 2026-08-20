@@ -39,4 +39,14 @@ export const authService = {
     const response = await api.get<ApiResponse<{ user: UserProfile }>>('/users/me');
     return response.data;
   },
+
+  updateProfile: async (payload: Partial<Pick<UserProfile, "full_name" | "username" | "email" | "bio" | "avatar_url">> & { current_password?: string }) => {
+    const response = await api.put<ApiResponse<{ user: UserProfile }>>('/users/me', payload);
+    return response.data;
+  },
+
+  updatePassword: async (payload: { current_password: string; password: string; password_confirmation: string }) => {
+    const response = await api.put<ApiResponse<unknown>>('/users/me/password', payload);
+    return response.data;
+  },
 };

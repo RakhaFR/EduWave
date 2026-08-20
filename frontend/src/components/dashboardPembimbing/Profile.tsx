@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { User, Mail, Shield, Award, Zap, Loader2 } from "lucide-react";
+import EditProfileForm from "@/components/ui/EditProfileForm";
 
 export default function PembimbingProfileComponent() {
   const { user, loading } = useCurrentUser();
@@ -63,6 +64,8 @@ export default function PembimbingProfileComponent() {
                 <p className="text-base font-extrabold text-teal-900">{user?.pearls ?? 0}</p>
               </div>
             </div>
+
+            <EditProfileForm />
 
             {/* Account details */}
             <div className="bg-slate-50 rounded-2xl p-4 space-y-3 text-xs border border-slate-100">
