@@ -41,6 +41,7 @@ Render asks for each variable marked as a secret. Enter:
 | --- | --- |
 | `APP_URL` | The public `https://<service-name>.onrender.com` URL supplied by Render |
 | `APP_KEY` | Output from `php artisan key:generate --show` |
+| `CORS_ALLOWED_ORIGINS` | Frontend origins, comma-separated, for example `https://your-project.vercel.app,http://localhost:3000` |
 | `DB_HOST` | TiDB host from its Connect dialog |
 | `DB_DATABASE` | TiDB database name, normally `test` |
 | `DB_USERNAME` | TiDB username from its Connect dialog |
