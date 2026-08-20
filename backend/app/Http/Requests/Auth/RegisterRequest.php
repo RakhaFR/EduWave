@@ -19,6 +19,7 @@ class RegisterRequest extends BaseRequest
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'password_confirmation' => ['required', 'string'],
             'full_name' => ['required', 'string', 'max:100'],
+            'role' => ['sometimes', 'string', 'in:student,instructor'],
         ];
     }
 }

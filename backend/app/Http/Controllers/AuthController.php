@@ -32,7 +32,7 @@ class AuthController extends ApiController
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'full_name' => $validated['full_name'],
-            'role' => 'student',
+            'role' => $validated['role'] ?? 'student',
             'pearls' => 0,
             'xp' => 0,
             'level' => 1,

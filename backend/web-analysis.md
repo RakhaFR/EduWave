@@ -94,9 +94,10 @@ Route::prefix('v1')->group(function () {
 {
   "username":         "string|required|unique:users",
   "email":            "string|required|email|unique:users",
-  "password":         "string|required|min:8|confirmed",
-  "password_confirmation": "string|required",
-  "full_name":        "string|required"
+   "password":         "string|required|min:8|confirmed",
+   "password_confirmation": "string|required",
+   "full_name":        "string|required",
+   "role":             "string|optional|in:student,instructor (defaults to student)"
 }
 ```
 

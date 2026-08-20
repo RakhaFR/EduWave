@@ -66,6 +66,39 @@ class AuthControllerTest extends TestCase
         ]);
     }
 
+    public function test_register_can_create_an_instructor_account(): void
+    {
+        $response = $this->postJson('/api/v1/auth/register', [
+            'username' => 'instructor_baru',
+            'email' => 'instructor@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'full_name' => 'Siti Pengajar',
+            'role' => 'instructor',
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.user.role', 'instructor');
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'instructor@example.com',
+            'role' => 'instructor',
+        ]);
+    }
+
+    public function test_register_rejects_admin_role(): void
+    {
+        $this->postJson('/api/v1/auth/register', [
+            'username' => 'admin_baru',
+            'email' => 'admin@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'full_name' => 'Admin Baru',
+            'role' => 'admin',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('role');
+    }
+
     public function test_register_rejects_duplicate_email()
     {
         User::factory()->create(['email' => 'duplicate@gmail.com']);
