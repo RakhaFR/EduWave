@@ -99,7 +99,7 @@ export default function LoginPage() {
     <div className="relative flex min-h-screen w-full bg-[#03152e] text-white overflow-hidden font-sans">
       {/* Kiri */}
       <div className="relative hidden w-1/2 md:flex items-center justify-center">
-        <Image src="/ocean-bg.jpg" alt="Underwater Ocean Background" fill priority className="object-cover object-center" />
+        <Image src="/bannerLogin.webp" alt="Underwater Ocean Background" fill priority className="object-cover object-center" />
         <div className="absolute top-0 right-[-1px] bottom-0 w-24 z-10 pointer-events-none">
           <svg className="h-full w-full fill-[#03152e]" viewBox="0 0 100 800" preserveAspectRatio="none">
             <path d="M0,0 C60,150 -30,300 70,450 C120,550 10,700 0,800 L100,800 L100,0 Z" />
