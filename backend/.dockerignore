@@ -1,0 +1,50 @@
+.git
+.github
+.agents
+.vscode
+.idea
+.nova
+.zed
+.fleet
+
+# Local env files
+.env
+.env.backup
+.env.test
+.env.production
+
+# Dev dependencies
+node_modules/
+/public/build
+/public/hot
+
+# Tests
+tests/
+phpunit.xml
+.phpunit.result.cache
+.phpunit.cache/
+
+# Dev tools
+vendor/bin/pint
+vendor/bin/phpunit
+
+# Docs / notes
+*.md
+*.postman_collection.json
+*.postman_environment.json
+TODO.md
+web-analysis.md
+PHASE-*.md
+POSTMAN_*.md
+schema.json
+
+# Logs
+storage/logs/
+storage/pail/
+
+# Compiled assets (will be rebuilt or not needed)
+bootstrap/cache/*.php
+
+# Temp files
+*.DS_Store
+Thumbs.db
