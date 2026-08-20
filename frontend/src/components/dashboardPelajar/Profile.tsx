@@ -137,7 +137,10 @@ export default function ProfileComponent() {
                         <div className="min-w-0">
                           <p className="text-[11px] font-bold text-[#00172e] leading-tight truncate">{ach.name}</p>
                           <p className="text-[10px] text-slate-400 leading-tight truncate">{ach.description}</p>
-                          <p className="text-[10px] font-bold text-amber-600 mt-0.5">+{ach.pearls_reward} 🪙</p>
+                          <p className="text-[10px] font-bold text-amber-600 mt-0.5 inline-flex items-center gap-1">
+                            +{ach.pearls_reward}
+                            <img src="/pearl.webp" alt="Mutiara" className="w-3 h-3 object-contain inline-block" />
+                          </p>
                         </div>
                       </div>
                     ))}

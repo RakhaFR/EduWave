@@ -45,15 +45,20 @@ export default function ReportComponent() {
       courseService.getMyRank().catch(() => null),
       courseService.getUserCourseProgress().catch(() => null),
     ]).then(([allRes, myRes, rankRes, progressRes]) => {
-      if (allRes?.success && allRes.data) {
-        setAllAchievements(allRes.data.achievements);
-        const earnedFromCatalog = allRes.data.achievements.filter((achievement) => achievement.is_earned);
-        if (earnedFromCatalog.length > 0 && (!myRes?.success || !myRes.data?.achievements?.length)) setMyAchievements(earnedFromCatalog);
-      }
+      const allAch = allRes?.success && allRes.data ? allRes.data.achievements : [];
+      setAllAchievements(allAch);
+
       if (myRes?.success && myRes.data) {
-        setMyAchievements(myRes.data.achievements);
-        setTotalPearlsFromAch(myRes.data.total_pearls_earned);
+        const earned = myRes.data.achievements;
+        setMyAchievements(earned);
+        setTotalPearlsFromAch(myRes.data.total_pearls_earned ?? 0);
+      } else {
+        // Fallback: use is_earned flag from catalog
+        const earnedFromCatalog = allAch.filter((a) => a.is_earned);
+        setMyAchievements(earnedFromCatalog);
+        setTotalPearlsFromAch(earnedFromCatalog.reduce((sum, a) => sum + (a.pearls_reward ?? 0), 0));
       }
+
       if (rankRes?.data?.user_rank) {
         setMyRank(rankRes.data.user_rank);
       }
@@ -120,7 +125,10 @@ export default function ReportComponent() {
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total XP Kamu</p>
                   <p className="text-4xl font-extrabold text-[#008be3] leading-none">{formatNumber(userXP)}</p>
-                  <p className="text-xs text-slate-400 mt-1.5 font-medium">{pearls} Mutiara terkumpul 🪙</p>
+                  <p className="text-xs text-slate-400 mt-1.5 font-medium flex items-center gap-1">
+                    <span>{pearls} Mutiara terkumpul</span>
+                    <img src="/pearl.webp" alt="Mutiara" className="w-4 h-4 object-contain inline-block" />
+                  </p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <div className="flex items-center gap-1.5 bg-[#f0f7ff] rounded-xl px-3.5 py-2 border border-[#008be3]/20">
@@ -216,7 +224,10 @@ export default function ReportComponent() {
               </div>
               <div className="text-right">
                 <p className="text-[10px] text-slate-400 font-medium">Mutiara dari pencapaian</p>
-                <p className="text-lg font-extrabold text-amber-500">+{totalPearlsFromAch} 🪙</p>
+                <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                  <span className="text-lg font-extrabold text-amber-500">+{totalPearlsFromAch}</span>
+                  <img src="/pearl.webp" alt="Mutiara" className="w-5 h-5 object-contain inline-block" />
+                </div>
               </div>
             </div>
 
@@ -251,7 +262,10 @@ export default function ReportComponent() {
                             )}
                           </div>
                           <div className="text-right shrink-0">
-                            <span className="text-xs font-bold text-amber-500">+{ach.pearls_reward} 🪙</span>
+                            <span className="text-xs font-bold text-amber-500 inline-flex items-center gap-1">
+                              +{ach.pearls_reward}
+                              <img src="/pearl.webp" alt="Mutiara" className="w-3.5 h-3.5 object-contain inline-block" />
+                            </span>
                             <p className="text-[10px] text-emerald-600 font-bold mt-0.5">✓ Diraih</p>
                           </div>
                         </div>
@@ -287,7 +301,10 @@ export default function ReportComponent() {
                               <p className="text-[10px] text-slate-300 mt-0.5">Target: {ach.condition_value} {ach.condition_type.replace(/_/g, " ")}</p>
                             </div>
                             <div className="text-right shrink-0">
-                              <span className="text-xs font-semibold text-slate-400">+{ach.pearls_reward} 🪙</span>
+                              <span className="text-xs font-semibold text-slate-400 inline-flex items-center gap-1">
+                                +{ach.pearls_reward}
+                                <img src="/pearl.webp" alt="Mutiara" className="w-3.5 h-3.5 object-contain inline-block opacity-60" />
+                              </span>
                               <p className="text-[10px] text-slate-300 font-medium mt-0.5">Belum</p>
                             </div>
                           </div>

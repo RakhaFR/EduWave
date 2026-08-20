@@ -41,4 +41,13 @@ export const achievementService = {
       error: { code: string; message: string } | null;
     };
   },
+
+  async checkAndUnlock() {
+    try {
+      const response = await api.post("/achievements/check");
+      return response.data;
+    } catch {
+      return null;
+    }
+  },
 };

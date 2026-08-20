@@ -43,6 +43,28 @@ export interface PembimbingExamForm {
   lesson_id?: string;
 }
 
+export interface ExamQuestion {
+  id: string;
+  exam_id: string;
+  question_text: string;
+  type: "multiple_choice" | "essay";
+  options: string[] | null;
+  correct_answer: string;
+  explanation: string | null;
+  points: number;
+  order: number;
+}
+
+export interface ExamQuestionForm {
+  question_text: string;
+  type: "multiple_choice" | "essay";
+  options?: string[];
+  correct_answer: string;
+  explanation?: string;
+  points: number;
+  order: number;
+}
+
 export const pembimbingService = {
   async getMyCourses() {
     const response = await api.get("/instructor/courses");
@@ -128,6 +150,27 @@ export const pembimbingService = {
 
   async deleteLesson(id: string) {
     const response = await api.delete(`/lessons/${id}`);
+    return response.data;
+  },
+
+  // Exam Questions
+  async getExamQuestions(examId: string) {
+    const response = await api.get(`/exams/${examId}/questions`);
+    return response.data as { success: boolean; data: ExamQuestion[] | null; error: null };
+  },
+
+  async createExamQuestion(examId: string, form: ExamQuestionForm) {
+    const response = await api.post(`/exams/${examId}/questions`, form);
+    return response.data as { success: boolean; data: ExamQuestion | null; error: null };
+  },
+
+  async updateExamQuestion(examId: string, questionId: string, form: Partial<ExamQuestionForm>) {
+    const response = await api.put(`/exams/${examId}/questions/${questionId}`, form);
+    return response.data as { success: boolean; data: ExamQuestion | null; error: null };
+  },
+
+  async deleteExamQuestion(examId: string, questionId: string) {
+    const response = await api.delete(`/exams/${examId}/questions/${questionId}`);
     return response.data;
   },
 };
