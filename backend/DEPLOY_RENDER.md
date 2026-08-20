@@ -48,27 +48,23 @@ Render asks for each variable marked as a secret. Enter:
 
 Do not change `DB_PORT`; `render.yaml` sets it to `4000`.
 
-## 4. Seed the production database once
+## 4. Seed the production database once (no Render Shell required)
 
-The Render deployment automatically runs migrations on each deploy. If a deployment stops during migration, fix the failing migration and redeploy; Laravel resumes from the first migration that was not recorded in the `migrations` table. Seed only once after the first successful deploy:
+The Render deployment automatically runs migrations on each deploy. If a deployment stops during migration, fix the failing migration and redeploy; Laravel resumes from the first migration that was not recorded in the `migrations` table.
 
-1. Open the Render service dashboard.
-2. Open **Shell**.
-3. Run:
+To populate the initial demo data without Render Shell:
 
-```sh
-php artisan db:seed --force
-```
+1. Open the service's **Environment** page in Render.
+2. Set `RUN_SEEDERS` to `true` and save the change.
+3. Trigger **Manual Deploy** then select **Deploy latest commit**.
+4. Confirm the deploy log contains `==> Seeding database...` and finishes successfully.
+5. Immediately set `RUN_SEEDERS` back to `false` and save it.
 
-This uses the production `APP_URL`, so the stored mascot URLs use the Render domain.
+The seeder uses the production `APP_URL`, so stored mascot URLs use the Render domain. `RUN_SEEDERS` defaults to `false` in `render.yaml`.
 
-For later seed updates, run a specific seeder instead of `migrate:fresh`:
+Do not leave `RUN_SEEDERS=true`: the current demo seeders create sample accounts, courses, lessons, and attempts and must only run against an empty database.
 
-```sh
-php artisan db:seed --class=MascotSeeder --force
-```
-
-Never run `php artisan migrate:fresh` against production because it drops all tables and user data.
+Never run `php artisan migrate:fresh` against this service. It drops all tables and user data. For a genuinely clean demo database, create a new TiDB database/cluster, update the Render database variables, then deploy once with `RUN_SEEDERS=true`.
 
 ## 5. Verify API and mascot storage
 
@@ -97,4 +93,4 @@ The existing backend CORS configuration must permit the Vercel frontend origin. 
 - Before the 6 September demo, open `/up` and the Vercel frontend a few minutes early to wake the API.
 - Render automatically redeploys after each push to the linked branch (`autoDeployTrigger: commit`).
 - Monitor failures from the Render dashboard's **Logs** tab.
-- Each normal deploy runs `php artisan migrate --force` but does not seed or delete data.
+- Each normal deploy runs `php artisan migrate --force` but does not seed or delete data. Initial data is only seeded when `RUN_SEEDERS=true`.

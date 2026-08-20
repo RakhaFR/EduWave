@@ -13,5 +13,10 @@ if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
     php artisan migrate --force
 fi
 
+if [ "${RUN_SEEDERS:-false}" = "true" ]; then
+    echo "==> Seeding database..."
+    php artisan db:seed --force
+fi
+
 echo "==> Starting supervisord..."
 exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf

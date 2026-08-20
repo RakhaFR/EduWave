@@ -51,3 +51,5 @@ services:
         value: predis
       - key: RUN_MIGRATIONS
         value: "true"
+      - key: RUN_SEEDERS
+        value: "false"
