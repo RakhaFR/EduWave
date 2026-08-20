@@ -6,7 +6,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Home, BookOpen, Bookmark, Users, Users2, Trophy, BarChart2, GraduationCap,
-  Play, Bell, Search, ChevronRight,
+  Play, Bell, Search, ChevronRight, Palette,
   LogOut, ChevronDown, Menu, X,
 } from "lucide-react";
 import FloatingBubbles from "@/components/ui/FloatingBubbles";
@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   { icon: <Trophy className="w-5 h-5" />,         label: "Leaderboard", href: "/pelajar/leaderboard" },
   { icon: <GraduationCap className="w-5 h-5" />,  label: "Pembimbing",  href: "/pelajar/pembimbing" },
   { icon: <BarChart2 className="w-5 h-5" />,      label: "Report",      href: "/pelajar/report" },
+  { icon: <Palette className="w-5 h-5" />,         label: "Customize Mascot", href: "/pelajar/mascot-customize" },
 ];
 
 // Bottom nav mobile — item utama (tanpa admin items)

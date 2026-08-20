@@ -258,33 +258,6 @@ export default function MascotCustomizeComponent() {
           </div>
         )}
 
-        {/* Accessory customization */}
-        <div className="bg-white rounded-3xl p-4 sm:p-5 mb-6 shadow-lg text-[#00172e]">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="font-extrabold text-base">Kustomisasi Quli</h2>
-              <p className="text-xs text-slate-400 mt-1">Pilih aksesori lalu pasang dari tab Inventori.</p>
-            </div>
-            <span className="text-xs font-bold text-cyan-600 bg-cyan-50 px-3 py-1.5 rounded-full">4 pilihan</span>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {(Object.keys(ACCESSORY_OPTIONS) as AccessoryKey[]).map((key) => (
-              <label key={key} className="flex flex-col gap-1.5">
-                <span className="text-[11px] font-bold text-slate-500 capitalize">{key}</span>
-                <select
-                  value={accessories[key]}
-                  onChange={(e) => setAccessories((current) => ({ ...current, [key]: e.target.value }))}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-cyan-400"
-                >
-                  {ACCESSORY_OPTIONS[key].map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </label>
-            ))}
-          </div>
-        </div>
-
         {/* Tabs */}
         <div className="flex bg-white/10 backdrop-blur p-1 rounded-2xl mb-6 gap-1">
           {(["katalog", "inventori"] as Tab[]).map((t) => (
