@@ -99,7 +99,7 @@ The table below reflects confirmed implementation status and auth boundaries:
 
 | Group | Method | Endpoint | Auth | Description | Tested |
 |---|---|---|---|---|---|
-| **Auth** | `POST` | `/api/v1/auth/register` | Public | Register a new user account | Yes |
+| **Auth** | `POST` | `/api/v1/auth/register` | Public | Register a student or instructor account and issue a Bearer token | Yes |
 | **Auth** | `POST` | `/api/v1/auth/login` | Public | Authenticate user via email or username & issue Bearer token | Yes |
 | **Auth** | `POST` | `/api/v1/auth/forgot-password` | Public | Request password reset link | Yes |
 | **Auth** | `POST` | `/api/v1/auth/reset-password` | Public | Reset password using reset token & revoke existing tokens | Yes |
@@ -171,13 +171,35 @@ The table below reflects confirmed implementation status and auth boundaries:
 ### 1. Authentication Endpoints (`/api/v1/auth`)
 
 #### `POST /api/v1/auth/register`
-Register a new student account.
+Register a new student or instructor account and receive a Sanctum Bearer token. This endpoint is public.
 
-* **Request Body:**
+The `role` field is optional. Omit it to register a student, or set it to `instructor` to register an instructor account. Public registration cannot create an `admin` account.
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `username` | string | Yes | Unique; maximum 50 characters |
+| `email` | string | Yes | Valid email address; unique; maximum 255 characters |
+| `password` | string | Yes | Minimum 8 characters; must match `password_confirmation` |
+| `password_confirmation` | string | Yes | Must match `password` |
+| `full_name` | string | Yes | Maximum 100 characters |
+| `role` | string | No | `student` or `instructor`; defaults to `student` |
+
+* **Instructor registration request:**
+```json
+{
+  "username": "pengajar_baru",
+  "email": "instructor@example.com",
+  "password": "password123",
+  "password_confirmation": "password123",
+  "full_name": "Siti Pengajar",
+  "role": "instructor"
+}
+```
+* **Student registration request:**
 ```json
 {
   "username": "penjelajah_baru",
-  "email": "user@example.com",
+  "email": "student@example.com",
   "password": "password123",
   "password_confirmation": "password123",
   "full_name": "Budi Santoso"
@@ -190,10 +212,10 @@ Register a new student account.
   "data": {
     "user": {
       "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
-      "username": "penjelajah_baru",
-      "email": "user@example.com",
-      "full_name": "Budi Santoso",
-      "role": "student",
+      "username": "pengajar_baru",
+      "email": "instructor@example.com",
+      "full_name": "Siti Pengajar",
+      "role": "instructor",
       "avatar_url": null,
       "pearls": 0,
       "xp": 0,
@@ -204,6 +226,21 @@ Register a new student account.
     "token_type": "Bearer"
   },
   "error": null,
+  "meta": null
+}
+```
+* **Validation Error (`422 Unprocessable Content`):** Returned for invalid input, including an unsupported role such as `admin`.
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Validasi gagal.",
+    "details": {
+      "role": ["Validasi gagal."]
+    }
+  },
   "meta": null
 }
 ```
