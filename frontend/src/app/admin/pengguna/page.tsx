@@ -55,6 +55,16 @@ export default function AdminUsersPage() {
     if (editingUser) {
       try {
         await adminService.updateUserRole(editingUser.id, backendRole);
+        
+        // Save local edits persistent
+        const storedEditsStr = localStorage.getItem("admin_edited_users");
+        let storedEdits: Record<string, { name?: string; email?: string }> = {};
+        if (storedEditsStr) {
+          try { storedEdits = JSON.parse(storedEditsStr); } catch { storedEdits = {}; }
+        }
+        storedEdits[editingUser.id] = { name: userForm.name, email: userForm.email };
+        localStorage.setItem("admin_edited_users", JSON.stringify(storedEdits));
+
         setUsers(
           users.map((u) =>
             u.id === editingUser.id

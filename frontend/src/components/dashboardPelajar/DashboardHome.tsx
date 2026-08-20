@@ -13,19 +13,6 @@ import { courseService, Course } from "@/services/courseService";
 import { mascotService, InventoryMascot } from "@/services/mascotService";
 import { DashboardContentSkeleton } from "@/components/ui/PageSkeleton";
 
-const LEADERBOARD = [
-  { rank: 4, name: "Rasya Raya Agung", xp: 3200, me: true  },
-  { rank: 5, name: "Dina Fitriani",    xp: 3100, me: false },
-  { rank: 6, name: "Ariel Saputra",    xp: 2900, me: false },
-  { rank: 7, name: "Sekar Ayu",        xp: 2750, me: false },
-];
-
-const TOP3 = [
-  { rank: 2, name: "Budi S",  color: "bg-slate-300",  textColor: "text-slate-600", h: "h-10" },
-  { rank: 1, name: "Citra M", color: "bg-amber-300",  textColor: "text-amber-800", h: "h-16" },
-  { rank: 3, name: "Doni A",  color: "bg-orange-200", textColor: "text-orange-700", h: "h-8"  },
-];
-
 const formatNumber = (num: number) => {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };

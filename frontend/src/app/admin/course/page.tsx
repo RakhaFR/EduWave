@@ -12,7 +12,7 @@ import { adminService, AdminCourseForm } from "@/services/adminService";
 const DEFAULT_FORM: AdminCourseForm = {
   title: "",
   description: "",
-  category: "",
+  category: "technology",
   difficulty: "beginner",
   status: "draft",
   pearls_reward: 0,

@@ -93,9 +93,15 @@ export default function Modals({
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
                   <label className="font-bold text-slate-500">Kategori</label>
-                  <input type="text" required placeholder="Contoh: Programming" value={courseForm.category}
-                    onChange={(e) => setCourseForm({ ...courseForm, category: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700 placeholder-slate-300" />
+                  <select value={courseForm.category || "technology"} onChange={(e) => setCourseForm({ ...courseForm, category: e.target.value })}
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 bg-white text-slate-700">
+                    <option value="technology">Teknologi & Koding</option>
+                    <option value="design">UI/UX & Desain</option>
+                    <option value="marine">Sains Laut & Kelautan</option>
+                    <option value="language">Bahasa</option>
+                    <option value="science">Sains</option>
+                    <option value="business">Bisnis</option>
+                  </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="font-bold text-slate-500">Kesulitan</label>
@@ -171,14 +177,14 @@ export default function Modals({
             <form onSubmit={handleSaveUser} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="font-bold text-slate-500">Nama Pengguna</label>
-                <input type="text" required placeholder="Rasya Raya" value={userForm.name}
+                <input type="text" required placeholder="Budi Santoso" value={userForm.name}
                   onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
                   className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700 placeholder-slate-300" />
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <label className="font-bold text-slate-500">Email</label>
-                <input type="email" required placeholder="rasya@eduwave.id" value={userForm.email}
+                <input type="email" required placeholder="budi@example.com" value={userForm.email}
                   onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
                   className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700 placeholder-slate-300" />
               </div>

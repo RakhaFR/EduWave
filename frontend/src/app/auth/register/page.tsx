@@ -186,7 +186,7 @@ export default function RegisterPage() {
                 <label className="text-sm font-medium text-slate-200">Gmail / Email</label>
                 <div className="relative flex items-center">
                   <Mail className="absolute left-4 h-5 w-5 text-slate-400" />
-                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="contoh@gmail.com"
+                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nama@example.com"
                     className="w-full rounded-xl border border-slate-700 bg-[#072042]/60 py-3.5 pl-12 pr-4 text-sm text-white placeholder-slate-500 outline-none transition-all focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500" />
                 </div>
               </div>

@@ -97,7 +97,7 @@ export default function EditProfileForm() {
           value={values.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-cyan-400"
-          placeholder="contoh@gmail.com"
+          placeholder="nama@example.com"
         />
       </div>
 
