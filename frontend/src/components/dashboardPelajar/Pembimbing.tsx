@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BookOpen, GraduationCap, Search, Users } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { InstructorDirectoryEntry, publicService } from "@/services/publicService";
+import { GridSkeleton } from "@/components/ui/PageSkeleton";
 
 const formatNumber = (value: number) => value.toLocaleString("id-ID");
 
@@ -68,7 +69,7 @@ export default function PembimbingComponent() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-16"><div className="w-9 h-9 border-4 border-white border-t-transparent rounded-full animate-spin" /></div>
+          <div className="rounded-3xl bg-white/10 p-4"><GridSkeleton count={6} /></div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16"><GraduationCap className="w-10 h-10 text-white/40 mx-auto mb-3" /><p className="text-white/70 text-sm">Belum ada pembimbing yang sesuai.</p></div>
         ) : (

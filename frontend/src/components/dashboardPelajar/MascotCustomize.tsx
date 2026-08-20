@@ -6,6 +6,7 @@ import { Loader2, ShoppingCart, CheckCircle, Zap, Star, Crown, Gem, ChevronLeft,
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { mascotService, MascotItem, InventoryMascot } from "@/services/mascotService";
 import { UserProfile } from "@/types/auth";
+import { GridSkeleton } from "@/components/ui/PageSkeleton";
 
 const RARITY_CONFIG = {
   common: { label: "Umum", color: "bg-slate-100 text-slate-600", border: "border-slate-200", glow: "", icon: Star },
@@ -214,7 +215,7 @@ export default function MascotCustomizeComponent() {
 
   return (
     <DashboardLayout searchPlaceholder="Cari maskot...">
-      <div className="px-4 md:px-8 py-4 md:py-6 max-w-4xl mx-auto">
+      <div className="w-full max-w-4xl mx-auto px-3 sm:px-5 md:px-8 py-4 md:py-6">
 
         {/* Toast */}
         {toast && (
@@ -240,7 +241,7 @@ export default function MascotCustomizeComponent() {
 
         {/* Active mascot preview */}
         {activeMascot && (
-          <div className="mb-6 bg-white/10 backdrop-blur border border-white/20 rounded-3xl p-5 flex items-center gap-5">
+          <div className="mb-6 bg-white/10 backdrop-blur border border-white/20 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-5 text-center sm:text-left">
             <div className="relative w-20 h-20 shrink-0">
               <Image
                 src={getInventoryImage(activeMascot, activeMascotIdx)}
@@ -258,7 +259,7 @@ export default function MascotCustomizeComponent() {
         )}
 
         {/* Accessory customization */}
-        <div className="bg-white rounded-3xl p-5 mb-6 shadow-lg text-[#00172e]">
+        <div className="bg-white rounded-3xl p-4 sm:p-5 mb-6 shadow-lg text-[#00172e]">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="font-extrabold text-base">Kustomisasi Quli</h2>
@@ -299,9 +300,7 @@ export default function MascotCustomizeComponent() {
 
         {/* Content */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
-          </div>
+          <div className="rounded-3xl bg-white/10 p-4"><GridSkeleton count={8} /></div>
         ) : tab === "katalog" ? (
           <>
             {catalog.length === 0 ? (

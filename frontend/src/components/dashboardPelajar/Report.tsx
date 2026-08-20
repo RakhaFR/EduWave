@@ -9,6 +9,7 @@ import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { achievementService, Achievement } from "@/services/achievementService";
 import { courseService } from "@/services/courseService";
+import { CardSkeleton, ListSkeleton } from "@/components/ui/PageSkeleton";
 
 type Tab = "ringkasan" | "kalkulasi" | "pencapaian";
 
@@ -73,7 +74,7 @@ export default function ReportComponent() {
 
   return (
     <DashboardLayout searchPlaceholder="Cari laporan...">
-      <main className="px-4 md:px-8 py-4 md:py-6 max-w-4xl mx-auto flex flex-col gap-5">
+      <main className="w-full max-w-4xl mx-auto px-3 sm:px-5 md:px-8 py-4 md:py-6 flex flex-col gap-4 sm:gap-5">
 
         {/* Header */}
         <div className="text-center">
@@ -101,6 +102,10 @@ export default function ReportComponent() {
           ))}
         </div>
 
+        {achLoading ? (
+          <div className="space-y-4"><CardSkeleton className="h-44 bg-white/80" /><div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{Array.from({ length: 4 }, (_, index) => <CardSkeleton key={index} className="h-28 bg-white/80" />)}</div><ListSkeleton count={4} /></div>
+        ) : (
+          <>
         {/* ── TAB: RINGKASAN ── */}
         {tab === "ringkasan" && (
           <div className="flex flex-col gap-4">
@@ -194,7 +199,7 @@ export default function ReportComponent() {
         {tab === "pencapaian" && (
           <div className="flex flex-col gap-4">
             {/* Summary card */}
-            <div className="bg-white rounded-3xl p-5 shadow-lg flex items-center gap-4">
+            <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shrink-0 shadow-md shadow-amber-200">
                 <Trophy className="w-6 h-6 text-white" />
               </div>
@@ -290,6 +295,8 @@ export default function ReportComponent() {
               </div>
             )}
           </div>
+        )}
+          </>
         )}
 
       </main>
