@@ -31,8 +31,8 @@ Do **not** commit `.env`. It remains ignored by Git.
 
 1. Sign in at [Render](https://dashboard.render.com/) with GitHub.
 2. Select **New** then **Blueprint**.
-3. Select the repository that contains this backend.
-4. If this is a monorepo, set the Blueprint path to `backend/render.yaml`.
+3. Select the EduWave repository.
+4. Keep the Blueprint path as `render.yaml` at the repository root. The blueprint sets `rootDir: backend`, so Render builds only the backend Docker image.
 5. Confirm the `eduwave-backend` service on the Free plan.
 
 Render asks for each variable marked as a secret. Enter:
@@ -53,7 +53,7 @@ Do not change `DB_PORT`; `render.yaml` sets it to `4000`.
 
 The Render deployment automatically runs migrations on each deploy. If a deployment stops during migration, fix the failing migration and redeploy; Laravel resumes from the first migration that was not recorded in the `migrations` table.
 
-Before seeding, create the Upstash database described in `SETUP_REDIS.md`, then add its native Redis `rediss://` URL as `REDIS_URL` in Render. Do not use the Upstash REST URL or REST token; Laravel's Redis client requires the Redis Connect URL.
+Before seeding, create the Upstash database described in `backend/SETUP_REDIS.md`, then add its native Redis `rediss://` URL as `REDIS_URL` in Render. Do not use the Upstash REST URL or REST token; Laravel's Redis client requires the Redis Connect URL. Do not set `REDIS_SCHEME`; the `rediss://` URL configures TLS automatically.
 
 To populate the initial demo data without Render Shell:
 
