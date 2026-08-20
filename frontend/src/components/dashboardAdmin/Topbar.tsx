@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 import {
   Menu,
   Search,
@@ -26,6 +27,8 @@ export default function Topbar({
   setMobileMenuOpen,
   showToast
 }: TopbarProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
@@ -35,6 +38,14 @@ export default function Topbar({
     clearUserCache();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && searchGlobal.trim()) {
+      if (pathname !== "/admin/course" && pathname !== "/admin/pengguna" && pathname !== "/admin") {
+        router.push("/admin/course");
+      }
+    }
   };
 
   const initial = (user?.full_name || user?.username || "A").charAt(0).toUpperCase();
@@ -54,9 +65,10 @@ export default function Topbar({
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
         <input
           type="text"
-          placeholder="Cari sesuatu..."
+          placeholder="Cari kursus, pengguna, kategori..."
           value={searchGlobal}
           onChange={(e) => setSearchGlobal(e.target.value)}
+          onKeyDown={handleSearchKeyDown}
           className="w-full pl-11 pr-4 py-2.5 bg-white rounded-full text-sm text-slate-700 placeholder-slate-400 outline-none shadow-md focus:ring-2 focus:ring-blue-300 transition-all border-none"
         />
         {searchGlobal && (

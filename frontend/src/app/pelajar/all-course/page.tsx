@@ -1,17 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { ChevronRight, ChevronLeft, Clock, Users, BookOpen, Sparkles, Filter } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { courseService, Course } from "@/services/courseService";
 import { GridSkeleton } from "@/components/ui/PageSkeleton";
 
-export default function PelajarAllCoursePage() {
+function AllCoursesContent() {
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get("search") || "";
+
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
   const [category, setCategory] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [page, setPage] = useState(1);
@@ -19,6 +23,13 @@ export default function PelajarAllCoursePage() {
   const [totalItems, setTotalItems] = useState(0);
 
   const [enrolledMap, setEnrolledMap] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const q = searchParams.get("search");
+    if (q !== null) {
+      setSearch(q);
+    }
+  }, [searchParams]);
 
   const fetchCourses = async () => {
     setLoading(true);
@@ -61,7 +72,7 @@ export default function PelajarAllCoursePage() {
 
   useEffect(() => {
     fetchCourses();
-  }, [category, difficulty]);
+  }, [category, difficulty, search]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -211,5 +222,13 @@ export default function PelajarAllCoursePage() {
         )}
       </main>
     </DashboardLayout>
+  );
+}
+
+export default function PelajarAllCoursePage() {
+  return (
+    <Suspense fallback={null}>
+      <AllCoursesContent />
+    </Suspense>
   );
 }

@@ -67,17 +67,40 @@ export default function PelajarLessonDetailPage() {
   useEffect(() => {
     async function loadLesson() {
       if (!params.id) return;
+      setLoading(true);
       try {
-        const response = await courseService.getLessonById(params.id);
+        const [response, progressRes] = await Promise.all([
+          courseService.getLessonById(params.id),
+          courseService.getUserCourseProgress().catch(() => null),
+        ]);
+
         const lessonData = response.data?.lesson ?? response.lesson ?? response.data ?? response;
         setLesson(lessonData);
-        setIsCompleted(Boolean(lessonData.is_completed));
+
+        // Check completion status from lessonData or user progress
+        let completed = Boolean(lessonData.is_completed);
+        if (!completed && progressRes?.success && progressRes.data?.completed_lessons) {
+          const completedIds = new Set(progressRes.data.completed_lessons.map((l: any) => l.lesson_id || l.id || l));
+          if (completedIds.has(params.id)) {
+            completed = true;
+          }
+        }
+        setIsCompleted(completed);
+
         if (lessonData.course_id) {
           setCourseId(lessonData.course_id);
           const courseResponse = await courseService.getCourseById(lessonData.course_id);
           const courseData = courseResponse.data?.course ?? courseResponse.data ?? courseResponse;
           setCourseTitle(courseData?.title ?? "");
-          setCourseLessons(courseData?.lessons ?? []);
+
+          // Mark completed status on course lessons list
+          const rawLessons: Lesson[] = courseData?.lessons ?? [];
+          if (progressRes?.success && progressRes.data?.completed_lessons) {
+            const completedIds = new Set(progressRes.data.completed_lessons.map((l: any) => l.lesson_id || l.id || l));
+            setCourseLessons(rawLessons.map((l) => ({ ...l, is_completed: l.is_completed || completedIds.has(l.id) })));
+          } else {
+            setCourseLessons(rawLessons);
+          }
         }
       } catch (err: any) {
         setMessage(err?.response?.data?.message || "Gagal memuat materi lesson.");
@@ -95,6 +118,7 @@ export default function PelajarLessonDetailPage() {
     try {
       await courseService.completeLesson(lesson.id);
       setIsCompleted(true);
+      setCourseLessons((prev) => prev.map((l) => l.id === lesson.id ? { ...l, is_completed: true } : l));
     } catch (err: any) {
       setMessage(err?.response?.data?.message || "Gagal menyelesaikan lesson.");
     } finally {

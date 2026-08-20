@@ -7,6 +7,23 @@ import { User, Mail, Shield, Award, Zap, Flame, Loader2, Trophy } from "lucide-r
 import { achievementService, Achievement } from "@/services/achievementService";
 import EditProfileForm from "@/components/ui/EditProfileForm";
 
+function AchievementIcon({ iconUrl, name }: { iconUrl?: string | null; name: string }) {
+  const [failed, setFailed] = useState(false);
+
+  if (iconUrl && !failed) {
+    return (
+      <img
+        src={iconUrl}
+        alt={name}
+        className="w-6 h-6 object-contain"
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+
+  return <Trophy className="w-4 h-4 text-amber-500" />;
+}
+
 export default function ProfileComponent() {
   const { user, loading } = useCurrentUser();
   const [imgError, setImgError] = useState(false);
@@ -127,12 +144,8 @@ export default function ProfileComponent() {
                   <div className="grid grid-cols-2 gap-2">
                     {achievements.map((ach) => (
                       <div key={ach.id} className="flex items-center gap-2.5 bg-amber-50 border border-amber-100 rounded-2xl p-3">
-                        <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 text-lg">
-                          {ach.icon_url ? (
-                            <img src={ach.icon_url} alt={ach.name} className="w-6 h-6 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                          ) : (
-                            <Trophy className="w-4 h-4 text-amber-500" />
-                          )}
+                        <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                          <AchievementIcon iconUrl={ach.icon_url} name={ach.name} />
                         </div>
                         <div className="min-w-0">
                           <p className="text-[11px] font-bold text-[#00172e] leading-tight truncate">{ach.name}</p>

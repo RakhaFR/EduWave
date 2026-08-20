@@ -68,11 +68,11 @@ export default function PelajarLeaderboardPage() {
             rank: item.rank || index + 1,
             name: fullName,
             xp: item.xp !== undefined ? item.xp : item.total_xp || 0,
-            streak: userObj.streak_days || item.streak_days || 0,
-            courses: userObj.completed_courses || item.completed_courses || 0,
+            streak: userObj.streak_days ?? item.streak_days ?? item.streak ?? 0,
+            courses: userObj.completed_courses ?? item.completed_courses ?? item.completed_courses_count ?? userObj.completed_courses_count ?? 0,
             avatar: fullName[0].toUpperCase(),
             avatarUrl: userObj.avatar_url || userObj.profile_photo_path || userObj.image || null,
-            change: item.rank_change || 0,
+            change: item.rank_change ?? item.change ?? 0,
             me: userObj.id === currentUser?.id,
           };
         });
@@ -107,11 +107,11 @@ export default function PelajarLeaderboardPage() {
             rank: item.rank || (page - 1) * perPage + index + 1,
             name: fullName,
             xp: item.xp !== undefined ? item.xp : item.total_xp || 0,
-            streak: userObj.streak_days || item.streak_days || 0,
-            courses: userObj.completed_courses || item.completed_courses || 0,
+            streak: userObj.streak_days ?? item.streak_days ?? item.streak ?? 0,
+            courses: userObj.completed_courses ?? item.completed_courses ?? item.completed_courses_count ?? userObj.completed_courses_count ?? 0,
             avatar: fullName[0].toUpperCase(),
             avatarUrl: userObj.avatar_url || userObj.profile_photo_path || userObj.image || null,
-            change: item.rank_change || 0,
+            change: item.rank_change ?? item.change ?? 0,
             me: userObj.id === currentUser?.id,
           };
         });
