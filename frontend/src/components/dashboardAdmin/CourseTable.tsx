@@ -165,7 +165,15 @@ export default function CourseTable({
                           <Users className="w-3 h-3" /> {c.enrolled_count}
                         </span>
                       </td>
-                      <td className="py-3.5 px-5 text-center font-semibold text-[#00172e]">{c.lesson_count}</td>
+                      <td className="py-3.5 px-5 text-center">
+                        <Link
+                          href={`/admin/course/${c.id}/lessons`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-all border border-emerald-200 shadow-sm cursor-pointer"
+                        >
+                          <List className="w-3.5 h-3.5" />
+                          <span>{c.lesson_count} Lesson</span>
+                        </Link>
+                      </td>
                       <td className="py-3.5 px-5 text-center">
                         <span
                           className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
@@ -181,13 +189,6 @@ export default function CourseTable({
                       </td>
                       <td className="py-3.5 px-5">
                         <div className="flex items-center justify-center gap-1.5">
-                          <Link
-                            href={`/admin/course/${c.id}/lessons`}
-                            className="px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-600 hover:bg-emerald-50 transition-all flex items-center gap-1 border border-transparent hover:border-emerald-100 cursor-pointer"
-                          >
-                            <List className="w-3.5 h-3.5" />
-                            <span>Lesson</span>
-                          </Link>
                           <button
                             onClick={() => onEditClick(c)}
                             className="px-2.5 py-1 rounded-lg text-xs font-bold text-[#0073e6] hover:bg-blue-50 transition-all flex items-center gap-1 border border-transparent hover:border-blue-100 cursor-pointer"

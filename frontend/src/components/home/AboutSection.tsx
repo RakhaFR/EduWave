@@ -117,7 +117,7 @@ export default function AboutSection() {
               {/* Foto 1 — besar (row-span-2) */}
               <div className="row-span-2 rounded-2xl overflow-hidden bg-[#c9e8ff] relative shadow-md">
                 <Image
-                  src="/ocean-bg3.webp"
+                  src="/about.webp"
                   alt="EduWave foto 1"
                   fill
                   sizes="(max-width: 768px) 45vw, (max-width: 1280px) 22vw, 270px"
@@ -128,7 +128,7 @@ export default function AboutSection() {
               {/* Foto 2 — kanan atas */}
               <div className="rounded-2xl overflow-hidden bg-[#ddf0ff] relative shadow-md">
                 <Image
-                  src="/ocean-bg2.webp"
+                  src="/about2.webp"
                   alt="EduWave foto 2"
                   fill
                   sizes="(max-width: 768px) 45vw, (max-width: 1280px) 22vw, 270px"
@@ -136,10 +136,10 @@ export default function AboutSection() {
                 />
               </div>
 
-              {/* Foto 3 — kanan bawah + badge */}
+              {/* Foto 3 — kanan bawah */}
               <div className="rounded-2xl overflow-hidden bg-[#b8e0ff] relative shadow-md">
                 <Image
-                  src="/ocean-bg.jpg"
+                  src="/about3.webp"
                   alt="EduWave foto 3"
                   fill
                   sizes="(max-width: 768px) 45vw, (max-width: 1280px) 22vw, 270px"

@@ -96,6 +96,7 @@ export default function RegisterPage() {
         password: cleanPassword,
         password_confirmation: cleanConfirmPassword,
         full_name: cleanFullName,
+        role: role === "pengajar" ? "instructor" : "student",
       });
 
       if (res.success && res.data) {

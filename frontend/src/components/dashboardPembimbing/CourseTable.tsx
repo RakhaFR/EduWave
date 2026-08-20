@@ -110,6 +110,7 @@ export default function CourseTable({
               <th className="py-4 px-5">Kategori</th>
               <th className="py-4 px-5 w-28 text-center">Tingkat</th>
               <th className="py-4 px-5 w-24 text-center">Siswa</th>
+              <th className="py-4 px-5 w-28 text-center">Lesson</th>
               <th className="py-4 px-5 w-28 text-center">Status</th>
               <th className="py-4 px-5 w-32 text-center">Aksi</th>
             </tr>
@@ -117,7 +118,7 @@ export default function CourseTable({
           <tbody className="divide-y divide-slate-100">
             {loading ? (
               <tr>
-                <td colSpan={6} className="py-10 text-center">
+                <td colSpan={7} className="py-10 text-center">
                   <Loader2 className="w-6 h-6 animate-spin text-blue-400 mx-auto" />
                 </td>
               </tr>
@@ -140,6 +141,15 @@ export default function CourseTable({
                   </td>
                   <td className="py-3.5 px-5 text-center font-semibold text-[#00172e]">{c.enrolled_count}</td>
                   <td className="py-3.5 px-5 text-center">
+                    <Link
+                      href={`/pembimbing/course/${c.id}/lessons`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-all border border-emerald-200 shadow-sm cursor-pointer"
+                    >
+                      <List className="w-3.5 h-3.5" />
+                      <span>{c.lesson_count ?? 0} Lesson</span>
+                    </Link>
+                  </td>
+                  <td className="py-3.5 px-5 text-center">
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                         c.status === "published"
@@ -154,13 +164,6 @@ export default function CourseTable({
                   </td>
                   <td className="py-3.5 px-5">
                     <div className="flex items-center justify-center gap-1.5">
-                      <Link
-                        href={`/pembimbing/course/${c.id}/lessons`}
-                        className="px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-600 hover:bg-emerald-50 transition-all flex items-center gap-1 border border-transparent hover:border-emerald-100 cursor-pointer"
-                      >
-                        <List className="w-3.5 h-3.5" />
-                        <span>Lesson</span>
-                      </Link>
                       <button
                         onClick={() => onEditClick(c)}
                         className="px-2.5 py-1 rounded-lg text-xs font-bold text-[#0073e6] hover:bg-blue-50 transition-all flex items-center gap-1 border border-transparent hover:border-blue-100 cursor-pointer"
@@ -181,7 +184,7 @@ export default function CourseTable({
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-slate-400 font-medium">
+                <td colSpan={7} className="py-8 text-center text-slate-400 font-medium">
                   Tidak ada data kursus yang sesuai.
                 </td>
               </tr>
