@@ -87,9 +87,12 @@ export default function EditProfileForm() {
       const apiError = error as { response?: { status?: number; data?: { error?: { code?: string; message?: string } } } };
       const errorCode = apiError.response?.data?.error?.code;
       const errorMessage = apiError.response?.data?.error?.message;
-      const text = errorCode === "INVALID_CURRENT_PASSWORD"
+      const usernameChanged = form.username.trim() !== "" && form.username.trim() !== user.username;
+      const emailChanged = form.email.trim() !== "" && form.email.trim() !== user.email;
+      const credentialsChanged = usernameChanged || emailChanged;
+      const text = errorCode === "INVALID_CURRENT_PASSWORD" || (credentialsChanged && Boolean(form.current_password))
         ? "Password yang anda masukkan salah"
-        : errorCode === "CURRENT_PASSWORD_REQUIRED" || apiError.response?.status === 422
+        : errorCode === "CURRENT_PASSWORD_REQUIRED" || (credentialsChanged && !form.current_password)
         ? "Mohon masukkan password jika anda mengubah email dan/atau username anda"
         : errorMessage || (error instanceof Error ? error.message : "Gagal menyimpan profil.");
       setMessage({ text, type: "error" });
