@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronRight, Clock, Users, Lock, LogIn, BookOpen } from "lucide-react";
 import PublicLayout from "@/components/home/PublicLayout";
 import { courseService, Course } from "@/services/courseService";
+import { GridSkeleton } from "@/components/ui/PageSkeleton";
 
 export default function CoursePublicPage() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -48,9 +49,7 @@ export default function CoursePublicPage() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
-          </div>
+          <div className="rounded-2xl bg-white/20 p-4"><GridSkeleton count={6} /></div>
         ) : previewCourses.length === 0 ? (
           <div className="bg-white/90 backdrop-blur-md rounded-2xl p-8 text-center max-w-md mx-auto my-12">
             <BookOpen className="w-12 h-12 text-[#008be3] mx-auto mb-3 opacity-60" />

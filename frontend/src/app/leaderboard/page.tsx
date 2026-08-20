@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Trophy, Medal, Crown, ChevronUp, ChevronDown, Minus, Lock, LogIn, ChevronRight } from "lucide-react";
 import PublicLayout from "@/components/home/PublicLayout";
 import { courseService } from "@/services/courseService";
+import { ListSkeleton } from "@/components/ui/PageSkeleton";
 
 interface LeaderboardUser {
   rank: number;
@@ -80,9 +81,7 @@ export default function LeaderboardPublicPage() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
-          </div>
+          <div className="rounded-3xl bg-white/20 p-5"><ListSkeleton count={7} /></div>
         ) : users.length === 0 ? (
           <div className="bg-white rounded-3xl p-8 text-center text-slate-500 mb-6">
             Belum ada data peringkat.

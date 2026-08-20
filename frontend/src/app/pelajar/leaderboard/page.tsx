@@ -5,6 +5,7 @@ import { Trophy, Medal, Crown, Flame, Star, ChevronUp, ChevronDown, Minus, Chevr
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { courseService } from "@/services/courseService";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { ListSkeleton } from "@/components/ui/PageSkeleton";
 
 type Period = "minggu" | "semua";
 
@@ -233,9 +234,7 @@ export default function PelajarLeaderboardPage() {
 
         {/* Tabel Peringkat */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
-          </div>
+          <div className="rounded-3xl bg-white/10 p-5"><ListSkeleton count={7} /></div>
         ) : leaderboard.length === 0 ? (
           <div className="bg-white rounded-3xl p-8 text-center text-slate-500">
             Belum ada data peringkat.

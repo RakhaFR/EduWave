@@ -11,6 +11,7 @@ import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { courseService, Course } from "@/services/courseService";
 import { mascotService, InventoryMascot } from "@/services/mascotService";
+import { DashboardContentSkeleton } from "@/components/ui/PageSkeleton";
 
 const LEADERBOARD = [
   { rank: 4, name: "Rasya Raya Agung", xp: 3200, me: true  },
@@ -133,6 +134,10 @@ export default function DashboardHome() {
 
   const completedCount = myCourses.filter((c) => c.progress_pct >= 100).length;
 
+  if (loadingCourses) {
+    return <DashboardLayout searchPlaceholder="Search..."><main className="px-4 md:px-8 py-4 md:py-6"><DashboardContentSkeleton /></main></DashboardLayout>;
+  }
+
   return (
     <DashboardLayout searchPlaceholder="Search...">
       <main className="px-4 md:px-8 py-4 md:py-6 flex flex-col gap-6">
@@ -178,11 +183,7 @@ export default function DashboardHome() {
               </Link>
             </div>
 
-            {loadingCourses ? (
-              <div className="bg-white rounded-2xl p-8 flex items-center justify-center">
-                <div className="w-8 h-8 border-4 border-[#008be3] border-t-transparent rounded-full animate-spin" />
-              </div>
-            ) : myCourses.length === 0 ? (
+             {myCourses.length === 0 ? (
               <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
                 <BookOpen className="w-10 h-10 text-[#008be3] mx-auto mb-2 opacity-50" />
                 <p className="text-xs font-semibold text-slate-600 mb-3">Anda belum mengikuti kursus apapun.</p>
