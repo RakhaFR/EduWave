@@ -167,6 +167,8 @@ export const courseService = {
 
   async completeLesson(lessonId: string, watchSeconds: number = 0) {
     const response = await api.post(`/lessons/${lessonId}/complete`, { watch_seconds: watchSeconds });
+    invalidateCache("course-progress");
+    invalidateCache("courses:");
     return response.data;
   },
 

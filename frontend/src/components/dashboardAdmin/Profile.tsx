@@ -44,27 +44,6 @@ export default function AdminProfileComponent() {
               </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-3 gap-3 pt-2">
-              <div className="bg-blue-50/80 p-3 rounded-2xl text-center border border-blue-100">
-                <Award className="w-5 h-5 mx-auto text-blue-600 mb-1" />
-                <p className="text-[10px] text-slate-500 font-medium">Level</p>
-                <p className="text-base font-extrabold text-blue-900">{user?.level ?? 1}</p>
-              </div>
-
-              <div className="bg-amber-50/80 p-3 rounded-2xl text-center border border-amber-100">
-                <Zap className="w-5 h-5 mx-auto text-amber-500 mb-1" />
-                <p className="text-[10px] text-slate-500 font-medium">XP</p>
-                <p className="text-base font-extrabold text-amber-800">{user?.xp ?? 0}</p>
-              </div>
-
-              <div className="bg-teal-50/80 p-3 rounded-2xl text-center border border-teal-100">
-                <Shield className="w-5 h-5 mx-auto text-teal-600 mb-1" />
-                <p className="text-[10px] text-slate-500 font-medium">Mutiara</p>
-                <p className="text-base font-extrabold text-teal-900">{user?.pearls ?? 0}</p>
-              </div>
-            </div>
-
             <EditProfileForm />
 
             {/* Account details */}

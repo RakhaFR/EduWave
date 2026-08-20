@@ -52,14 +52,14 @@ export default function PelajarLessonDetailPage() {
         const lessonData = response.data?.lesson ?? response.lesson ?? response.data ?? response;
         setLesson(lessonData);
 
-        // Check completion status from lessonData or user progress
-        let completed = Boolean(lessonData.is_completed);
-        if (!completed && progressRes?.success && progressRes.data?.completed_lessons) {
-          const completedIds = new Set(progressRes.data.completed_lessons.map((l: any) => l.lesson_id || l.id || l));
-          if (completedIds.has(params.id)) {
-            completed = true;
-          }
-        }
+        // Check completion status from localStorage backup + progressRes + lessonData
+        const localCompleted = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("completed_lesson_ids") || "[]") : [];
+        const completedIds = new Set([
+          ...localCompleted,
+          ...(progressRes?.success && progressRes.data?.completed_lessons ? progressRes.data.completed_lessons.map((l: any) => l.lesson_id || l.id || l) : []),
+        ]);
+
+        const completed = Boolean(lessonData.is_completed) || completedIds.has(params.id);
         setIsCompleted(completed);
 
         if (lessonData.course_id) {
@@ -70,12 +70,7 @@ export default function PelajarLessonDetailPage() {
 
           // Mark completed status on course lessons list
           const rawLessons: Lesson[] = courseData?.lessons ?? [];
-          if (progressRes?.success && progressRes.data?.completed_lessons) {
-            const completedIds = new Set(progressRes.data.completed_lessons.map((l: any) => l.lesson_id || l.id || l));
-            setCourseLessons(rawLessons.map((l) => ({ ...l, is_completed: l.is_completed || completedIds.has(l.id) })));
-          } else {
-            setCourseLessons(rawLessons);
-          }
+          setCourseLessons(rawLessons.map((l) => ({ ...l, is_completed: l.is_completed || completedIds.has(l.id) })));
         }
       } catch (err: any) {
         if (err?.response?.status === 403 || err?.response?.data?.error?.code === "LESSON_LOCKED") {
@@ -98,6 +93,15 @@ export default function PelajarLessonDetailPage() {
       await courseService.completeLesson(lesson.id);
       setIsCompleted(true);
       setCourseLessons((prev) => prev.map((l) => l.id === lesson.id ? { ...l, is_completed: true } : l));
+
+      // Save to localStorage completed IDs backup
+      if (typeof window !== "undefined") {
+        const localCompleted = JSON.parse(localStorage.getItem("completed_lesson_ids") || "[]");
+        if (!localCompleted.includes(lesson.id)) {
+          localCompleted.push(lesson.id);
+          localStorage.setItem("completed_lesson_ids", JSON.stringify(localCompleted));
+        }
+      }
     } catch (err: any) {
       setMessage(err?.response?.data?.message || "Gagal menyelesaikan lesson.");
     } finally {
