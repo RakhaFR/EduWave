@@ -47,6 +47,10 @@ Render asks for each variable marked as a secret. Enter:
 | `DB_USERNAME` | TiDB username from its Connect dialog |
 | `DB_PASSWORD` | TiDB password from its Connect dialog |
 | `REDIS_URL` | Upstash **Redis Connect** URL beginning with `rediss://` |
+| `REVERB_APP_ID` | Random numeric ID, e.g. `100001` |
+| `REVERB_APP_KEY` | Random alphanumeric string for Reverb key |
+| `REVERB_APP_SECRET` | Random alphanumeric secret for Reverb |
+| `REVERB_HOST` | The domain of your backend, e.g. `eduwave-backend-rxah.onrender.com` |
 
 Do not change `DB_PORT`; `render.yaml` sets it to `4000`.
 

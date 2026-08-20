@@ -49,7 +49,19 @@ services:
       - key: FILESYSTEM_DISK
         value: public
       - key: BROADCAST_CONNECTION
-        value: log
+        value: reverb
+      - key: REVERB_APP_ID
+        sync: false
+      - key: REVERB_APP_KEY
+        sync: false
+      - key: REVERB_APP_SECRET
+        sync: false
+      - key: REVERB_HOST
+        sync: false
+      - key: REVERB_PORT
+        value: "443"
+      - key: REVERB_SCHEME
+        value: https
       - key: REDIS_CLIENT
         value: predis
       - key: REDIS_URL
