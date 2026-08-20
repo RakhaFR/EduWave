@@ -8,6 +8,7 @@ interface AdminContextType {
   courses: Course[];
   setCourses: React.Dispatch<React.SetStateAction<Course[]>>;
   coursesLoading: boolean;
+  dataLoading: boolean;
   refreshCourses: () => void;
   users: UserType[];
   setUsers: React.Dispatch<React.SetStateAction<UserType[]>>;
@@ -27,6 +28,7 @@ const AdminContext = createContext<AdminContextType | undefined>(undefined);
 export function AdminProvider({ children }: { children: React.ReactNode }) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [coursesLoading, setCoursesLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
   const [users, setUsers] = useState<UserType[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
@@ -101,6 +103,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       showToast("Gagal memuat data dari server.", "error");
     } finally {
       setCoursesLoading(false);
+      setDataLoading(false);
     }
   }, []);
 
@@ -114,6 +117,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         courses,
         setCourses,
         coursesLoading,
+        dataLoading,
         refreshCourses,
         users,
         setUsers,

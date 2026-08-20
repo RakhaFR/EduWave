@@ -8,6 +8,7 @@ interface PembimbingContextType {
   courses: PembimbingCourse[];
   setCourses: React.Dispatch<React.SetStateAction<PembimbingCourse[]>>;
   coursesLoading: boolean;
+  dataLoading: boolean;
   refreshCourses: () => void;
   refreshExams: () => void;
   exams: Exam[];
@@ -23,6 +24,8 @@ const PembimbingContext = createContext<PembimbingContextType | undefined>(undef
 export function PembimbingProvider({ children }: { children: React.ReactNode }) {
   const [courses, setCourses] = useState<PembimbingCourse[]>([]);
   const [coursesLoading, setCoursesLoading] = useState(true);
+  const [examsLoading, setExamsLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
   const [exams, setExams] = useState<Exam[]>([]);
   const [searchGlobal, setSearchGlobal] = useState("");
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -47,6 +50,7 @@ export function PembimbingProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   const refreshExams = useCallback(async () => {
+    setExamsLoading(true);
     try {
       const res = await pembimbingService.getMyExams();
       if (res.success && Array.isArray(res.data)) {
@@ -54,12 +58,13 @@ export function PembimbingProvider({ children }: { children: React.ReactNode }) 
       }
     } catch {
       showToast("Gagal memuat data ujian dari server.", "error");
+    } finally {
+      setExamsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    refreshCourses();
-    refreshExams();
+    Promise.all([refreshCourses(), refreshExams()]).finally(() => setDataLoading(false));
   }, [refreshCourses, refreshExams]);
 
   return (
@@ -68,6 +73,7 @@ export function PembimbingProvider({ children }: { children: React.ReactNode }) 
         courses,
         setCourses,
         coursesLoading,
+        dataLoading,
         refreshCourses,
         refreshExams,
         exams,

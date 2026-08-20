@@ -16,6 +16,7 @@ import FloatingBubbles from "@/components/ui/FloatingBubbles";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import { usePembimbing } from "./PembimbingContext";
+import DashboardSkeleton from "@/components/ui/DashboardSkeleton";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -24,12 +25,14 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { searchGlobal, setSearchGlobal, toast, showToast } = usePembimbing();
+  const { searchGlobal, setSearchGlobal, toast, showToast, dataLoading } = usePembimbing();
 
   const isActive = (href: string) => {
     if (href === "/pembimbing") return pathname === "/pembimbing";
     return pathname.startsWith(href);
   };
+
+  if (dataLoading) return <DashboardSkeleton />;
 
   return (
     <div className="min-h-screen font-sans flex flex-col md:flex-row bg-[#0073e6] text-[#00172e] relative overflow-x-hidden select-none items-stretch">
