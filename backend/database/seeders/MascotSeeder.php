@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\Mascot;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Storage;
 
 class MascotSeeder extends Seeder
 {
@@ -26,6 +25,10 @@ class MascotSeeder extends Seeder
 
         Mascot::query()->delete();
 
+        // Build base storage URL from APP_URL (includes port for local dev, domain only for production)
+        $appUrl = rtrim(config('app.url'), '/');
+        $storageBase = $appUrl.'/storage';
+
         foreach ($colors as $colorIndex => $color) {
             $index = array_search($colorIndex, array_keys($colors), true) + 1;
 
@@ -33,7 +36,7 @@ class MascotSeeder extends Seeder
                 Mascot::create([
                     'id' => sprintf('1000000%d-0000-4000-8000-%012d', $index, $level),
                     'name' => "Ubur-ubur {$color} {$level}",
-                    'avatar_url' => Storage::disk('public')->url("mascots/{$colorIndex}/level-{$level}.webp"),
+                    'avatar_url' => "{$storageBase}/mascots/{$colorIndex}/level-{$level}.webp",
                     'description' => "Ubur-ubur {$color} level {$level} yang menemani perjalanan belajar di EduWave.",
                     'unlock_cost' => $price,
                     'rarity' => $rarities[$level],
