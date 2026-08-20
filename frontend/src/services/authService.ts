@@ -7,7 +7,6 @@ export interface RegisterPayload {
   password: string;
   password_confirmation: string;
   full_name: string;
-  role: "student" | "instructor";
 }
 
 export interface LoginPayload {
