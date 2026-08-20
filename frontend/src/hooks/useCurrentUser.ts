@@ -36,6 +36,7 @@ async function doFetch(): Promise<UserProfile | null> {
       const res2 = await authService.getAuthMe();
       if (res2.success && res2.data?.user) {
         cachedUser = res2.data.user;
+        cachedToken = token;
         storeUser(res2.data.user);
         return res2.data.user;
       }
@@ -51,9 +52,11 @@ async function doFetch(): Promise<UserProfile | null> {
     }
     return null;
   })();
-  const result = await fetchPromise;
-  fetchPromise = null;
-  return result;
+  try {
+    return await fetchPromise;
+  } finally {
+    fetchPromise = null;
+  }
 }
 
 export function clearUserCache() {

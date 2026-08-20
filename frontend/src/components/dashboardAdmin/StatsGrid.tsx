@@ -1,29 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { User, BookOpen, GraduationCap, UserPlus } from "lucide-react";
-import { adminService, AdminAnalytics } from "@/services/adminService";
+import { useAdmin } from "./AdminContext";
 
 interface StatsGridProps {
   totalCourses?: number;
 }
 
 export default function StatsGrid({ totalCourses }: StatsGridProps) {
-  const [analytics, setAnalytics] = useState<AdminAnalytics | null>(null);
-
-  useEffect(() => {
-    async function loadStats() {
-      try {
-        const res = await adminService.getAnalyticsOverview();
-        if (res.success && res.data) {
-          setAnalytics(res.data);
-        }
-      } catch {
-        // fallback
-      }
-    }
-    loadStats();
-  }, []);
+  const { analytics } = useAdmin();
 
   const studentsCount = analytics?.users?.students ?? 0;
   const coursesCount = analytics?.courses?.total ?? totalCourses ?? 0;

@@ -1,4 +1,5 @@
 import { api } from "@/lib/axios";
+import { cachedRequest, invalidateCache } from "@/lib/requestCache";
 
 export interface MascotItem {
   id: string;
@@ -19,25 +20,30 @@ export interface InventoryMascot extends MascotItem {
 
 export const mascotService = {
   async getCatalog() {
-    const response = await api.get("/mascots");
-    return response.data as {
+    return cachedRequest("mascots:catalog", async () => {
+      const response = await api.get("/mascots");
+      return response.data as {
       success: boolean;
       data: { mascots: MascotItem[]; count: number } | null;
       error: { code: string; message: string } | null;
-    };
+      };
+    });
   },
 
   async getInventory() {
-    const response = await api.get("/mascots/inventory");
-    return response.data as {
+    return cachedRequest("mascots:inventory", async () => {
+      const response = await api.get("/mascots/inventory");
+      return response.data as {
       success: boolean;
       data: { mascots: InventoryMascot[]; count: number } | null;
       error: { code: string; message: string } | null;
-    };
+      };
+    });
   },
 
   async purchase(mascotId: string) {
     const response = await api.post(`/mascots/${mascotId}/purchase`);
+    invalidateCache("mascots:");
     return response.data as {
       success: boolean;
       data: { mascot: MascotItem; pearls_spent: number; pearls_remaining: number } | null;
@@ -47,6 +53,7 @@ export const mascotService = {
 
   async equip(mascotId: string, accessories: Record<string, string>) {
     const response = await api.put("/mascots/equip", { mascot_id: mascotId, accessories });
+    invalidateCache("mascots:");
     return response.data as {
       success: boolean;
       data: { mascot_id: string; name: string; avatar_url: string; is_active: boolean } | null;

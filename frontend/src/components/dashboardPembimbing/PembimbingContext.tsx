@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { PembimbingCourse, Exam } from "./types";
 import { pembimbingService } from "@/services/pembimbingService";
 
@@ -30,10 +30,10 @@ export function PembimbingProvider({ children }: { children: React.ReactNode }) 
   const [searchGlobal, setSearchGlobal] = useState("");
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  const showToast = (message: string, type: "success" | "error" = "success") => {
+  const showToast = useCallback((message: string, type: "success" | "error" = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
-  };
+  }, []);
 
   const refreshCourses = useCallback(async () => {
     setCoursesLoading(true);
@@ -67,23 +67,13 @@ export function PembimbingProvider({ children }: { children: React.ReactNode }) 
     Promise.all([refreshCourses(), refreshExams()]).finally(() => setDataLoading(false));
   }, [refreshCourses, refreshExams]);
 
+  const contextValue = useMemo(() => ({
+    courses, setCourses, coursesLoading, dataLoading, refreshCourses, refreshExams,
+    exams, setExams, searchGlobal, setSearchGlobal, toast, showToast,
+  }), [courses, coursesLoading, dataLoading, refreshCourses, refreshExams, exams, searchGlobal, toast, showToast]);
+
   return (
-    <PembimbingContext.Provider
-      value={{
-        courses,
-        setCourses,
-        coursesLoading,
-        dataLoading,
-        refreshCourses,
-        refreshExams,
-        exams,
-        setExams,
-        searchGlobal,
-        setSearchGlobal,
-        toast,
-        showToast,
-      }}
-    >
+    <PembimbingContext.Provider value={contextValue}>
       {children}
     </PembimbingContext.Provider>
   );

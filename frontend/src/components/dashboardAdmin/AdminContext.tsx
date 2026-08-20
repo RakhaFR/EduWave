@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { Course, UserType, Category, Registration } from "./types";
 import { adminService, AdminAnalytics } from "@/services/adminService";
 
@@ -36,10 +36,10 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   const [searchGlobal, setSearchGlobal] = useState("");
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  const showToast = (message: string, type: "success" | "error" = "success") => {
+  const showToast = useCallback((message: string, type: "success" | "error" = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
-  };
+  }, []);
 
   const refreshCourses = useCallback(async () => {
     setCoursesLoading(true);
@@ -111,27 +111,14 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     refreshCourses();
   }, [refreshCourses]);
 
+  const contextValue = useMemo(() => ({
+    courses, setCourses, coursesLoading, dataLoading, refreshCourses, users, setUsers,
+    categories, setCategories, registrations, setRegistrations, analytics, searchGlobal,
+    setSearchGlobal, toast, showToast,
+  }), [courses, coursesLoading, dataLoading, refreshCourses, users, categories, registrations, analytics, searchGlobal, toast, showToast]);
+
   return (
-    <AdminContext.Provider
-      value={{
-        courses,
-        setCourses,
-        coursesLoading,
-        dataLoading,
-        refreshCourses,
-        users,
-        setUsers,
-        categories,
-        setCategories,
-        registrations,
-        setRegistrations,
-        analytics,
-        searchGlobal,
-        setSearchGlobal,
-        toast,
-        showToast,
-      }}
-    >
+    <AdminContext.Provider value={contextValue}>
       {children}
     </AdminContext.Provider>
   );

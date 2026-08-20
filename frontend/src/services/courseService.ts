@@ -1,4 +1,5 @@
 import { api } from "@/lib/axios";
+import { cachedRequest, invalidateCache } from "@/lib/requestCache";
 
 export interface Instructor {
   id: string;
@@ -121,8 +122,11 @@ export interface ExamAttemptHistory {
 
 export const courseService = {
   async getAllCourses(params?: { category?: string; difficulty?: string; search?: string; sort?: string }) {
-    const response = await api.get("/courses", { params });
-    return response.data;
+    const cacheKey = `courses:${JSON.stringify(params ?? {})}`;
+    return cachedRequest(cacheKey, async () => {
+      const response = await api.get("/courses", { params });
+      return response.data;
+    });
   },
 
   async getCourseById(id: string) {
@@ -132,11 +136,15 @@ export const courseService = {
 
   async enrollCourse(courseId: string) {
     const response = await api.post(`/courses/${courseId}/enroll`);
+    invalidateCache("courses:");
+    invalidateCache("course-progress");
     return response.data;
   },
 
   async unenrollCourse(courseId: string) {
     const response = await api.delete(`/courses/${courseId}/enroll`);
+    invalidateCache("courses:");
+    invalidateCache("course-progress");
     return response.data;
   },
 
@@ -146,8 +154,10 @@ export const courseService = {
   },
 
   async getUserCourseProgress() {
-    const response = await api.get('/users/me/course-progress');
-    return response.data;
+    return cachedRequest("course-progress:me", async () => {
+      const response = await api.get('/users/me/course-progress');
+      return response.data;
+    });
   },
 
   async getLessonById(lessonId: string) {
@@ -186,8 +196,10 @@ export const courseService = {
   },
 
   async getLeaderboard(limit: number = 50, page: number = 1) {
-    const response = await api.get("/leaderboard", { params: { limit, per_page: limit, page } });
-    return response.data;
+    return cachedRequest(`leaderboard:${limit}:${page}`, async () => {
+      const response = await api.get("/leaderboard", { params: { limit, per_page: limit, page } });
+      return response.data;
+    });
   },
 
   async getWeeklyLeaderboard(limit: number = 50, page: number = 1) {
