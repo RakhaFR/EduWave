@@ -13,6 +13,27 @@ import { CardSkeleton, ListSkeleton } from "@/components/ui/PageSkeleton";
 
 type Tab = "ringkasan" | "kalkulasi" | "pencapaian";
 
+function AchievementIcon({ iconUrl, name, isEarned = true }: { iconUrl?: string | null; name: string; isEarned?: boolean }) {
+  const [failed, setFailed] = useState(false);
+
+  if (iconUrl && !failed) {
+    return (
+      <img
+        src={iconUrl}
+        alt={name}
+        className={`w-7 h-7 object-contain ${!isEarned ? "grayscale opacity-60" : ""}`}
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isEarned ? "bg-amber-100 text-amber-600" : "bg-slate-200 text-slate-400"}`}>
+      <Trophy className="w-4 h-4" />
+    </div>
+  );
+}
+
 const XP_RULES = [
   { icon: <CheckCircle2 className="w-4 h-4 text-green-500" />, label: "Menyelesaikan Kursus", xp: 500, desc: "Per kursus yang diselesaikan 100%" },
   { icon: <Star className="w-4 h-4 text-amber-400 fill-amber-400" />, label: "Lulus Ujian (≥80%)", xp: 200, desc: "Per ujian dengan nilai minimal 80" },
@@ -106,7 +127,7 @@ export default function ReportComponent() {
   return (
     <DashboardLayout searchPlaceholder="Cari laporan...">
       {claimToast && (
-        <div className={`fixed top-5 right-5 z-50 px-5 py-3 rounded-2xl text-sm font-semibold shadow-xl transition-all ${claimToast.type === "success" ? "bg-emerald-500 text-white" : "bg-red-500 text-white"}`}>
+        <div className={`fixed top-5 right-5 z-50 px-5 py-3 rounded-2xl text-sm font-semibold shadow-2xl transition-all animate-bounce ${claimToast.type === "success" ? "bg-emerald-500 text-white ring-4 ring-emerald-300/40" : "bg-red-500 text-white ring-4 ring-red-300/40"}`}>
           {claimToast.msg}
         </div>
       )}
@@ -274,12 +295,8 @@ export default function ReportComponent() {
                     <div className="flex flex-col gap-2">
                       {myAchievements.map((ach) => (
                         <div key={ach.id} className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-100 rounded-2xl">
-                          <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-                            {ach.icon_url ? (
-                              <img src={ach.icon_url} alt={ach.name} className="w-7 h-7 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                            ) : (
-                              <Trophy className="w-5 h-5 text-amber-500" />
-                            )}
+                          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0 border border-amber-100">
+                            <AchievementIcon iconUrl={ach.icon_url} name={ach.name} isEarned={true} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-bold text-[#00172e] truncate">{ach.name}</p>
@@ -313,35 +330,52 @@ export default function ReportComponent() {
                         Belum Diraih ({notEarned.length})
                       </p>
                       <div className="flex flex-col gap-2">
-                        {notEarned.map((ach) => (
-                          <div key={ach.id} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-100 rounded-2xl">
-                            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 grayscale opacity-50">
-                              {ach.icon_url ? (
-                                <img src={ach.icon_url} alt={ach.name} className="w-7 h-7 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                              ) : (
-                                <Trophy className="w-5 h-5 text-slate-400" />
-                              )}
+                        {notEarned.map((ach) => {
+                          const currentVal = ach.progress?.current ?? 0;
+                          const targetVal = ach.progress?.target ?? ach.condition_value ?? 1;
+                          const pct = Math.min(100, Math.max(0, Math.round((currentVal / targetVal) * 100)));
+
+                          return (
+                            <div key={ach.id} className="flex flex-col gap-2 p-3 bg-slate-50 border border-slate-100 rounded-2xl transition-all hover:bg-slate-100/60">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-slate-200/60 flex items-center justify-center shrink-0">
+                                  <AchievementIcon iconUrl={ach.icon_url} name={ach.name} isEarned={false} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-bold text-slate-700 truncate">{ach.name}</p>
+                                  <p className="text-[11px] text-slate-400 truncate">{ach.description}</p>
+                                </div>
+                                <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                                  <span className="text-xs font-bold text-amber-500 inline-flex items-center gap-1">
+                                    +{ach.pearls_reward}
+                                    <img src="/pearl.webp" alt="Mutiara" className="w-3.5 h-3.5 object-contain inline-block" />
+                                  </span>
+                                  <button
+                                    onClick={() => handleClaim(ach)}
+                                    disabled={claimingId === ach.id}
+                                    className="px-3 py-1 rounded-full text-xs font-bold bg-[#008be3] text-white hover:bg-[#0078c8] disabled:opacity-50 shadow-sm cursor-pointer transition-all active:scale-95 hover:shadow-md"
+                                  >
+                                    {claimingId === ach.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Klaim"}
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Progress Bar & Value 0/10 */}
+                              <div className="mt-1">
+                                <div className="flex items-center justify-between text-[10px] text-slate-400 font-semibold mb-1">
+                                  <span>Progres</span>
+                                  <span>{currentVal} / {targetVal}</span>
+                                </div>
+                                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-gradient-to-r from-cyan-400 to-[#008be3] rounded-full transition-all duration-500"
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-bold text-slate-500 truncate">{ach.name}</p>
-                              <p className="text-[11px] text-slate-400 truncate">{ach.description}</p>
-                              <p className="text-[10px] text-slate-300 mt-0.5">Target: {ach.condition_value} {ach.condition_type.replace(/_/g, " ")}</p>
-                            </div>
-                            <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                              <span className="text-xs font-semibold text-slate-500 inline-flex items-center gap-1">
-                                +{ach.pearls_reward}
-                                <img src="/pearl.webp" alt="Mutiara" className="w-3.5 h-3.5 object-contain inline-block" />
-                              </span>
-                              <button
-                                onClick={() => handleClaim(ach)}
-                                disabled={claimingId === ach.id}
-                                className="px-3 py-1 rounded-full text-xs font-bold bg-[#008be3] text-white hover:bg-[#0078c8] disabled:opacity-50 shadow-sm cursor-pointer transition-all active:scale-95"
-                              >
-                                {claimingId === ach.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Klaim"}
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   );
