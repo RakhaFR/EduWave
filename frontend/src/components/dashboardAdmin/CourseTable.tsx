@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Plus, Edit, Trash, X, ChevronLeft, ChevronRight, Loader2, BookOpen, Users, Clock, List } from "lucide-react";
+import { Search, Plus, Edit, Trash, X, Loader2, BookOpen, Users, Clock, List } from "lucide-react";
 import { Course } from "./types";
 import Link from "next/link";
+import SmartPagination from "@/components/common/SmartPagination";
 
 interface CourseTableProps {
   courses: Course[];
@@ -67,14 +68,6 @@ export default function CourseTable({
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredCourses.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredCourses, currentPage]);
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -223,48 +216,11 @@ export default function CourseTable({
               <p className="text-xs text-slate-400 font-medium">
                 Menampilkan <span className="font-bold text-slate-700">{Math.min(filteredCourses.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)}-{Math.min(filteredCourses.length, currentPage * ITEMS_PER_PAGE)}</span> dari <span className="font-bold text-slate-700">{filteredCourses.length}</span> kursus
               </p>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={handlePrevPage}
-                  disabled={currentPage === 1}
-                  className={`p-1.5 rounded-lg border text-slate-500 transition-all flex items-center justify-center ${
-                    currentPage === 1
-                      ? "opacity-40 cursor-not-allowed border-slate-100"
-                      : "hover:bg-slate-50 border-slate-200 active:scale-95 cursor-pointer"
-                  }`}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-
-                {Array.from({ length: totalPages }).map((_, i) => {
-                  const pageNum = i + 1;
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`w-8 h-8 rounded-lg border text-xs font-bold transition-all flex items-center justify-center cursor-pointer ${
-                        currentPage === pageNum
-                          ? "bg-[#0073e6] border-[#0073e6] text-white shadow-sm shadow-blue-100"
-                          : "border-slate-200 text-slate-500 hover:bg-slate-50"
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-
-                <button
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages}
-                  className={`p-1.5 rounded-lg border text-slate-500 transition-all flex items-center justify-center ${
-                    currentPage === totalPages
-                      ? "opacity-40 cursor-not-allowed border-slate-100"
-                      : "hover:bg-slate-50 border-slate-200 active:scale-95 cursor-pointer"
-                  }`}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
+              <SmartPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
             </div>
           )}
         </>
