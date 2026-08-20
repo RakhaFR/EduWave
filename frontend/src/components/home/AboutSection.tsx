@@ -110,41 +110,60 @@ export default function AboutSection() {
           data-aos="fade-up"
           className="flex flex-col md:flex-row items-center gap-10 md:gap-16 mb-20"
         >
-          {/* Grid 3 foto */}
+          {/* Grid gambar dengan HP di tengah */}
           <div className="w-full md:w-[45%] shrink-0">
-            <div className="grid grid-cols-2 grid-rows-2 gap-3 h-[340px] sm:h-[380px]">
+            <div className="relative h-[400px] sm:h-[450px]">
+              
+              {/* Background grid 2 kolom x 2 baris */}
+              <div className="grid grid-cols-[1fr_2fr] grid-rows-2 gap-3 h-full">
+                
+                {/* about.webp - kiri penuh (row-span-2, format portrait 9:16) */}
+                <div className="row-span-2 rounded-2xl overflow-hidden bg-[#c9e8ff] relative shadow-md">
+                  <Image
+                    src="/about.webp"
+                    alt="EduWave Mobile"
+                    fill
+                    sizes="(max-width: 768px) 30vw, 15vw"
+                    className="object-cover"
+                  />
+                </div>
 
-              {/* Foto 1 — besar (row-span-2) */}
-              <div className="row-span-2 rounded-2xl overflow-hidden bg-[#c9e8ff] relative shadow-md">
-                <Image
-                  src="/about.webp"
-                  alt="EduWave foto 1"
-                  fill
-                  sizes="(max-width: 768px) 45vw, (max-width: 1280px) 22vw, 270px"
-                  className="object-cover"
-                />
+                {/* about2.webp - kanan atas (landscape 16:9) */}
+                <div className="rounded-2xl overflow-hidden bg-[#ddf0ff] relative shadow-md">
+                  <Image
+                    src="/about2.webp"
+                    alt="EduWave Dashboard"
+                    fill
+                    sizes="(max-width: 768px) 60vw, 30vw"
+                    className="object-cover"
+                  />
+                </div>
+
+                {/* about3.webp - kanan bawah (landscape 16:9) */}
+                <div className="rounded-2xl overflow-hidden bg-[#b8e0ff] relative shadow-md">
+                  <Image
+                    src="/about3.webp"
+                    alt="EduWave Course"
+                    fill
+                    sizes="(max-width: 768px) 60vw, 30vw"
+                    className="object-cover"
+                  />
+                </div>
               </div>
 
-              {/* Foto 2 — kanan atas */}
-              <div className="rounded-2xl overflow-hidden bg-[#ddf0ff] relative shadow-md">
-                <Image
-                  src="/about2.webp"
-                  alt="EduWave foto 2"
-                  fill
-                  sizes="(max-width: 768px) 45vw, (max-width: 1280px) 22vw, 270px"
-                  className="object-cover"
-                />
-              </div>
-
-              {/* Foto 3 — kanan bawah */}
-              <div className="rounded-2xl overflow-hidden bg-[#b8e0ff] relative shadow-md">
-                <Image
-                  src="/about3.webp"
-                  alt="EduWave foto 3"
-                  fill
-                  sizes="(max-width: 768px) 45vw, (max-width: 1280px) 22vw, 270px"
-                  className="object-cover"
-                />
+              {/* HP mockup (mobileAbout.webp) - floating di tengah dengan shadow bulat putih */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-[45%] sm:w-[40%]">
+                {/* Shadow bulat putih di belakang */}
+                <div className="absolute inset-0 -z-10 scale-110 blur-3xl bg-white/80 rounded-full" />
+                <div className="relative aspect-[9/19]">
+                  <Image
+                    src="/mobileAbout.webp"
+                    alt="EduWave Mobile App"
+                    fill
+                    sizes="(max-width: 768px) 45vw, 20vw"
+                    className="object-contain drop-shadow-2xl"
+                  />
+                </div>
               </div>
 
             </div>
