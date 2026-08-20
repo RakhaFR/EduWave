@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Redis;
+use Throwable;
 
 class LeaderboardService
 {
@@ -32,7 +33,7 @@ class LeaderboardService
 
             // Set expiry on weekly key (8 days to cover week transition overlap)
             Redis::expire($weeklyKey, 60 * 60 * 24 * 8);
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             // Redis unavailable (e.g. in test environment) — fail silently
             // The leaderboard will be eventually consistent when Redis recovers
             logger()->warning('LeaderboardService: Redis unavailable, skipping score update.', [

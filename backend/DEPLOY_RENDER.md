@@ -45,12 +45,15 @@ Render asks for each variable marked as a secret. Enter:
 | `DB_DATABASE` | TiDB database name, normally `test` |
 | `DB_USERNAME` | TiDB username from its Connect dialog |
 | `DB_PASSWORD` | TiDB password from its Connect dialog |
+| `REDIS_URL` | Upstash **Redis Connect** URL beginning with `rediss://` |
 
 Do not change `DB_PORT`; `render.yaml` sets it to `4000`.
 
-## 4. Seed the production database once (no Render Shell required)
+## 4. Configure Redis and seed the production database (no Render Shell required)
 
 The Render deployment automatically runs migrations on each deploy. If a deployment stops during migration, fix the failing migration and redeploy; Laravel resumes from the first migration that was not recorded in the `migrations` table.
+
+Before seeding, create the Upstash database described in `SETUP_REDIS.md`, then add its native Redis `rediss://` URL as `REDIS_URL` in Render. Do not use the Upstash REST URL or REST token; Laravel's Redis client requires the Redis Connect URL.
 
 To populate the initial demo data without Render Shell:
 
@@ -61,6 +64,8 @@ To populate the initial demo data without Render Shell:
 5. Immediately set `RUN_SEEDERS` back to `false` and save it.
 
 The seeder uses the production `APP_URL`, so stored mascot URLs use the Render domain. `RUN_SEEDERS` defaults to `false` in `render.yaml`.
+
+If a prior deployment already completed the general seeders but failed at `LeaderboardSeeder`, leave `RUN_SEEDERS=false`. Set `RUN_LEADERBOARD_SEEDER=true`, deploy once, then set it back to `false`. This runs only the leaderboard bootstrap and does not create duplicate demo data.
 
 Do not leave `RUN_SEEDERS=true`: the current demo seeders create sample accounts, courses, lessons, and attempts and must only run against an empty database.
 

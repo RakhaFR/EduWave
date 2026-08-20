@@ -12,6 +12,7 @@ class LeaderboardSeeder extends Seeder
     public function run(): void
     {
         $service = app(LeaderboardService::class);
+
         $weeklyKey = 'leaderboard:weekly:'.now()->format('o-\WW');
 
         Redis::del('leaderboard:global', $weeklyKey);

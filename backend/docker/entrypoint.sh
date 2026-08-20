@@ -18,5 +18,10 @@ if [ "${RUN_SEEDERS:-false}" = "true" ]; then
     php artisan db:seed --force
 fi
 
+if [ "${RUN_LEADERBOARD_SEEDER:-false}" = "true" ]; then
+    echo "==> Seeding leaderboard..."
+    php artisan db:seed --class=LeaderboardSeeder --force
+fi
+
 echo "==> Starting supervisord..."
 exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf

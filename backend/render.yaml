@@ -49,7 +49,11 @@ services:
         value: log
       - key: REDIS_CLIENT
         value: predis
+      - key: REDIS_URL
+        sync: false
       - key: RUN_MIGRATIONS
         value: "true"
       - key: RUN_SEEDERS
+        value: "false"
+      - key: RUN_LEADERBOARD_SEEDER
         value: "false"
