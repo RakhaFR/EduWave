@@ -136,7 +136,6 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
             <div className="relative">
               <button onClick={() => setNotificationsOpen((open) => !open)} className="relative w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20 hover:bg-white/30 transition-colors">
                 <Bell className="w-4 h-4 text-white" />
-                <span className="absolute top-1 right-1 md:top-1.5 md:right-1.5 w-2 h-2 rounded-full bg-red-400" />
               </button>
               {notificationsOpen && <div className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white p-4 shadow-xl z-50 text-slate-700">
                 <p className="text-sm font-bold">Notifikasi</p>
