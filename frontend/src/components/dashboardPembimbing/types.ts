@@ -18,6 +18,7 @@ export interface PembimbingCourse {
   pearls_reward: number;
   created_at: string;
   updated_at: string;
+  lessons?: any[];
 }
 
 export interface Exam {
@@ -29,4 +30,5 @@ export interface Exam {
   passing_score: number;
   max_attempts: number;
   pearls_reward: number;
+  lesson_id?: string | null;
 }

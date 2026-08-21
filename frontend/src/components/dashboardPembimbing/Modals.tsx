@@ -172,7 +172,7 @@ export default function Modals({
               <div className="flex flex-col gap-1.5">
                 <label className="font-bold text-slate-500">Kursus</label>
                 <select value={examForm.course_id}
-                  onChange={(e) => setExamForm({ ...examForm, course_id: e.target.value })}
+                  onChange={(e) => setExamForm({ ...examForm, course_id: e.target.value, lesson_id: "" })}
                   className="w-full px-3 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 bg-white text-slate-700">
                   <option value="">-- Pilih Kursus --</option>
                   {availableCourses.map((c) => (
@@ -180,6 +180,20 @@ export default function Modals({
                   ))}
                 </select>
               </div>
+
+              {examForm.course_id && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-bold text-slate-500">Lesson Terkait (Opsional)</label>
+                  <select value={examForm.lesson_id || ""}
+                    onChange={(e) => setExamForm({ ...examForm, lesson_id: e.target.value || undefined })}
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 bg-white text-slate-700">
+                    <option value="">-- Tanpa Lesson (Ujian Bebas) --</option>
+                    {availableCourses.find((c) => c.id === examForm.course_id)?.lessons?.map((l: any) => (
+                      <option key={l.id} value={l.id}>{l.title}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">

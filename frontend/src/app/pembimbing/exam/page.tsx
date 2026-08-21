@@ -26,6 +26,7 @@ const DEFAULT_EXAM_FORM: PembimbingExamForm = {
   passing_score: 70,
   max_attempts: 3,
   pearls_reward: 0,
+  lesson_id: "",
 };
 
 export default function PembimbingExamPage() {
@@ -56,6 +57,7 @@ export default function PembimbingExamPage() {
       passing_score: exam.passing_score,
       max_attempts: exam.max_attempts,
       pearls_reward: exam.pearls_reward,
+      lesson_id: (exam as any).lesson_id || "",
     });
     setIsExamModalOpen(true);
   };
