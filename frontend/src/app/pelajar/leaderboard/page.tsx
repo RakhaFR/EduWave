@@ -19,6 +19,7 @@ interface LeaderboardUser {
   avatar: string;
   avatarUrl?: string;
   change: number;
+  hasServerChange?: boolean;
   me: boolean;
 }
 
@@ -40,20 +41,8 @@ const formatNumber = (num: number) => {
   return (num || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };
 
-function withLocalRankChanges(users: LeaderboardUser[], scope: Period) {
-  if (typeof window === "undefined") return users;
-  const key = `leaderboard-ranks:${scope}`;
-  let previous: Record<string, number> = {};
-  try { previous = JSON.parse(sessionStorage.getItem(key) || "{}"); } catch { previous = {}; }
-  const next: Record<string, number> = {};
-  const result = users.map((user) => {
-    if (user.id) next[user.id] = user.rank;
-    const serverChange = user.change;
-    const localChange = user.id && previous[user.id] ? previous[user.id] - user.rank : 0;
-    return { ...user, change: serverChange || localChange };
-  });
-  sessionStorage.setItem(key, JSON.stringify(next));
-  return result;
+function withServerRankChanges(users: LeaderboardUser[]) {
+  return users.map((user) => ({ ...user, change: Number.isFinite(user.change) ? user.change : 0 }));
 }
 
 export default function PelajarLeaderboardPage() {
@@ -92,7 +81,7 @@ export default function PelajarLeaderboardPage() {
             me: userObj.id === currentUser?.id || item.user_id === currentUser?.id,
           };
         });
-        setTop3(withLocalRankChanges(formattedTop3, period));
+        setTop3(withServerRankChanges(formattedTop3));
       } catch (err) {
         console.error("Gagal memuat top 3:", err);
       }
@@ -132,7 +121,7 @@ export default function PelajarLeaderboardPage() {
           };
         });
 
-        setLeaderboard(withLocalRankChanges(formattedList, period));
+        setLeaderboard(withServerRankChanges(formattedList));
 
         if (meRes?.data) {
           const userRank = meRes.data.user_rank;
