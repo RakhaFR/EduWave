@@ -139,8 +139,13 @@ export const adminService = {
     return response.data;
   },
 
-  async updateUserRole(id: string, role: string) {
+  async updateUserRole(id: string, role: "student" | "instructor" | "admin") {
     const response = await api.put(`/admin/users/${id}/role`, { role });
+    return response.data;
+  },
+
+  async getUserGamification(id: string) {
+    const response = await api.get(`/admin/users/${id}/gamification`);
     return response.data;
   },
 

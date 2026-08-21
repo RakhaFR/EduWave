@@ -12,6 +12,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { courseService, Course } from "@/services/courseService";
 import { mascotService, InventoryMascot } from "@/services/mascotService";
 import { DashboardContentSkeleton } from "@/components/ui/PageSkeleton";
+import { getStudentRank } from "@/lib/studentRank";
 
 const formatNumber = (num: number) => {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -227,7 +228,7 @@ export default function DashboardHome() {
               <div className="flex items-center justify-between">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">XP Kamu</p>
                 <span className="text-[10px] font-bold bg-[#008be3]/10 text-[#008be3] px-2 py-0.5 rounded-full">
-                  Lv.{userLevel} · Penyelam
+                  Lv.{userLevel} · {getStudentRank(userLevel)}
                 </span>
               </div>
               <div className="flex items-center gap-3">

@@ -55,15 +55,16 @@ export default function AdminUsersPage() {
     if (editingUser) {
       try {
         const isActive = userForm.status === "Aktif";
-        await Promise.all([
-          adminService.updateUser(editingUser.id, {
-            full_name: userForm.name,
-            email: userForm.email,
-            role: backendRole,
-            is_active: isActive,
-          }),
-          adminService.updateUserRole(editingUser.id, backendRole).catch(() => null),
-        ]);
+        await adminService.updateUser(editingUser.id, {
+          full_name: userForm.name,
+          email: userForm.email,
+          is_active: isActive,
+        });
+        const previousRole = editingUser.role === "Admin" ? "admin" : editingUser.role === "Pengajar" ? "instructor" : "student";
+        let roleResponse = null;
+        if (previousRole !== backendRole) {
+          roleResponse = await adminService.updateUserRole(editingUser.id, backendRole);
+        }
 
         // Sync state lokal
         setUsers(
@@ -79,7 +80,14 @@ export default function AdminUsersPage() {
               : u
           )
         );
-        showToast("Pengguna berhasil diperbarui di database server!");
+        const gamificationAction = roleResponse?.data?.gamification_action;
+        const gamification = backendRole === "student" ? await adminService.getUserGamification(editingUser.id).catch(() => null) : null;
+        const actionMessage = gamificationAction === "destroyed"
+          ? " Data gamifikasi lama telah dibersihkan."
+          : gamificationAction === "initialized"
+          ? ` Data gamifikasi baru telah dibuat${gamification?.data ? ` (${gamification.data.xp} XP, ${gamification.data.pearls} Pearls).` : "."}`
+          : "";
+        showToast(`Pengguna berhasil diperbarui di database server!${actionMessage}`);
         refreshCourses();
       } catch (err: any) {
         showToast(err?.response?.data?.error?.message || "Gagal memperbarui pengguna di server.", "error");

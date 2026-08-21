@@ -6,6 +6,7 @@ import {
   Star, Award, CheckCircle2, Loader2,
 } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
+import { getStudentRank } from "@/lib/studentRank";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { achievementService, Achievement } from "@/services/achievementService";
 import { courseService } from "@/services/courseService";
@@ -193,7 +194,7 @@ export default function ReportComponent() {
               {/* Level progress */}
               <div className="mb-2">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-bold text-[#00172e]">Level {userLevel} · Penyelam</span>
+                  <span className="text-xs font-bold text-[#00172e]">Level {userLevel} · {getStudentRank(userLevel)}</span>
                   <span className="text-xs font-semibold text-[#008be3]">{formatNumber(userXP)} / {formatNumber(nextLevelXP)} XP</span>
                 </div>
                 <div className="h-3 rounded-full bg-slate-100 overflow-hidden">
