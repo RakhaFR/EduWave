@@ -1,0 +1,410 @@
+"use client";
+
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Plus, Pencil, Trash2, Loader2, HelpCircle } from "lucide-react";
+import { pembimbingService, ExamQuestion, ExamQuestionForm } from "@/services/pembimbingService";
+import { usePageToast, PageToast } from "@/components/ui/PageToast";
+
+const DEFAULT_QUESTION_FORM: ExamQuestionForm = {
+  question_text: "",
+  type: "multiple_choice",
+  options: ["", "", "", ""],
+  correct_answer: "",
+  explanation: "",
+  points: 10,
+  order: 1,
+};
+
+export default function ExamQuestionsPage() {
+  const params = useParams();
+  const router = useRouter();
+  const examId = params.id as string;
+
+  const [questions, setQuestions] = useState<ExamQuestion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast, showToast, hideToast } = usePageToast();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<ExamQuestion | null>(null);
+  const [formData, setFormData] = useState<ExamQuestionForm>(DEFAULT_QUESTION_FORM);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadQuestions();
+  }, [examId]);
+
+  async function loadQuestions() {
+    setLoading(true);
+    try {
+      const res = await pembimbingService.getExamQuestions(examId);
+      if (res.success && Array.isArray(res.data)) {
+        setQuestions(res.data);
+      } else {
+        setQuestions([]);
+      }
+    } catch {
+      setQuestions([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleOpenAdd() {
+    setEditingQuestion(null);
+    setFormData({
+      ...DEFAULT_QUESTION_FORM,
+      options: ["", "", "", ""],
+      order: questions.length + 1,
+    });
+    setIsModalOpen(true);
+  }
+
+  function handleOpenEdit(q: ExamQuestion) {
+    setEditingQuestion(q);
+    const opts = Array.isArray(q.options) && q.options.length > 0 ? [...q.options] : ["", "", "", ""];
+    setFormData({
+      question_text: q.question_text,
+      type: "multiple_choice",
+      options: opts,
+      correct_answer: q.correct_answer,
+      explanation: q.explanation || "",
+      points: q.points || 10,
+      order: q.order || 1,
+    });
+    setIsModalOpen(true);
+  }
+
+  function handleOptionChange(index: number, val: string) {
+    const nextOpts = [...(formData.options || ["", "", "", ""])];
+    nextOpts[index] = val;
+    setFormData({ ...formData, options: nextOpts });
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!formData.question_text.trim()) {
+      showToast("Pertanyaan tidak boleh kosong!", "error");
+      return;
+    }
+    const cleanOptions = (formData.options || []).map((o) => o.trim()).filter(Boolean);
+    if (cleanOptions.length < 2) {
+      showToast("Minimal 2 pilihan jawaban!", "error");
+      return;
+    }
+    if (!formData.correct_answer.trim()) {
+      showToast("Jawaban benar tidak boleh kosong!", "error");
+      return;
+    }
+
+    setSaveLoading(true);
+    try {
+      const payload: ExamQuestionForm = {
+        question_text: formData.question_text,
+        type: "multiple_choice",
+        options: cleanOptions,
+        correct_answer: formData.correct_answer,
+        explanation: formData.explanation || undefined,
+        points: Number(formData.points) || 10,
+        order: Number(formData.order) || 1,
+      };
+
+      if (editingQuestion) {
+        const res = await pembimbingService.updateExamQuestion(examId, editingQuestion.id, payload);
+        if (res.success) {
+          await loadQuestions();
+          setIsModalOpen(false);
+          showToast("Soal berhasil diperbarui!");
+        } else {
+          showToast("Gagal memperbarui soal.", "error");
+        }
+      } else {
+        const res = await pembimbingService.createExamQuestion(examId, payload);
+        if (res.success) {
+          await loadQuestions();
+          setIsModalOpen(false);
+          showToast("Soal baru berhasil ditambahkan!");
+        } else {
+          showToast("Gagal menambahkan soal.", "error");
+        }
+      }
+    } catch {
+      showToast("Terjadi kesalahan.", "error");
+    } finally {
+      setSaveLoading(false);
+    }
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteConfirm) return;
+    try {
+      await pembimbingService.deleteExamQuestion(examId, deleteConfirm);
+      await loadQuestions();
+      showToast("Soal berhasil dihapus!");
+    } catch {
+      showToast("Gagal menghapus soal.", "error");
+    } finally {
+      setDeleteConfirm(null);
+    }
+  }
+
+  return (
+    <div className="p-6 max-w-6xl mx-auto flex flex-col gap-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => router.back()}
+            className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-5 h-5 text-slate-600" />
+          </button>
+          <div>
+            <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <HelpCircle className="w-5 h-5 text-[#0073e6]" />
+              <span>Kelola Soal Ujian (Pilihan Ganda)</span>
+            </h1>
+            <p className="text-xs text-slate-500 font-mono mt-0.5">Exam ID: {examId}</p>
+          </div>
+        </div>
+
+        <button
+          onClick={handleOpenAdd}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0073e6] hover:bg-[#0052cc] text-white text-xs font-bold shadow-md shadow-blue-200 transition-all cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Tambah Soal</span>
+        </button>
+      </div>
+
+      {/* Content */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20 bg-white rounded-2xl border border-slate-100 shadow-sm">
+          <Loader2 className="w-6 h-6 animate-spin text-[#0073e6]" />
+        </div>
+      ) : questions.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-2xl border border-slate-100 shadow-sm">
+          <p className="text-slate-400 text-sm font-medium">Belum ada soal pada ujian ini.</p>
+          <button
+            onClick={handleOpenAdd}
+            className="mt-3 text-xs font-bold text-[#0073e6] hover:underline cursor-pointer"
+          >
+            + Tambah Soal Pertama
+          </button>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {questions.map((q, idx) => (
+            <div
+              key={q.id}
+              className="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow flex flex-col gap-3"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <span className="w-7 h-7 rounded-lg bg-blue-50 text-[#0073e6] font-bold text-xs flex items-center justify-center shrink-0">
+                    {q.order || idx + 1}
+                  </span>
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-sm sm:text-base">{q.question_text}</h3>
+                    <p className="text-xs text-slate-400 mt-0.5">Poin: {q.points} | Tipe: Pilihan Ganda</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => handleOpenEdit(q)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-[#0073e6] hover:bg-blue-50 transition-colors cursor-pointer"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setDeleteConfirm(q.id)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Options */}
+              {Array.isArray(q.options) && q.options.length > 0 && (
+                <div className="grid sm:grid-cols-2 gap-2 mt-1">
+                  {q.options.map((opt, oIdx) => {
+                    const isCorrect = opt === q.correct_answer;
+                    return (
+                      <div
+                        key={oIdx}
+                        className={`p-2.5 rounded-xl border text-xs font-medium ${
+                          isCorrect
+                            ? "bg-emerald-50 border-emerald-200 text-emerald-800 font-bold"
+                            : "bg-slate-50 border-slate-100 text-slate-600"
+                        }`}
+                      >
+                        <span className="mr-2 font-mono text-slate-400">{String.fromCharCode(65 + oIdx)}.</span>
+                        {opt}
+                        {isCorrect && <span className="ml-2 text-[10px] bg-emerald-200 text-emerald-900 px-1.5 py-0.5 rounded">Jawaban Benar</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {q.explanation && (
+                <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs text-slate-600">
+                  <span className="font-bold text-slate-700">Pembahasan:</span> {q.explanation}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal Add/Edit */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+          <div className="relative bg-white border border-slate-100 rounded-2xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg font-bold text-slate-800 mb-4">
+              {editingQuestion ? "Edit Soal Ujian" : "Tambah Soal Ujian"}
+            </h2>
+
+            <form onSubmit={handleSave} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Pertanyaan</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={formData.question_text}
+                  onChange={(e) => setFormData({ ...formData, question_text: e.target.value })}
+                  placeholder="Masukkan pertanyaan pilihan ganda..."
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm outline-none focus:border-[#0073e6]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Pilihan Jawaban</label>
+                <div className="flex flex-col gap-2">
+                  {(formData.options || ["", "", "", ""]).map((opt, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className="w-6 text-center text-xs font-mono font-bold text-slate-400">
+                        {String.fromCharCode(65 + idx)}
+                      </span>
+                      <input
+                        type="text"
+                        value={opt}
+                        onChange={(e) => handleOptionChange(idx, e.target.value)}
+                        placeholder={`Pilihan ${String.fromCharCode(65 + idx)}`}
+                        className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0073e6]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, correct_answer: opt })}
+                        className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border cursor-pointer ${
+                          formData.correct_answer === opt && opt !== ""
+                            ? "bg-emerald-500 text-white border-emerald-500"
+                            : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
+                        }`}
+                      >
+                        {formData.correct_answer === opt && opt !== "" ? "Kunci" : "Pilih Kunci"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Kunci Jawaban Teks (Persis)</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.correct_answer}
+                  onChange={(e) => setFormData({ ...formData, correct_answer: e.target.value })}
+                  placeholder="Kunci jawaban persis sama dengan salah satu opsi"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0073e6]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Pembahasan (Opsional)</label>
+                <textarea
+                  rows={2}
+                  value={formData.explanation}
+                  onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
+                  placeholder="Penjelasan/pembahasan jawaban..."
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0073e6]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Poin</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={formData.points}
+                    onChange={(e) => setFormData({ ...formData, points: parseInt(e.target.value, 10) || 10 })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0073e6]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Urutan</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={formData.order}
+                    onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value, 10) || 1 })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#0073e6]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={saveLoading}
+                  className="px-4 py-2 rounded-xl bg-[#0073e6] hover:bg-[#0052cc] text-white text-xs font-bold transition-all shadow-md shadow-blue-200 cursor-pointer disabled:opacity-50"
+                >
+                  {saveLoading ? "Menyimpan..." : "Simpan Soal"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Delete */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)} />
+          <div className="relative bg-white border border-slate-100 rounded-2xl shadow-xl p-6 w-full max-w-sm text-center">
+            <h3 className="text-sm font-bold text-slate-800 mb-2">Hapus Soal Ujian?</h3>
+            <p className="text-xs text-slate-500 mb-4">Tindakan ini tidak dapat dibatalkan.</p>
+            <div className="flex justify-center gap-2">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs font-bold cursor-pointer"
+              >
+                Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <PageToast toast={toast} onClose={hideToast} />
+    </div>
+  );
+}

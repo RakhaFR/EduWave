@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Plus, Pencil, Trash2, Video, FileText, HelpCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import { pembimbingService } from "@/services/pembimbingService";
 import { courseService } from "@/services/courseService";
+import { usePageToast, PageToast } from "@/components/ui/PageToast";
 
 interface Lesson {
   id: string;
@@ -33,6 +34,7 @@ export default function PembimbingCourseLessonsPage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast, showToast, hideToast } = usePageToast();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
@@ -68,7 +70,7 @@ export default function PembimbingCourseLessonsPage() {
         setLessons(res.data.lessons || []);
       }
     } catch {
-      alert("Gagal memuat data kursus.");
+      showToast("Gagal memuat data kursus.", "error");
     } finally {
       setLoading(false);
     }
@@ -107,7 +109,7 @@ export default function PembimbingCourseLessonsPage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!formData.title.trim()) {
-      alert("Judul lesson tidak boleh kosong!");
+      showToast("Judul lesson tidak boleh kosong!", "error");
       return;
     }
 
@@ -127,15 +129,15 @@ export default function PembimbingCourseLessonsPage() {
 
       if (editingLesson) {
         await pembimbingService.updateLesson(editingLesson.id, payload);
-        alert("Lesson berhasil diperbarui!");
+        showToast("Lesson berhasil diperbarui!");
       } else {
         await pembimbingService.createLesson(payload);
-        alert("Lesson baru berhasil ditambahkan!");
+        showToast("Lesson baru berhasil ditambahkan!");
       }
       setIsModalOpen(false);
       loadData();
     } catch (err: any) {
-      alert(err?.response?.data?.error?.message || "Terjadi kesalahan.");
+      showToast(err?.response?.data?.error?.message || "Terjadi kesalahan.", "error");
     } finally {
       setSaveLoading(false);
     }
@@ -144,11 +146,11 @@ export default function PembimbingCourseLessonsPage() {
   async function handleDelete(lessonId: string) {
     try {
       await pembimbingService.deleteLesson(lessonId);
-      alert("Lesson berhasil dihapus!");
+      showToast("Lesson berhasil dihapus!");
       setDeleteConfirm(null);
       loadData();
     } catch {
-      alert("Gagal menghapus lesson.");
+      showToast("Gagal menghapus lesson.", "error");
     }
   }
 
@@ -287,6 +289,7 @@ export default function PembimbingCourseLessonsPage() {
           </div>
         </div>
       )}
+      <PageToast toast={toast} onClose={hideToast} />
     </div>
   );
 }

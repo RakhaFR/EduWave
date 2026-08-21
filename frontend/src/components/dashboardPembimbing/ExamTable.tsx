@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Plus, Edit, Trash, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Edit, Trash, X, ChevronLeft, ChevronRight, HelpCircle } from "lucide-react";
+import Link from "next/link";
 import { Exam } from "./types";
 
 interface ExamTableProps {
@@ -96,6 +97,7 @@ export default function ExamTable({
               <th className="py-4 px-5 w-28 text-center">Durasi</th>
               <th className="py-4 px-5 w-24 text-center">Nilai Lulus</th>
               <th className="py-4 px-5 w-24 text-center">Maks. Coba</th>
+              <th className="py-4 px-5 w-28 text-center">Soal</th>
               <th className="py-4 px-5 w-32 text-center">Aksi</th>
             </tr>
           </thead>
@@ -113,6 +115,15 @@ export default function ExamTable({
                   </td>
                   <td className="py-3.5 px-5 text-center font-semibold text-[#00172e]">{e.passing_score}%</td>
                   <td className="py-3.5 px-5 text-center font-semibold text-[#00172e]">{e.max_attempts}x</td>
+                  <td className="py-3.5 px-5 text-center">
+                    <Link
+                      href={`/pembimbing/exam/${e.id}/questions`}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-[#0073e6] hover:bg-blue-100 transition-all border border-blue-200"
+                    >
+                      <HelpCircle className="w-3.5 h-3.5" />
+                      <span>Kelola Soal</span>
+                    </Link>
+                  </td>
                   <td className="py-3.5 px-5">
                     <div className="flex items-center justify-center gap-1.5">
                       <button
@@ -135,7 +146,7 @@ export default function ExamTable({
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-slate-400 font-medium">
+                <td colSpan={7} className="py-8 text-center text-slate-400 font-medium">
                   Tidak ada data ujian. Buat ujian baru di atas.
                 </td>
               </tr>

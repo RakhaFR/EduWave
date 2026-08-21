@@ -89,12 +89,13 @@ export default function PelajarLessonDetailPage() {
     return () => clearInterval(interval);
   }, [isCompleted, params.id]);
 
-  // Scroll listener + persist to localStorage
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+  // Check if content fits in view without scrollbar or check scroll position
+  const checkScrollEligibility = () => {
     if (isCompleted || hasScrolledToBottom) return;
-    const target = e.currentTarget;
-    const isBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
-    if (isBottom) {
+    const el = contentAreaRef.current;
+    if (!el) return;
+    const isBottomOrNoScroll = el.scrollHeight <= el.clientHeight + 150 || el.scrollHeight - el.scrollTop <= el.clientHeight + 150;
+    if (isBottomOrNoScroll) {
       setHasScrolledToBottom(true);
       if (params.id) {
         try {
@@ -104,6 +105,24 @@ export default function PelajarLessonDetailPage() {
         }
       }
     }
+  };
+
+  // Auto check scroll eligibility when lesson content is rendered or window resized
+  useEffect(() => {
+    if (!lesson) return;
+    const timer = setTimeout(() => {
+      checkScrollEligibility();
+    }, 500);
+    window.addEventListener("resize", checkScrollEligibility);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", checkScrollEligibility);
+    };
+  }, [lesson, params.id]);
+
+  // Scroll listener + persist to localStorage
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    checkScrollEligibility();
   };
 
   const isEligibleToComplete = isCompleted || (secondsSpent >= REQUIRED_TIME_SEC && (hasScrolledToBottom || !lesson?.content));
