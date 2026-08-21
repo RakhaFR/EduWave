@@ -268,20 +268,24 @@ export default function PelajarExamPage() {
                   </p>
                 </div>
                 <div className="space-y-2 pl-10">
-                  {q.options.map((opt) => {
-                    const selected = answers[q.id] === opt.key;
+                  {(Array.isArray(q.options) ? q.options : []).map((opt: any, oIdx: number) => {
+                    const optionText = typeof opt === "string" ? opt : opt?.value ?? opt?.text ?? String(opt);
+                    const optionKey = typeof opt === "string" ? opt : opt?.key ?? opt?.value ?? String(opt);
+                    const label = String.fromCharCode(65 + oIdx);
+                    const selected = answers[q.id] === optionKey;
                     return (
                       <button
-                        key={opt.key}
-                        onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: opt.key }))}
-                        className={`w-full text-left rounded-xl border px-4 py-2.5 text-sm transition-colors ${
+                        key={oIdx}
+                        type="button"
+                        onClick={() => setAnswers((prev) => ({ ...prev, [q.id]: optionKey }))}
+                        className={`w-full text-left rounded-xl border px-4 py-2.5 text-sm transition-colors cursor-pointer ${
                           selected
-                            ? "border-[#008be3] bg-[#f0f7ff] font-semibold text-[#008be3]"
+                            ? "border-[#008be3] bg-[#f0f7ff] font-semibold text-[#008be3] ring-1 ring-[#008be3]"
                             : "border-slate-200 bg-slate-50 text-slate-700 hover:border-[#008be3]/40 hover:bg-blue-50"
                         }`}
                       >
-                        <span className="font-bold mr-2">{opt.key}.</span>
-                        {opt.value}
+                        <span className="font-bold mr-2">{label}.</span>
+                        {optionText}
                       </button>
                     );
                   })}
