@@ -80,6 +80,12 @@ export default function LoginPage() {
           localStorage.setItem("token", res.data.token);
         }
         if (res.data.user) {
+          if (res.data.user.is_active === false) {
+            setErrorMsg("Akun anda sedang nonaktif. Silakan hubungi administrator.");
+            localStorage.removeItem("token");
+            clearUserCache();
+            return;
+          }
           localStorage.setItem("user", JSON.stringify(res.data.user));
           const role = res.data.user.role;
           if (role === "admin") {

@@ -52,6 +52,14 @@ export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
           return;
         }
 
+        if (user.is_active === false) {
+          clearUserCache();
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          if (isMounted) router.replace("/auth/login?error=account_inactive");
+          return;
+        }
+
         localStorage.setItem("user", JSON.stringify(user));
 
         if (allowedRoles && allowedRoles.length > 0) {

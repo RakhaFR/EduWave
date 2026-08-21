@@ -4,6 +4,7 @@ export interface UserProfile {
   email: string;
   full_name: string;
   role: 'student' | 'instructor' | 'admin';
+  is_active?: boolean;
   avatar_url?: string | null;
   bio?: string | null;
   pearls?: number;
