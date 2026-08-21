@@ -1518,14 +1518,18 @@ Get current week leaderboard rankings (week format: ISO 8601 year-week, e.g., `2
     "rankings": [
       {
         "rank": 1,
+        "user_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "xp": 5000,
+        "rank_change": 1,
         "user": {
           "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
           "username": "weekly_champion",
           "full_name": "Sarah Andini",
           "avatar_url": "https://example.com/avatar3.jpg",
-          "level": 12
+          "level": 12,
+          "streak_days": 5,
+          "completed_courses_count": 2
         },
-        "xp": 5000,
         "pearls": 800
       }
     ]
