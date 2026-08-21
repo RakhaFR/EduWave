@@ -6,6 +6,7 @@ import { Loader2, ShoppingCart, CheckCircle, Zap, Star, Crown, Gem, ChevronLeft,
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { mascotService, MascotItem, InventoryMascot } from "@/services/mascotService";
 import { UserProfile } from "@/types/auth";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { GridSkeleton } from "@/components/ui/PageSkeleton";
 
 const RARITY_CONFIG = {
@@ -65,6 +66,7 @@ const ACCESSORY_OPTIONS: Record<AccessoryKey, { label: string; value: string; ti
 };
 
 export default function MascotCustomizeComponent() {
+  const { user: currentUser } = useCurrentUser();
   const [tab, setTab] = useState<Tab>("katalog");
   const [catalog, setCatalog] = useState<MascotItem[]>([]);
   const [inventory, setInventory] = useState<InventoryMascot[]>([]);
@@ -113,14 +115,11 @@ export default function MascotCustomizeComponent() {
   }, []);
 
   useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (stored) {
-      const u: UserProfile = JSON.parse(stored);
-      setUser(u);
-      setPearls(u.pearls ?? 0);
-    }
+    if (!currentUser) return;
+    setUser(currentUser);
+    setPearls(currentUser.pearls ?? 0);
     loadData();
-  }, [loadData]);
+  }, [currentUser, loadData]);
 
   const handlePurchase = async (mascot: MascotItem) => {
     setActionLoading(mascot.id);

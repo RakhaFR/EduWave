@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { User, Mail, GraduationCap, Presentation, ArrowLeft, Anchor, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { authService } from "@/services/authService";
+import { clearUserCache } from "@/hooks/useCurrentUser";
 import { formatErrorMessage } from "@/lib/utils";
 import { sanitizeInput, validateUsername, validateEmail, validatePassword, authRateLimiter } from "@/lib/security";
 
@@ -100,6 +101,9 @@ export default function RegisterPage() {
       });
 
       if (res.success && res.data) {
+        clearUserCache();
+        localStorage.removeItem("user");
+        localStorage.removeItem("active_mascot");
         authRateLimiter.resetAttempts("register_attempt");
         if (res.data.token) {
           localStorage.setItem("token", res.data.token);

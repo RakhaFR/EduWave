@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { authService } from '@/services/authService';
 import { UserProfile } from '@/types/auth';
+import { clearRequestCache } from '@/lib/requestCache';
 
 let cachedUser: UserProfile | null = null;
 let cachedToken: string | null = null;
@@ -79,6 +80,7 @@ async function doFetch(): Promise<UserProfile | null> {
 }
 
 export function clearUserCache() {
+  clearRequestCache();
   cachedUser = null;
   cachedToken = null;
   fetchPromise = null;

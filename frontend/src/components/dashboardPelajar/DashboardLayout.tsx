@@ -63,6 +63,7 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
     clearUserCache();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("active_mascot");
     setAvatarOpen(false);
   };
 

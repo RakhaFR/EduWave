@@ -26,3 +26,7 @@ export function invalidateCache(keyPrefix: string) {
     if (key.startsWith(keyPrefix)) cache.delete(key);
   }
 }
+
+export function clearRequestCache() {
+  cache.clear();
+}
