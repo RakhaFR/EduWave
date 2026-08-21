@@ -43,13 +43,15 @@ export default function PelajarExamPage() {
           courseService.getExamById(id),
           courseService.getExamAttempts(id).catch(() => ({ data: [] })),
         ]);
-        setExam(examRes.data ?? null);
+        const examData = examRes.data?.exam ?? examRes.data ?? null;
+        setExam(examData);
 
         const raw = histRes.data ?? histRes ?? [];
         const list: ExamAttemptHistory[] = Array.isArray(raw) ? raw : [];
         setHistory(list);
-      } catch {
-        setError("Ujian tidak dapat dimuat.");
+      } catch (err: unknown) {
+        const message = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+        setError(message || "Ujian tidak dapat dimuat.");
       } finally {
         setLoading(false);
       }
@@ -81,14 +83,15 @@ export default function PelajarExamPage() {
       const data: ExamAttempt = res.data;
       setAttempt(data);
       setAnswers({});
-      setTimeLeft(data.exam.time_limit_sec);
-      setPhase("doing");
+       setTimeLeft(Math.max(0, Math.floor((new Date(data.expires_at).getTime() - Date.now()) / 1000)) || data.exam.time_limit_sec);
+       setPhase("doing");
     } catch (e: unknown) {
       const err = e as { response?: { data?: { error?: { code?: string } } } };
       if (err?.response?.data?.error?.code === "MAX_ATTEMPTS_EXCEEDED") {
         setPhase("maxed");
       } else {
-        setError("Ujian tidak dapat dimulai. Pastikan Anda sudah enroll kursus ini.");
+        const message = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+        setError(message || "Ujian tidak dapat dimulai. Pastikan Anda sudah enroll kursus ini.");
       }
     } finally {
       setStarting(false);
@@ -118,8 +121,9 @@ export default function PelajarExamPage() {
       const raw = histRes.data ?? histRes ?? [];
       setHistory(Array.isArray(raw) ? raw : []);
       setPhase("result");
-    } catch {
-      setError("Gagal mengirim jawaban. Coba lagi.");
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+      setError(message || "Gagal mengirim jawaban. Coba lagi.");
     } finally {
       setSubmitting(false);
     }
