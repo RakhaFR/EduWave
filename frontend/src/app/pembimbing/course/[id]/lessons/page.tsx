@@ -43,7 +43,7 @@ export default function PembimbingCourseLessonsPage() {
     type: "video",
     content: "",
     video_url: "",
-    duration_minutes: 0,
+    duration_minutes: 5,
     order: 1,
     xp_reward: 30,
     is_preview: false,
@@ -83,7 +83,7 @@ export default function PembimbingCourseLessonsPage() {
       type: "video",
       content: "",
       video_url: "",
-      duration_minutes: 0,
+      duration_minutes: 5,
       order: lessons.length + 1,
       xp_reward: 30,
       is_preview: false,
@@ -110,6 +110,10 @@ export default function PembimbingCourseLessonsPage() {
     e.preventDefault();
     if (!formData.title.trim()) {
       showToast("Judul lesson tidak boleh kosong!", "error");
+      return;
+    }
+    if (!formData.duration_minutes || formData.duration_minutes < 1) {
+      showToast("Durasi lesson wajib diisi minimal 1 menit!", "error");
       return;
     }
 
@@ -246,7 +250,7 @@ export default function PembimbingCourseLessonsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">Durasi (menit) *</label>
-                    <input type="number" required min="0" max="10000" value={formData.duration_minutes} onChange={(e) => setFormData({ ...formData, duration_minutes: parseInt(e.target.value) || 0 })} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700" />
+                    <input type="number" required min="1" max="10000" value={formData.duration_minutes} onChange={(e) => setFormData({ ...formData, duration_minutes: Math.max(1, parseInt(e.target.value) || 5) })} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700" />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">XP Reward *</label>
