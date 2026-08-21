@@ -12,6 +12,10 @@ class LeaderboardService
 
     private const WEEKLY_KEY_PREFIX = 'leaderboard:weekly:';
 
+    private const PREV_RANKS_GLOBAL_KEY = 'leaderboard:global:prev_ranks';
+
+    private const PREV_RANKS_WEEKLY_PREFIX = 'leaderboard:weekly:prev_ranks:';
+
     /**
      * Update user's score in both global and weekly leaderboards.
      */
@@ -24,15 +28,30 @@ class LeaderboardService
             $score = (float) $user->xp;
             $userId = $user->id;
 
+            // Track old rank before updating score if not tracked yet
+            $oldGlobalRank = Redis::zrevrank(self::GLOBAL_KEY, $userId);
+            if ($oldGlobalRank !== null) {
+                Redis::hsetnx(self::PREV_RANKS_GLOBAL_KEY, $userId, (int) $oldGlobalRank + 1);
+            }
+
+            $currentWeek = now()->format('o-\WW');
+            $weeklyKey = self::WEEKLY_KEY_PREFIX.$currentWeek;
+            $prevWeeklyRanksKey = self::PREV_RANKS_WEEKLY_PREFIX.$currentWeek;
+
+            $oldWeeklyRank = Redis::zrevrank($weeklyKey, $userId);
+            if ($oldWeeklyRank !== null) {
+                Redis::hsetnx($prevWeeklyRanksKey, $userId, (int) $oldWeeklyRank + 1);
+            }
+
             // Update global leaderboard
             Redis::zadd(self::GLOBAL_KEY, $score, $userId);
 
-            // Update weekly leaderboard (key format: leaderboard:weekly:2026-W33)
-            $weeklyKey = self::WEEKLY_KEY_PREFIX.now()->format('o-\WW');
+            // Update weekly leaderboard
             Redis::zadd($weeklyKey, $score, $userId);
 
-            // Set expiry on weekly key (8 days to cover week transition overlap)
+            // Set expiry on weekly keys (8 days to cover week transition overlap)
             Redis::expire($weeklyKey, 60 * 60 * 24 * 8);
+            Redis::expire($prevWeeklyRanksKey, 60 * 60 * 24 * 8);
         } catch (Throwable $e) {
             // Redis unavailable (e.g. in test environment) — fail silently
             // The leaderboard will be eventually consistent when Redis recovers
@@ -114,6 +133,43 @@ class LeaderboardService
             'user_rank' => $rank + 1, // Convert to 1-indexed for display
             'neighbors' => $this->formatLeaderboardResults($results, $start),
         ];
+    }
+
+    /**
+     * Get rank changes for given rankings array [{user_id, rank}, ...].
+     * Returns an associative array of user_id => rank_change (int).
+     */
+    public function getRankChanges(string $scope, array $rankings): array
+    {
+        if (empty($rankings)) {
+            return [];
+        }
+
+        try {
+            $prevKey = match ($scope) {
+                'global' => self::PREV_RANKS_GLOBAL_KEY,
+                'weekly' => self::PREV_RANKS_WEEKLY_PREFIX.now()->format('o-\WW'),
+                default => self::PREV_RANKS_GLOBAL_KEY,
+            };
+
+            $userIds = collect($rankings)->pluck('user_id')->all();
+            $prevRanks = Redis::hmget($prevKey, $userIds);
+
+            $changes = [];
+            foreach ($rankings as $item) {
+                $userId = $item['user_id'];
+                $currentRank = (int) $item['rank'];
+                $prevRank = isset($prevRanks[$userId]) && $prevRanks[$userId] !== false ? (int) $prevRanks[$userId] : null;
+
+                // rank_change = prev_rank - current_rank
+                // (e.g. prev 5, current 3 => 5 - 3 = +2, meaning moved up 2 ranks)
+                $changes[$userId] = $prevRank !== null ? ($prevRank - $currentRank) : 0;
+            }
+
+            return $changes;
+        } catch (Throwable $e) {
+            return [];
+        }
     }
 
     /**

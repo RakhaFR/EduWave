@@ -30,7 +30,7 @@ class LeaderboardController extends ApiController
         $offset = ($page - 1) * $perPage;
 
         $rankings = $this->leaderboardService->getTopN('global', $perPage, $offset);
-        $enrichedRankings = $this->enrichWithUserData($rankings);
+        $enrichedRankings = $this->enrichWithUserData($rankings, 'global');
 
         return $this->success([
             'rankings' => $enrichedRankings,
@@ -55,7 +55,7 @@ class LeaderboardController extends ApiController
         $offset = ($page - 1) * $perPage;
 
         $rankings = $this->leaderboardService->getTopN('weekly', $perPage, $offset);
-        $enrichedRankings = $this->enrichWithUserData($rankings);
+        $enrichedRankings = $this->enrichWithUserData($rankings, 'weekly');
 
         return $this->success([
             'rankings' => $enrichedRankings,
@@ -92,7 +92,7 @@ class LeaderboardController extends ApiController
             ]);
         }
 
-        $enrichedNeighbors = $this->enrichWithUserData($data['neighbors']);
+        $enrichedNeighbors = $this->enrichWithUserData($data['neighbors'], $scope);
 
         return $this->success([
             'user_rank' => $data['user_rank'],
@@ -110,9 +110,10 @@ class LeaderboardController extends ApiController
      * Enrich leaderboard rankings with user data.
      *
      * @param  array  $rankings  [{user_id, score, rank}, ...]
+     * @param  string $scope     ('global' | 'weekly')
      * @return array [{rank, user_id, xp, rank_change, user: {...}}, ...]
      */
-    private function enrichWithUserData(array $rankings): array
+    private function enrichWithUserData(array $rankings, string $scope = 'global'): array
     {
         if (empty($rankings)) {
             return [];
@@ -126,7 +127,9 @@ class LeaderboardController extends ApiController
             ->get()
             ->keyBy('id');
 
-        return collect($rankings)->map(function ($entry) use ($users) {
+        $rankChanges = $this->leaderboardService->getRankChanges($scope, $rankings);
+
+        return collect($rankings)->map(function ($entry) use ($users, $rankChanges) {
             $user = $users->get($entry['user_id']);
 
             if (! $user) {
@@ -137,7 +140,7 @@ class LeaderboardController extends ApiController
                 'rank' => $entry['rank'],
                 'user_id' => $user->id,
                 'xp' => (int) $entry['score'],
-                'rank_change' => 0,
+                'rank_change' => (int) ($rankChanges[$user->id] ?? 0),
                 'user' => [
                     'id' => $user->id,
                     'username' => $user->username,
