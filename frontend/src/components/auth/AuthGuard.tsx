@@ -52,7 +52,10 @@ export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
           return;
         }
 
-        if (user.is_active === false) {
+        const userObj = user as any;
+        const isInactive = userObj.is_active === false || userObj.is_active === 0 || userObj.is_active === "0";
+
+        if (isInactive) {
           clearUserCache();
           localStorage.removeItem("token");
           localStorage.removeItem("user");

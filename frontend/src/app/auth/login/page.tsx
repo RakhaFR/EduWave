@@ -33,6 +33,15 @@ export default function LoginPage() {
     if (token) {
       authService.getUserMe().then((res) => {
         if (res.success && res.data?.user) {
+          const userObj = res.data.user as any;
+          const isInactive = userObj.is_active === false || userObj.is_active === 0 || userObj.is_active === "0";
+          if (isInactive) {
+            clearUserCache();
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            setErrorMsg("Akun anda sedang nonaktif. Silakan hubungi administrator.");
+            return;
+          }
           const role = res.data.user.role;
           if (role === "admin") router.replace("/admin");
           else if (role === "instructor") router.replace("/pembimbing");
@@ -82,9 +91,13 @@ export default function LoginPage() {
           localStorage.setItem("token", res.data.token);
         }
         if (res.data.user) {
-          if (res.data.user.is_active === false) {
+          const userObj = res.data.user as any;
+          const isInactive = userObj.is_active === false || userObj.is_active === 0 || userObj.is_active === "0";
+
+          if (isInactive) {
             setErrorMsg("Akun anda sedang nonaktif. Silakan hubungi administrator.");
             localStorage.removeItem("token");
+            localStorage.removeItem("user");
             clearUserCache();
             return;
           }
