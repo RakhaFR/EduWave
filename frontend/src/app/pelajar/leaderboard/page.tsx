@@ -42,7 +42,10 @@ const formatNumber = (num: number) => {
 };
 
 function withServerRankChanges(users: LeaderboardUser[]) {
-  return users.map((user) => ({ ...user, change: Number.isFinite(user.change) ? user.change : 0 }));
+  return users.map((user) => {
+    const change = Number(user.change);
+    return { ...user, change: Number.isFinite(change) ? change : 0 };
+  });
 }
 
 export default function PelajarLeaderboardPage() {
@@ -77,7 +80,7 @@ export default function PelajarLeaderboardPage() {
             courses: userObj.completed_courses_count ?? userObj.completed_courses ?? item.completed_courses_count ?? 0,
             avatar: fullName[0].toUpperCase(),
             avatarUrl: userObj.avatar_url || userObj.profile_photo_path || userObj.image || null,
-            change: item.rank_change ?? item.change ?? 0,
+            change: item.rank_change ?? item.change ?? userObj.rank_change ?? userObj.change ?? 0,
             me: userObj.id === currentUser?.id || item.user_id === currentUser?.id,
           };
         });
@@ -116,7 +119,7 @@ export default function PelajarLeaderboardPage() {
             courses: userObj.completed_courses_count ?? userObj.completed_courses ?? item.completed_courses_count ?? 0,
             avatar: fullName[0].toUpperCase(),
             avatarUrl: userObj.avatar_url || userObj.profile_photo_path || userObj.image || null,
-            change: item.rank_change ?? item.change ?? 0,
+            change: item.rank_change ?? item.change ?? userObj.rank_change ?? userObj.change ?? 0,
             me: userObj.id === currentUser?.id || item.user_id === currentUser?.id,
           };
         });

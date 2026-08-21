@@ -81,6 +81,14 @@ async function doFetch(): Promise<UserProfile | null> {
 
 export function clearUserCache() {
   clearRequestCache();
+  if (typeof window !== "undefined") {
+    for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+      const key = localStorage.key(index);
+      if (key && (key.startsWith("lesson_time_") || key.startsWith("lesson_scrolled_"))) localStorage.removeItem(key);
+    }
+    localStorage.removeItem("completed_lesson_ids");
+    localStorage.removeItem("active_mascot");
+  }
   cachedUser = null;
   cachedToken = null;
   fetchPromise = null;

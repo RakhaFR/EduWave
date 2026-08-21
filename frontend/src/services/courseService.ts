@@ -120,9 +120,18 @@ export interface ExamAttemptHistory {
   started_at: string;
 }
 
+function accountCacheScope() {
+  if (typeof window === "undefined") return "anonymous";
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    if (user?.id) return user.id;
+  } catch { /* ignore */ }
+  return localStorage.getItem("token") || "anonymous";
+}
+
 export const courseService = {
   async getAllCourses(params?: { category?: string; difficulty?: string; search?: string; sort?: string }) {
-    const cacheKey = `courses:${JSON.stringify(params ?? {})}`;
+    const cacheKey = `courses:${accountCacheScope()}:${JSON.stringify(params ?? {})}`;
     return cachedRequest(cacheKey, async () => {
       const response = await api.get("/courses", { params });
       return response.data;
@@ -154,7 +163,7 @@ export const courseService = {
   },
 
   async getUserCourseProgress() {
-    return cachedRequest("course-progress:me", async () => {
+    return cachedRequest(`course-progress:${accountCacheScope()}`, async () => {
       const response = await api.get('/users/me/course-progress');
       return response.data;
     });
@@ -197,9 +206,9 @@ export const courseService = {
     return response.data;
   },
 
-  async getLeaderboard(limit: number = 50, page: number = 1) {
-    return cachedRequest(`leaderboard:${limit}:${page}`, async () => {
-      const response = await api.get("/leaderboard", { params: { limit, per_page: limit, page } });
+  async getLeaderboard(perPage: number = 50, page: number = 1) {
+    return cachedRequest(`leaderboard:${accountCacheScope()}:${perPage}:${page}`, async () => {
+      const response = await api.get("/leaderboard", { params: { page, per_page: Math.min(perPage, 100) } });
       return response.data;
     });
   },

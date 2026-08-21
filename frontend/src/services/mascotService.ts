@@ -20,7 +20,7 @@ export interface InventoryMascot extends MascotItem {
 
 export const mascotService = {
   async getCatalog() {
-    return cachedRequest("mascots:catalog", async () => {
+    return cachedRequest(`mascots:${typeof window !== "undefined" ? localStorage.getItem("user") || localStorage.getItem("token") || "anonymous" : "anonymous"}:catalog`, async () => {
       const response = await api.get("/mascots");
       return response.data as {
       success: boolean;
@@ -31,7 +31,7 @@ export const mascotService = {
   },
 
   async getInventory() {
-    return cachedRequest("mascots:inventory", async () => {
+    return cachedRequest(`mascots:${typeof window !== "undefined" ? localStorage.getItem("user") || localStorage.getItem("token") || "anonymous" : "anonymous"}:inventory`, async () => {
       const response = await api.get("/mascots/inventory");
       return response.data as {
       success: boolean;
