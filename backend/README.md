@@ -1462,27 +1462,19 @@ Get global all-time leaderboard rankings. Rankings are calculated and cached in 
     "rankings": [
       {
         "rank": 1,
+        "user_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+        "xp": 25000,
+        "rank_change": 2,
         "user": {
           "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
           "username": "coral_explorer",
           "full_name": "Rina Kartika",
           "avatar_url": "https://example.com/avatar.jpg",
-          "level": 18
+          "level": 18,
+          "streak_days": 7,
+          "completed_courses_count": 4
         },
-        "xp": 25000,
         "pearls": 4800
-      },
-      {
-        "rank": 2,
-        "user": {
-          "id": "8a2cdb3c-2b6c-3cad-8bcc-1a0c6b2cb5c",
-          "username": "ocean_scholar",
-          "full_name": "Ahmad Wijaya",
-          "avatar_url": "https://example.com/avatar2.jpg",
-          "level": 16
-        },
-        "xp": 22000,
-        "pearls": 4200
       }
     ]
   },

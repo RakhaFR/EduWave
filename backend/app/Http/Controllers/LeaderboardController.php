@@ -110,7 +110,7 @@ class LeaderboardController extends ApiController
      * Enrich leaderboard rankings with user data.
      *
      * @param  array  $rankings  [{user_id, score, rank}, ...]
-     * @return array [{rank, user: {...}, xp, ...}, ...]
+     * @return array [{rank, user_id, xp, rank_change, user: {...}}, ...]
      */
     private function enrichWithUserData(array $rankings): array
     {
@@ -120,6 +120,9 @@ class LeaderboardController extends ApiController
 
         $userIds = collect($rankings)->pluck('user_id')->all();
         $users = User::whereIn('id', $userIds)
+            ->withCount(['enrollments as completed_courses_count' => function ($query) {
+                $query->where('status', 'completed');
+            }])
             ->get()
             ->keyBy('id');
 
@@ -132,14 +135,18 @@ class LeaderboardController extends ApiController
 
             return [
                 'rank' => $entry['rank'],
+                'user_id' => $user->id,
+                'xp' => (int) $entry['score'],
+                'rank_change' => 0,
                 'user' => [
                     'id' => $user->id,
                     'username' => $user->username,
                     'full_name' => $user->full_name,
                     'avatar_url' => $user->avatar_url,
                     'level' => $user->level,
+                    'streak_days' => $user->streak_days ?? 0,
+                    'completed_courses_count' => (int) ($user->completed_courses_count ?? 0),
                 ],
-                'xp' => (int) $entry['score'],
                 'pearls' => $user->pearls,
             ];
         })->filter()->values()->all();
