@@ -32,9 +32,12 @@ export default function DashboardHome() {
   const [activeMascot, setActiveMascot] = useState<InventoryMascot | null>(null);
   const [activeMascotIndex, setActiveMascotIndex] = useState(0);
 
-  // Dynamic XP progress percentage (target level 1000 XP)
+  // Dynamic XP progress percentage (Target level 10.000 XP)
   const xpVal = user?.xp ?? 0;
-  const xpPct = Math.min(100, Math.max(0, Math.round((xpVal % 1000) / 10)));
+  const XP_PER_LEVEL = 10000;
+  const userLevel = Math.max(user?.level || 1, Math.floor(xpVal / XP_PER_LEVEL) + 1);
+  const xpInCurrentLevel = xpVal % XP_PER_LEVEL;
+  const xpPct = Math.min(100, Math.max(0, Math.round((xpInCurrentLevel / XP_PER_LEVEL) * 100)));
 
   useEffect(() => {
     // Check cached active mascot from localStorage first
@@ -224,7 +227,7 @@ export default function DashboardHome() {
               <div className="flex items-center justify-between">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">XP Kamu</p>
                 <span className="text-[10px] font-bold bg-[#008be3]/10 text-[#008be3] px-2 py-0.5 rounded-full">
-                  Lv.{user?.level ?? 1} · Penyelam
+                  Lv.{userLevel} · Penyelam
                 </span>
               </div>
               <div className="flex items-center gap-3">

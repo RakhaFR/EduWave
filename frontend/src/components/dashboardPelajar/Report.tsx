@@ -57,9 +57,18 @@ export default function ReportComponent() {
   const [claimToast, setClaimToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
 
   const userXP = user?.xp || 0;
-  const userLevel = user?.level || 1;
   const streakDays = user?.streak_days || 0;
   const pearls = user?.pearls || 0;
+
+  // Dynamic Level Calculation synced with XP
+  const XP_PER_LEVEL = 10000; // 10.000 XP per Level
+  const calculatedLevel = Math.max(user?.level || 1, Math.floor(userXP / XP_PER_LEVEL) + 1);
+  const userLevel = calculatedLevel;
+  const currentLevelBaseXP = (userLevel - 1) * XP_PER_LEVEL;
+  const nextLevelXP = userLevel * XP_PER_LEVEL;
+  const xpInCurrentLevel = Math.max(0, userXP - currentLevelBaseXP);
+  const xpNeededToNext = Math.max(0, nextLevelXP - userXP);
+  const progressToNext = Math.min(100, Math.max(0, Math.round((xpInCurrentLevel / XP_PER_LEVEL) * 100)));
 
   // Real DB state
   const [myRank, setMyRank] = useState<number | string>("-");
@@ -118,11 +127,6 @@ export default function ReportComponent() {
       setTimeout(() => setClaimToast(null), 3500);
     }
   };
-
-  const nextLevelXP = userLevel * 1000;
-  const currentLevelBaseXP = (userLevel - 1) * 1000;
-  const xpInCurrentLevel = Math.max(0, userXP - currentLevelBaseXP);
-  const progressToNext = Math.min(100, Math.max(0, Math.round((xpInCurrentLevel / 1000) * 100)));
 
   return (
     <DashboardLayout searchPlaceholder="Cari laporan...">
@@ -198,7 +202,7 @@ export default function ReportComponent() {
                     style={{ width: `${progressToNext}%` }}
                   />
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1 text-right">Butuh {formatNumber(Math.max(0, nextLevelXP - userXP))} XP lagi ke Level {userLevel + 1}</p>
+                <p className="text-[10px] text-slate-400 mt-1 text-right">Butuh {formatNumber(xpNeededToNext)} XP lagi ke Level {userLevel + 1}</p>
               </div>
             </div>
 
@@ -331,9 +335,22 @@ export default function ReportComponent() {
                       </p>
                       <div className="flex flex-col gap-2">
                         {notEarned.map((ach) => {
-                          const currentVal = ach.progress?.current ?? 0;
-                          const targetVal = ach.progress?.target ?? ach.condition_value ?? 1;
+                          // Hitung progres aktual berdasarkan condition_type achievement
+                          let currentVal = ach.progress?.current ?? 0;
+                          const condType = (ach as any).condition_type?.toLowerCase() || (ach as any).type?.toLowerCase() || "";
+                          if (condType.includes("streak")) {
+                            currentVal = streakDays;
+                          } else if (condType.includes("course") || condType.includes("kursus")) {
+                            currentVal = coursesCompleted;
+                          } else if (condType.includes("xp")) {
+                            currentVal = userXP;
+                          } else if (condType.includes("pearl") || condType.includes("mutiara")) {
+                            currentVal = pearls;
+                          }
+
+                          const targetVal = ach.progress?.target ?? ach.condition_value ?? (ach as any).target_value ?? 1;
                           const pct = Math.min(100, Math.max(0, Math.round((currentVal / targetVal) * 100)));
+                          const isEligibleToClaim = currentVal >= targetVal || pct >= 100;
 
                           return (
                             <div key={ach.id} className="flex flex-col gap-2 p-3 bg-slate-50 border border-slate-100 rounded-2xl transition-all hover:bg-slate-100/60">
@@ -352,23 +369,39 @@ export default function ReportComponent() {
                                   </span>
                                   <button
                                     onClick={() => handleClaim(ach)}
-                                    disabled={claimingId === ach.id}
-                                    className="px-3 py-1 rounded-full text-xs font-bold bg-[#008be3] text-white hover:bg-[#0078c8] disabled:opacity-50 shadow-sm cursor-pointer transition-all active:scale-95 hover:shadow-md"
+                                    disabled={!isEligibleToClaim || claimingId === ach.id}
+                                    className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                                      isEligibleToClaim
+                                        ? "bg-[#008be3] text-white hover:bg-[#0078c8] shadow-md shadow-blue-200 cursor-pointer active:scale-95 animate-pulse"
+                                        : "bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300/40"
+                                    }`}
                                   >
-                                    {claimingId === ach.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Klaim"}
+                                    {claimingId === ach.id ? (
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : isEligibleToClaim ? (
+                                      "Klaim"
+                                    ) : (
+                                      "Belum Memenuhi"
+                                    )}
                                   </button>
                                 </div>
                               </div>
 
-                              {/* Progress Bar & Value 0/10 */}
+                              {/* Progress Bar & Value X / Y */}
                               <div className="mt-1">
                                 <div className="flex items-center justify-between text-[10px] text-slate-400 font-semibold mb-1">
-                                  <span>Progres</span>
-                                  <span>{currentVal} / {targetVal}</span>
+                                  <span>Progres Belajar</span>
+                                  <span className={isEligibleToClaim ? "text-emerald-600 font-bold" : "text-slate-500"}>
+                                    {formatNumber(currentVal)} / {formatNumber(targetVal)}
+                                  </span>
                                 </div>
                                 <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
                                   <div
-                                    className="h-full bg-gradient-to-r from-cyan-400 to-[#008be3] rounded-full transition-all duration-500"
+                                    className={`h-full rounded-full transition-all duration-500 ${
+                                      isEligibleToClaim
+                                        ? "bg-gradient-to-r from-emerald-400 to-emerald-500"
+                                        : "bg-gradient-to-r from-cyan-400 to-[#008be3]"
+                                    }`}
                                     style={{ width: `${pct}%` }}
                                   />
                                 </div>
