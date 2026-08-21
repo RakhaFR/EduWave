@@ -49,6 +49,11 @@ export default function Topbar({
   };
 
   const initial = (user?.full_name || user?.username || "P").charAt(0).toUpperCase();
+  const notification = pathname.startsWith("/pembimbing/course")
+    ? { text: "Kelola kursus yang kamu bimbing dan pantau materi pembelajaran.", href: "/pembimbing/course" }
+    : pathname.startsWith("/pembimbing/exam")
+    ? { text: "Periksa dan kelola ujian yang tersedia untuk peserta didik.", href: "/pembimbing/exam" }
+    : { text: "Pantau kursus dan ujian dari dashboard pembimbing.", href: "/pembimbing" };
 
   return (
     <header className="flex items-center justify-between gap-4 mb-4 px-2">
@@ -83,9 +88,9 @@ export default function Topbar({
         <div className="relative">
           <button onClick={() => setNotificationsOpen((open) => !open)} className="relative w-10 h-10 rounded-full bg-white/15 border border-white/25 flex items-center justify-center text-white hover:bg-white/25 transition-all shadow-md cursor-pointer">
             <Bell className="w-5 h-5" />
-            <span className="absolute top-2 right-2.5 w-2 h-2 rounded-full bg-red-400 border border-[#0073e6]" />
+            
           </button>
-          {notificationsOpen && <div className="absolute right-0 top-full mt-2 z-50 w-64 rounded-2xl bg-white p-4 shadow-xl text-slate-700"><p className="text-sm font-bold">Notifikasi Pembimbing</p><p className="mt-2 text-xs text-slate-500">Data kursus dan ujian telah dimuat.</p><Link href="/pembimbing" onClick={() => setNotificationsOpen(false)} className="mt-3 block text-xs font-bold text-[#0073e6]">Buka dashboard</Link></div>}
+          {notificationsOpen && <div className="absolute right-0 top-full mt-2 z-50 w-64 rounded-2xl bg-white p-4 shadow-xl text-slate-700"><p className="text-sm font-bold">Notifikasi Pembimbing</p><p className="mt-2 text-xs text-slate-500">{notification.text}</p><Link href={notification.href} onClick={() => setNotificationsOpen(false)} className="mt-3 block text-xs font-bold text-[#0073e6]">Lihat detail</Link></div>}
         </div>
 
         <div className="relative">

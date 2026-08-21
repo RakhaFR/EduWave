@@ -51,6 +51,13 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
 
   const displayName = user?.full_name || user?.username || "Pelajar";
   const initial = displayName.charAt(0).toUpperCase();
+  const notifications = pathname.startsWith("/pelajar/report")
+    ? [{ text: "Progress, XP, dan achievement kamu tersedia di Report.", href: "/pelajar/report" }]
+    : pathname.startsWith("/pelajar/my-courses")
+    ? [{ text: "Lanjutkan lesson untuk mendapatkan XP.", href: "/pelajar/my-courses" }]
+    : pathname.startsWith("/pelajar/mascot-customize")
+    ? [{ text: `Saldo kamu saat ini ${user?.pearls ?? 0} Pearls.`, href: "/pelajar/mascot-customize" }]
+    : [{ text: "Jelajahi All Course dan mulai perjalanan belajarmu.", href: "/pelajar/all-course" }];
 
   const handleLogout = () => {
     clearUserCache();
@@ -139,8 +146,7 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
               </button>
               {notificationsOpen && <div className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white p-4 shadow-xl z-50 text-slate-700">
                 <p className="text-sm font-bold">Notifikasi</p>
-                <p className="mt-2 text-xs text-slate-500">Belum ada notifikasi baru.</p>
-                <Link href="/pelajar/report" onClick={() => setNotificationsOpen(false)} className="mt-3 block text-xs font-bold text-[#008be3]">Lihat laporan belajar</Link>
+{notifications.map((notification) => <div key={notification.text}><p className="mt-2 text-xs text-slate-500">{notification.text}</p><Link href={notification.href} onClick={() => setNotificationsOpen(false)} className="mt-3 block text-xs font-bold text-[#008be3]">Lihat detail</Link></div>)}
               </div>}
             </div>
 
