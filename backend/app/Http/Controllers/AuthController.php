@@ -48,6 +48,7 @@ class AuthController extends ApiController
                 'email' => $user->email,
                 'full_name' => $user->full_name,
                 'role' => $user->role,
+                'is_active' => (bool) $user->is_active,
                 'avatar_url' => $user->avatar_url,
                 'pearls' => $user->pearls,
                 'xp' => $user->xp,
@@ -73,6 +74,10 @@ class AuthController extends ApiController
             return $this->error('AUTH_INVALID_CREDENTIALS', 'Email atau password salah.', 401);
         }
 
+        if (isset($user->is_active) && ! $user->is_active) {
+            return $this->error('AUTH_ACCOUNT_INACTIVE', 'Akun anda sedang nonaktif. Silakan hubungi administrator.', 403);
+        }
+
         // Revoke all existing tokens so only one active session is allowed at a time.
         // Any device still holding an old token will receive 401 SESSION_EXPIRED.
         $user->tokens()->delete();
@@ -87,6 +92,7 @@ class AuthController extends ApiController
                 'email' => $user->email,
                 'full_name' => $user->full_name,
                 'role' => $user->role,
+                'is_active' => (bool) $user->is_active,
                 'avatar_url' => $user->avatar_url,
                 'pearls' => $user->pearls,
                 'xp' => $user->xp,
@@ -123,6 +129,7 @@ class AuthController extends ApiController
                 'email' => $user->email,
                 'full_name' => $user->full_name,
                 'role' => $user->role,
+                'is_active' => (bool) $user->is_active,
                 'avatar_url' => $user->avatar_url,
                 'pearls' => $user->pearls,
                 'xp' => $user->xp,

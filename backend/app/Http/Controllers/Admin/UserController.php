@@ -75,6 +75,10 @@ class UserController extends ApiController
 
         $user->update($validated);
 
+        if (isset($validated['is_active']) && ! $validated['is_active']) {
+            $user->tokens()->delete();
+        }
+
         return $this->success([
             'user' => [
                 'id'        => $user->id,

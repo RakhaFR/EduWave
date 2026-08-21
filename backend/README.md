@@ -224,6 +224,7 @@ The `role` field is optional. Omit it to register a student, or set it to `instr
       "email": "instructor@example.com",
       "full_name": "Siti Pengajar",
       "role": "instructor",
+      "is_active": true,
       "avatar_url": null,
       "pearls": 0,
       "xp": 0,
@@ -278,6 +279,7 @@ Authenticate using email or username.
       "email": "user@example.com",
       "full_name": "Budi Santoso",
       "role": "student",
+      "is_active": true,
       "avatar_url": null,
       "pearls": 150,
       "xp": 500,
@@ -288,6 +290,18 @@ Authenticate using email or username.
     "token_type": "Bearer"
   },
   "error": null,
+  "meta": null
+}
+```
+* **Account Inactive Response (`403 Forbidden`):**
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "AUTH_ACCOUNT_INACTIVE",
+    "message": "Akun anda sedang nonaktif. Silakan hubungi administrator."
+  },
   "meta": null
 }
 ```
