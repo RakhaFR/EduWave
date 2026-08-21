@@ -9,7 +9,8 @@ import {
   Users,
   ClipboardList,
   FolderOpen,
-  Settings
+  Settings,
+  HelpCircle,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -70,6 +71,18 @@ export default function Sidebar({ showToast }: SidebarProps) {
             >
               <BookOpen className="w-5 h-5 shrink-0" />
               <span>Kursus</span>
+            </Link>
+
+            <Link
+              href="/admin/exam"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left w-full cursor-pointer ${
+                isActive("/admin/exam")
+                  ? "bg-[#e6f3ff] text-[#0073e6] font-semibold"
+                  : "text-slate-500 hover:bg-slate-50 hover:text-[#0073e6]"
+              }`}
+            >
+              <HelpCircle className="w-5 h-5 shrink-0" />
+              <span>Ujian</span>
             </Link>
 
             <Link

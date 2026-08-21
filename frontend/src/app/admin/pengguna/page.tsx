@@ -11,7 +11,7 @@ import { authService } from "@/services/authService";
 import { UserType } from "@/components/dashboardAdmin/types";
 
 export default function AdminUsersPage() {
-  const { courses, users, setUsers, showToast, searchGlobal } = useAdmin();
+  const { courses, users, setUsers, showToast, searchGlobal, refreshCourses } = useAdmin();
 
   // Modals state
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
@@ -55,32 +55,32 @@ export default function AdminUsersPage() {
     if (editingUser) {
       try {
         const isActive = userForm.status === "Aktif";
-        const updateRes = await adminService.updateUser(editingUser.id, {
-          full_name: userForm.name,
-          email: userForm.email,
-          role: backendRole,
-          is_active: isActive,
-        });
+        await Promise.all([
+          adminService.updateUser(editingUser.id, {
+            full_name: userForm.name,
+            email: userForm.email,
+            role: backendRole,
+            is_active: isActive,
+          }),
+          adminService.updateUserRole(editingUser.id, backendRole).catch(() => null),
+        ]);
 
-        if (updateRes.success !== false) {
-          // Sync state lokal
-          setUsers(
-            users.map((u) =>
-              u.id === editingUser.id
-                ? {
-                    ...u,
-                    name: userForm.name,
-                    email: userForm.email,
-                    role: userForm.role,
-                    status: userForm.status,
-                  }
-                : u
-            )
-          );
-          showToast("Pengguna berhasil diperbarui di database server!");
-        } else {
-          showToast(updateRes.error?.message || "Gagal memperbarui pengguna.", "error");
-        }
+        // Sync state lokal
+        setUsers(
+          users.map((u) =>
+            u.id === editingUser.id
+              ? {
+                  ...u,
+                  name: userForm.name,
+                  email: userForm.email,
+                  role: userForm.role,
+                  status: userForm.status,
+                }
+              : u
+          )
+        );
+        showToast("Pengguna berhasil diperbarui di database server!");
+        refreshCourses();
       } catch (err: any) {
         showToast(err?.response?.data?.error?.message || "Gagal memperbarui pengguna di server.", "error");
       }

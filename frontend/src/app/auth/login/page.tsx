@@ -18,11 +18,13 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    // Tangkap error message dari query param jika dipicu oleh 401 Session Expired / Concurrent Login
+    // Tangkap error message dari query param jika dipicu oleh Account Inactive atau 401 Session Expired
     if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
       const errorParam = urlParams.get("error");
-      if (errorParam) {
+      if (errorParam === "account_inactive") {
+        setErrorMsg("Akun anda telah dinonaktifkan oleh administrator.");
+      } else if (errorParam) {
         setErrorMsg(decodeURIComponent(errorParam));
       }
     }

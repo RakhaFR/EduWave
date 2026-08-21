@@ -97,18 +97,11 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (usersRes?.success && Array.isArray(usersRes.data)) {
-        const storedEditsStr = localStorage.getItem("admin_edited_users");
-        let storedEdits: Record<string, { name?: string; email?: string }> = {};
-        if (storedEditsStr) {
-          try { storedEdits = JSON.parse(storedEditsStr); } catch { storedEdits = {}; }
-        }
-
         const mappedUsers: UserType[] = usersRes.data.map((u: any) => {
-          const edit = storedEdits[u.id];
           return {
             id: u.id,
-            name: edit?.name || u.full_name || u.username,
-            email: edit?.email || u.email,
+            name: u.full_name || u.username,
+            email: u.email,
             role: u.role === "admin" ? "Admin" : u.role === "instructor" ? "Pengajar" : "Siswa",
             status: u.is_active === false ? "Nonaktif" : "Aktif",
           };

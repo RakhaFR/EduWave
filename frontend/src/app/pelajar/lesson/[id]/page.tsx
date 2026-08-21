@@ -41,18 +41,20 @@ export default function PelajarLessonDetailPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Tracking: Durasi dinamis berbasis lesson.duration_minutes (default 5 menit / 300 detik)
-  const REQUIRED_TIME_SEC = (lesson?.duration_minutes && lesson.duration_minutes > 0 ? lesson.duration_minutes : 5) * 60;
+  const durationMin = lesson?.duration_minutes && lesson.duration_minutes > 0 ? lesson.duration_minutes : 5;
+  const REQUIRED_TIME_SEC = durationMin * 60;
   const [secondsSpent, setSecondsSpent] = useState(0);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const contentAreaRef = useRef<HTMLDivElement>(null);
 
-  // Load saved time & scroll status on lesson change
+  // Load saved time & scroll status on lesson change & when lesson duration is loaded
   useEffect(() => {
     if (!params.id) return;
     try {
       const savedTime = localStorage.getItem(`lesson_time_${params.id}`);
       if (savedTime) {
-        setSecondsSpent(Math.min(REQUIRED_TIME_SEC, parseInt(savedTime, 10) || 0));
+        const parsedSec = parseInt(savedTime, 10) || 0;
+        setSecondsSpent(Math.min(REQUIRED_TIME_SEC, parsedSec));
       } else {
         setSecondsSpent(0);
       }
@@ -66,7 +68,7 @@ export default function PelajarLessonDetailPage() {
     } catch {
       // ignore
     }
-  }, [params.id]);
+  }, [params.id, REQUIRED_TIME_SEC]);
 
   // Timer counter + persist to localStorage
   useEffect(() => {

@@ -26,13 +26,16 @@ export function validateUsername(username: string): { valid: boolean; message?: 
 }
 
 export function validateEmail(email: string): { valid: boolean; message?: string } {
-  const clean = email.trim();
+  const clean = email.trim().toLowerCase();
   if (!clean) {
     return { valid: false, message: 'Email tidak boleh kosong.' };
   }
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(clean)) {
     return { valid: false, message: 'Format alamat email tidak valid.' };
+  }
+  if (!clean.endsWith('@gmail.com') && !clean.endsWith('@eduwave.id')) {
+    return { valid: false, message: 'Email harus menggunakan domain @gmail.com atau @eduwave.id' };
   }
   return { valid: true };
 }
