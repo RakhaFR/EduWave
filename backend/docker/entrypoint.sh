@@ -23,5 +23,10 @@ if [ "${RUN_LEADERBOARD_SEEDER:-false}" = "true" ]; then
     php artisan db:seed --class=LeaderboardSeeder --force
 fi
 
+if [ "${RUN_RECALC_LEVELS:-false}" = "true" ]; then
+    echo "==> Recalculating user levels from XP..."
+    php artisan users:recalc-levels
+fi
+
 echo "==> Starting supervisord..."
 exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf

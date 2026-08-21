@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Events\XpAwarded;
 use App\Listeners\UpdateLeaderboardOnXpAwarded;
 use App\Models\Course;
+use App\Models\User;
+use App\Observers\UserObserver;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\Lesson;
@@ -39,6 +41,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Exam::class, ExamPolicy::class);
         Gate::policy(ExamAttempt::class, ExamAttemptPolicy::class);
         Gate::policy(StudyRoom::class, StudyRoomPolicy::class);
+
+        // Register model observers
+        User::observe(UserObserver::class);
 
         // Register event listeners
         Event::listen(
