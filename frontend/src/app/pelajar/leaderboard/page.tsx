@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trophy, Medal, Crown, Flame, Star, ChevronUp, ChevronDown, Minus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trophy, Medal, Crown, Flame, ChevronUp, ChevronDown, Minus, ChevronLeft, ChevronRight } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { courseService } from "@/services/courseService";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -283,11 +283,10 @@ export default function PelajarLeaderboardPage() {
 
                 <div className="col-span-3 md:col-span-2 text-center hidden sm:flex items-center justify-center gap-1">
                   <Flame className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-                  <span className="text-xs font-semibold text-slate-600">{user.streak}h</span>
+                  <span className="text-xs font-semibold text-slate-600">{user.streak} hari</span>
                 </div>
 
-                <div className="col-span-2 text-center hidden md:flex items-center justify-center gap-1">
-                  <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0" />
+                <div className="col-span-2 text-center hidden md:flex items-center justify-center">
                   <span className="text-xs font-semibold text-slate-600">{user.courses}</span>
                 </div>
 
