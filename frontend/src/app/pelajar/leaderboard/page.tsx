@@ -40,6 +40,22 @@ const formatNumber = (num: number) => {
   return (num || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };
 
+function withLocalRankChanges(users: LeaderboardUser[], scope: Period) {
+  if (typeof window === "undefined") return users;
+  const key = `leaderboard-ranks:${scope}`;
+  let previous: Record<string, number> = {};
+  try { previous = JSON.parse(sessionStorage.getItem(key) || "{}"); } catch { previous = {}; }
+  const next: Record<string, number> = {};
+  const result = users.map((user) => {
+    if (user.id) next[user.id] = user.rank;
+    const serverChange = user.change;
+    const localChange = user.id && previous[user.id] ? previous[user.id] - user.rank : 0;
+    return { ...user, change: serverChange || localChange };
+  });
+  sessionStorage.setItem(key, JSON.stringify(next));
+  return result;
+}
+
 export default function PelajarLeaderboardPage() {
   const { user: currentUser } = useCurrentUser();
   const [period, setPeriod] = useState<Period>("minggu");
@@ -76,7 +92,7 @@ export default function PelajarLeaderboardPage() {
             me: userObj.id === currentUser?.id || item.user_id === currentUser?.id,
           };
         });
-        setTop3(formattedTop3);
+        setTop3(withLocalRankChanges(formattedTop3, period));
       } catch (err) {
         console.error("Gagal memuat top 3:", err);
       }
@@ -116,7 +132,7 @@ export default function PelajarLeaderboardPage() {
           };
         });
 
-        setLeaderboard(formattedList);
+        setLeaderboard(withLocalRankChanges(formattedList, period));
 
         if (meRes?.data) {
           const userRank = meRes.data.user_rank;
