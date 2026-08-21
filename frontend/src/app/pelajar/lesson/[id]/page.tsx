@@ -40,8 +40,8 @@ export default function PelajarLessonDetailPage() {
   const [courseId, setCourseId] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Tracking: Minimal 5 menit (300 detik) & Scroll hingga dasar konten
-  const REQUIRED_TIME_SEC = 300; // 5 Menit
+  // Tracking: Durasi dinamis berbasis lesson.duration_minutes (default 5 menit / 300 detik)
+  const REQUIRED_TIME_SEC = (lesson?.duration_minutes && lesson.duration_minutes > 0 ? lesson.duration_minutes : 5) * 60;
   const [secondsSpent, setSecondsSpent] = useState(0);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const contentAreaRef = useRef<HTMLDivElement>(null);
@@ -510,7 +510,7 @@ export default function PelajarLessonDetailPage() {
                     <div className="flex items-center gap-1.5 font-semibold">
                       <Clock className={`w-3.5 h-3.5 ${secondsSpent >= REQUIRED_TIME_SEC ? "text-emerald-500" : "text-amber-500"}`} />
                       <span className={secondsSpent >= REQUIRED_TIME_SEC ? "text-emerald-600 font-bold" : "text-slate-600"}>
-                        Waktu Baca: {Math.floor(secondsSpent / 60).toString().padStart(2, '0')}:{(secondsSpent % 60).toString().padStart(2, '0')} / 05:00
+                        Waktu Baca: {Math.floor(secondsSpent / 60).toString().padStart(2, '0')}:{(secondsSpent % 60).toString().padStart(2, '0')} / {Math.floor(REQUIRED_TIME_SEC / 60).toString().padStart(2, '0')}:00
                       </span>
                     </div>
 
@@ -527,7 +527,7 @@ export default function PelajarLessonDetailPage() {
 
                   {!isEligibleToComplete && (
                     <span className="text-[10px] text-amber-600 font-medium bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
-                      Baca minimal 5 menit & scroll sampai bawah untuk membuka tombol
+                      Baca minimal {Math.floor(REQUIRED_TIME_SEC / 60)} menit & scroll sampai bawah untuk membuka tombol
                     </span>
                   )}
                 </div>

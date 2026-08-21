@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { PembimbingCourse, Exam } from "./types";
 import { PembimbingCourseForm, PembimbingExamForm } from "@/services/pembimbingService";
+import { courseService } from "@/services/courseService";
 
 interface ModalsProps {
   isCourseModalOpen: boolean;
@@ -49,6 +51,30 @@ export default function Modals({
   setDeleteConfirm,
   handleConfirmDelete,
 }: ModalsProps) {
+  const [courseLessons, setCourseLessons] = useState<any[]>([]);
+  const [lessonsLoading, setLessonsLoading] = useState(false);
+
+  useEffect(() => {
+    async function loadLessonsForSelectedCourse() {
+      if (!examForm.course_id) {
+        setCourseLessons([]);
+        return;
+      }
+      setLessonsLoading(true);
+      try {
+        const res = await courseService.getCourseById(examForm.course_id);
+        const lessons = res?.data?.lessons || res?.lessons || [];
+        setCourseLessons(lessons);
+      } catch {
+        setCourseLessons([]);
+      } finally {
+        setLessonsLoading(false);
+      }
+    }
+    if (isExamModalOpen && examForm.course_id) {
+      loadLessonsForSelectedCourse();
+    }
+  }, [isExamModalOpen, examForm.course_id]);
   return (
     <>
       {isCourseModalOpen && (
@@ -187,8 +213,10 @@ export default function Modals({
                   <select value={examForm.lesson_id || ""}
                     onChange={(e) => setExamForm({ ...examForm, lesson_id: e.target.value || undefined })}
                     className="w-full px-3 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 bg-white text-slate-700">
-                    <option value="">-- Tanpa Lesson (Ujian Bebas) --</option>
-                    {availableCourses.find((c) => c.id === examForm.course_id)?.lessons?.map((l: any) => (
+                    <option value="">
+                      {lessonsLoading ? "Memuat lesson..." : "-- Tanpa Lesson (Ujian Bebas) --"}
+                    </option>
+                    {courseLessons.map((l: any) => (
                       <option key={l.id} value={l.id}>{l.title}</option>
                     ))}
                   </select>
