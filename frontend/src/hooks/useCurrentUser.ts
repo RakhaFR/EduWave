@@ -14,6 +14,25 @@ function getStoredUser(): UserProfile | null {
   } catch { return null; }
 }
 
+function applyAdminEdits(u: UserProfile): UserProfile {
+  if (typeof window === 'undefined') return u;
+  try {
+    const raw = localStorage.getItem('admin_edited_users');
+    const edits = raw ? JSON.parse(raw) : {};
+    const edit = edits[u.id];
+    if (!edit) return u;
+    return {
+      ...u,
+      full_name: edit.name || u.full_name,
+      email: edit.email || u.email,
+      role: edit.role || u.role,
+      is_active: edit.status ? edit.status === 'Aktif' : (u as UserProfile & { is_active?: boolean }).is_active,
+    } as UserProfile;
+  } catch {
+    return u;
+  }
+}
+
 function storeUser(u: UserProfile) {
   if (typeof window !== 'undefined') {
     localStorage.setItem('user', JSON.stringify(u));
@@ -28,25 +47,25 @@ async function doFetch(): Promise<UserProfile | null> {
     try {
       const res = await authService.getUserMe();
       if (res.success && res.data?.user) {
-        cachedUser = res.data.user;
+        cachedUser = applyAdminEdits(res.data.user);
         cachedToken = token;
-        storeUser(res.data.user);
-        return res.data.user;
+        storeUser(cachedUser);
+        return cachedUser;
       }
       const res2 = await authService.getAuthMe();
       if (res2.success && res2.data?.user) {
-        cachedUser = res2.data.user;
+        cachedUser = applyAdminEdits(res2.data.user);
         cachedToken = token;
-        storeUser(res2.data.user);
-        return res2.data.user;
+        storeUser(cachedUser);
+        return cachedUser;
       }
     } catch {
       try {
         const res2 = await authService.getAuthMe();
         if (res2.success && res2.data?.user) {
-          cachedUser = res2.data.user;
-          storeUser(res2.data.user);
-          return res2.data.user;
+          cachedUser = applyAdminEdits(res2.data.user);
+          storeUser(cachedUser);
+          return cachedUser;
         }
       } catch { /* ignore */ }
     }
