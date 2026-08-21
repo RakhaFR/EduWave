@@ -119,7 +119,13 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       authRateLimiter.recordAttempt("login_attempt");
-      setErrorMsg(formatErrorMessage(err, "Login gagal. Silakan periksa kembali email & password anda."));
+      const errCode = err?.response?.data?.error?.code;
+      const errMsg = err?.response?.data?.error?.message;
+      if (errCode === "AUTH_ACCOUNT_INACTIVE" || err?.response?.status === 403) {
+        setErrorMsg(errMsg || "Akun anda sedang nonaktif. Silakan hubungi administrator.");
+      } else {
+        setErrorMsg(formatErrorMessage(err, "Login gagal. Silakan periksa kembali email & password anda."));
+      }
     } finally {
       setLoading(false);
     }
