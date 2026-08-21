@@ -18,6 +18,15 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
+    // Tangkap error message dari query param jika dipicu oleh 401 Session Expired / Concurrent Login
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const errorParam = urlParams.get("error");
+      if (errorParam) {
+        setErrorMsg(decodeURIComponent(errorParam));
+      }
+    }
+
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (token) {
       authService.getUserMe().then((res) => {

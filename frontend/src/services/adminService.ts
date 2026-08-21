@@ -134,6 +134,11 @@ export const adminService = {
     return response.data;
   },
 
+  async updateUser(id: string, form: { full_name?: string; email?: string; username?: string; role?: string; is_active?: boolean }) {
+    const response = await api.put(`/admin/users/${id}`, form);
+    return response.data;
+  },
+
   async updateUserRole(id: string, role: string) {
     const response = await api.put(`/admin/users/${id}/role`, { role });
     return response.data;

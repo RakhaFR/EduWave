@@ -54,33 +54,35 @@ export default function AdminUsersPage() {
 
     if (editingUser) {
       try {
-        await adminService.updateUserRole(editingUser.id, backendRole);
-        
-        // Save local edits persistent
-        const storedEditsStr = localStorage.getItem("admin_edited_users");
-        let storedEdits: Record<string, { name?: string; email?: string; role?: string; status?: string }> = {};
-        if (storedEditsStr) {
-          try { storedEdits = JSON.parse(storedEditsStr); } catch { storedEdits = {}; }
-        }
-        storedEdits[editingUser.id] = { name: userForm.name, email: userForm.email, role: backendRole, status: userForm.status };
-        localStorage.setItem("admin_edited_users", JSON.stringify(storedEdits));
+        const isActive = userForm.status === "Aktif";
+        const updateRes = await adminService.updateUser(editingUser.id, {
+          full_name: userForm.name,
+          email: userForm.email,
+          role: backendRole,
+          is_active: isActive,
+        });
 
-        setUsers(
-          users.map((u) =>
-            u.id === editingUser.id
-              ? {
-                  ...u,
-                  name: userForm.name,
-                  email: userForm.email,
-                  role: userForm.role,
-                  status: userForm.status,
-                }
-              : u
-          )
-        );
-        showToast("Pengguna berhasil diperbarui di database!");
-      } catch {
-        showToast("Gagal mengupdate role pengguna di server.", "error");
+        if (updateRes.success !== false) {
+          // Sync state lokal
+          setUsers(
+            users.map((u) =>
+              u.id === editingUser.id
+                ? {
+                    ...u,
+                    name: userForm.name,
+                    email: userForm.email,
+                    role: userForm.role,
+                    status: userForm.status,
+                  }
+                : u
+            )
+          );
+          showToast("Pengguna berhasil diperbarui di database server!");
+        } else {
+          showToast(updateRes.error?.message || "Gagal memperbarui pengguna.", "error");
+        }
+      } catch (err: any) {
+        showToast(err?.response?.data?.error?.message || "Gagal memperbarui pengguna di server.", "error");
       }
     } else {
       try {
