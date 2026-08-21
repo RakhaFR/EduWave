@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Mascot;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class AuthControllerTest extends TestCase
@@ -193,6 +194,27 @@ class AuthControllerTest extends TestCase
             'success' => false,
             'error' => [
                 'code' => 'AUTH_INVALID_CREDENTIALS',
+            ],
+        ]);
+    }
+
+    public function test_login_rejects_inactive_user()
+    {
+        $user = User::factory()->create([
+            'password' => Hash::make('password123'),
+            'is_active' => false,
+        ]);
+
+        $response = $this->postJson('/api/v1/auth/login', [
+            'email' => $user->email,
+            'password' => 'password123',
+        ]);
+
+        $response->assertStatus(403);
+        $response->assertJson([
+            'success' => false,
+            'error' => [
+                'code' => 'AUTH_ACCOUNT_INACTIVE',
             ],
         ]);
     }
