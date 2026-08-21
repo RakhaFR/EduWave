@@ -73,7 +73,6 @@ export default function StudentTutorial() {
       const element = document.querySelector(`[data-tour="${target}"]`);
       if (!element) return;
       element.classList.add("tour-current-target");
-      element.scrollIntoView({ behavior: "smooth", block: "center" });
       const rect = element.getBoundingClientRect();
       const bubbleWidth = Math.min(420, window.innerWidth - 32);
       const minimumLeft = rect.left < 280 ? 150 : 16;
