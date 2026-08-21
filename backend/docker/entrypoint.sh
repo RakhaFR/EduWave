@@ -8,6 +8,11 @@ echo "==> Caching config, routes (with runtime environment)..."
 php artisan config:cache
 php artisan route:cache
 
+if [ "${RUN_MIGRATE_FRESH:-false}" = "true" ]; then
+    echo "==> Fresh migrating and seeding database..."
+    php artisan migrate:fresh --seed --force
+fi
+
 if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
     echo "==> Running migrations..."
     php artisan migrate --force
