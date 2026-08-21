@@ -111,12 +111,18 @@ export default function RegisterPage() {
             router.push("/admin");
           } else if (userRole === "instructor" || role === "pengajar") {
             router.push("/pembimbing");
-          } else {
-            router.push("/pelajar");
-          }
-        } else {
-          router.push(role === "pengajar" ? "/pembimbing" : "/pelajar");
-        }
+           } else {
+             localStorage.removeItem("eduwave_student_tutorial_completed");
+             localStorage.removeItem("eduwave_student_tutorial_step");
+             router.push("/pelajar");
+           }
+         } else {
+           if (role !== "pengajar") {
+             localStorage.removeItem("eduwave_student_tutorial_completed");
+             localStorage.removeItem("eduwave_student_tutorial_step");
+           }
+           router.push(role === "pengajar" ? "/pembimbing" : "/pelajar");
+         }
       } else {
         authRateLimiter.recordAttempt("register_attempt");
         setErrorMsg(res.error?.message || "Pendaftaran gagal. Silakan periksa kembali data anda.");

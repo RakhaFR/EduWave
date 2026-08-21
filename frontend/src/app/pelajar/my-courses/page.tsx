@@ -87,6 +87,7 @@ export default function PelajarMyCoursesPage() {
               const isFinished = course.progress_pct >= 100;
               return (
                 <Link
+                  data-tour={enrolledCourses[0]?.id === course.id ? "my-course-card" : undefined}
                   key={course.id}
                   href={`/course/${course.id}`}
                   className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-black/20 hover:-translate-y-1 transition-all duration-300 flex flex-col"

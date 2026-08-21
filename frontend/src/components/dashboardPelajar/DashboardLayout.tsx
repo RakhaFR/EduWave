@@ -10,6 +10,7 @@ import {
   LogOut, ChevronDown, Menu, X,
 } from "lucide-react";
 import FloatingBubbles from "@/components/ui/FloatingBubbles";
+import StudentTutorial from "@/components/ui/StudentTutorial";
 import { clearUserCache, useCurrentUser } from "@/hooks/useCurrentUser";
 
 const NAV_ITEMS = [
@@ -92,6 +93,7 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
               const active = pathname === item.href || (item.href !== "#" && pathname.startsWith(item.href) && item.href !== "/pelajar") || pathname === item.href;
               return (
                 <Link key={item.label} href={item.href}
+                  data-tour={item.href === "/pelajar" ? "home" : item.href === "/pelajar/all-course" ? "all-course" : item.href === "/pelajar/my-courses" ? "my-courses" : item.href === "/pelajar/liveClass" ? "live-class" : item.href === "/pelajar/study-room" ? "study-forum" : item.href === "/pelajar/leaderboard" ? "leaderboard" : item.href === "/pelajar/pembimbing" ? "pembimbing" : item.href === "/pelajar/report" ? "report" : item.href === "/pelajar/mascot-customize" ? "mascot" : undefined}
                   title={item.label}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
                     ${active
@@ -251,6 +253,7 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
           })}
         </div>
       </div>
+      <StudentTutorial />
     </div>
   );
 }

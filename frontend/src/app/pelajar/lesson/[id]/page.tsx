@@ -9,6 +9,7 @@ import {
   FileText, Video, List,
 } from "lucide-react";
 import { courseService, Lesson } from "@/services/courseService";
+import StudentTutorial from "@/components/ui/StudentTutorial";
 
 function MarkdownRenderer({ content }: { content: string }) {
   return (
@@ -366,6 +367,7 @@ export default function PelajarLessonDetailPage() {
 
         {/* ── Main Content ── */}
         <main
+          data-tour="lesson-content"
           ref={contentAreaRef}
           onScroll={handleScroll}
           className="flex-1 min-w-0 overflow-y-auto"
@@ -542,6 +544,7 @@ export default function PelajarLessonDetailPage() {
           </div>
         </main>
       </div>
+      <StudentTutorial />
     </div>
   );
 }

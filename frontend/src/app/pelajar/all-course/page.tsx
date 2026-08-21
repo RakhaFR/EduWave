@@ -147,13 +147,13 @@ function AllCoursesContent() {
             <p className="text-xs text-slate-500 mb-4">Coba sesuaikan pencarian atau filter kategori Anda.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5 mb-8">
+          <div data-tour="course-list" className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5 mb-8">
             {courses.map((course) => (
               <div
                 key={course.id}
                 className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-black/20 hover:-translate-y-1 transition-all duration-300 flex flex-col"
               >
-                <Link href={`/course/${course.id}`} className="block cursor-pointer">
+                <Link data-tour={courses[0]?.id === course.id ? "course-card" : undefined} href={`/course/${course.id}`} className="block cursor-pointer">
                   <div className="relative h-40 md:h-44 bg-[#c9e8ff] shrink-0">
                     <img
                       src={course.thumbnail_url || "/ocean-bg.jpg"}

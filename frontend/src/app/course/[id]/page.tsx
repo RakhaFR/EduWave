@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, BookOpen, CheckCircle2, Clock, PlayCircle, Trophy } from "lucide-react";
 import { courseService, Course, Lesson } from "@/services/courseService";
+import StudentTutorial from "@/components/ui/StudentTutorial";
 
 export default function CourseDetailPage() {
   const params = useParams<{ id: string }>();
@@ -119,7 +120,7 @@ export default function CourseDetailPage() {
         <div className="min-w-0"><h1 className="truncate font-extrabold">{course.title}</h1><p className="text-xs text-slate-400">{course.instructor?.full_name || "Instruktur EduWave"}</p></div>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-6 md:px-8">
-        <section className="mb-6 overflow-hidden rounded-3xl bg-white shadow-sm">
+        <section data-tour="course-overview" className="mb-6 overflow-hidden rounded-3xl bg-white shadow-sm">
           <div className="h-48 bg-[#c9e8ff]"><img src={course.thumbnail_url || "/ocean-bg.jpg"} alt={course.title} className="h-full w-full object-cover" onError={(event) => { event.currentTarget.src = "/ocean-bg.jpg"; }} /></div>
           <div className="p-5 md:p-7">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -150,7 +151,7 @@ export default function CourseDetailPage() {
             </div>
           </div>
         </section>
-        <section className="rounded-3xl bg-white p-5 shadow-sm md:p-7"><div className="mb-5 flex items-center justify-between"><div><h2 className="font-extrabold">Daftar Lesson</h2><p className="text-xs text-slate-400">{completedLessons} dari {lessons.length} lesson selesai</p></div><span className="text-sm font-extrabold text-[#008be3]">{Math.round(progress)}%</span></div><div className="mb-6 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#008be3] transition-all" style={{ width: `${Math.min(100, progress)}%` }} /></div>              <div className="divide-y divide-slate-100">
+        <section data-tour="lesson-list" className="rounded-3xl bg-white p-5 shadow-sm md:p-7"><div className="mb-5 flex items-center justify-between"><div><h2 className="font-extrabold">Daftar Lesson</h2><p className="text-xs text-slate-400">{completedLessons} dari {lessons.length} lesson selesai</p></div><span className="text-sm font-extrabold text-[#008be3]">{Math.round(progress)}%</span></div><div className="mb-6 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#008be3] transition-all" style={{ width: `${Math.min(100, progress)}%` }} /></div>              <div className="divide-y divide-slate-100">
                 {lessons.map((lesson, idx) => {
                   const isLocked = idx > 0 && !lessons[idx - 1].is_completed && !lesson.is_completed;
 
@@ -211,6 +212,7 @@ export default function CourseDetailPage() {
                 })}
               </div>{message && <p className="mt-4 rounded-xl bg-red-50 p-3 text-xs text-red-500">{message}</p>}</section>
       </main>
+      <StudentTutorial />
     </div>
   );
 }
