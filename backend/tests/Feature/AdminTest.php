@@ -77,9 +77,49 @@ class AdminTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.user.role', 'instructor');
+            ->assertJsonPath('data.user.role', 'instructor')
+            ->assertJsonPath('data.previous_role', 'student')
+            ->assertJsonPath('data.new_role', 'instructor')
+            ->assertJsonPath('data.gamification_action', 'destroyed');
 
         $this->assertEquals('instructor', $student->fresh()->role);
+    }
+
+    public function test_admin_cannot_change_own_role(): void
+    {
+        $admin = $this->admin();
+
+        $response = $this->actingAs($admin)->putJson("/api/v1/admin/users/{$admin->id}/role", [
+            'role' => 'student',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('error.code', 'CANNOT_CHANGE_OWN_ROLE');
+    }
+
+    public function test_admin_role_update_validates_invalid_role(): void
+    {
+        $admin = $this->admin();
+        $student = $this->student();
+
+        $response = $this->actingAs($admin)->putJson("/api/v1/admin/users/{$student->id}/role", [
+            'role' => 'invalid_role',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('error.code', 'INVALID_ROLE');
+    }
+
+    public function test_admin_can_get_user_gamification_stats(): void
+    {
+        $admin = $this->admin();
+        $student = $this->student();
+
+        $response = $this->actingAs($admin)->getJson("/api/v1/admin/users/{$student->id}/gamification");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.user_id', $student->id)
+            ->assertJsonPath('data.role', 'student');
     }
 
     public function test_admin_can_delete_student_user(): void

@@ -166,7 +166,8 @@ The table below reflects confirmed implementation status and auth boundaries:
 | **Exam Question** | `DELETE` | `/api/v1/exams/{exam}/questions/{question}` | Admin/Instructor | Delete an individual exam question | Yes |
 | **Admin** | `GET` | `/api/v1/admin/users` | Admin | List all users with filters and pagination | Yes |
 | **Admin** | `PUT` | `/api/v1/admin/users/{user}` | Admin | Update user details (full_name, email, username, role, is_active) | Yes |
-| **Admin** | `PUT` | `/api/v1/admin/users/{user}/role` | Admin | Update user role | Yes |
+| **Admin** | `PUT` | `/api/v1/admin/users/{user}/role` | Admin | Update user role and synchronize student gamification data in DB transaction | Yes |
+| **Admin** | `GET` | `/api/v1/admin/users/{user}/gamification` | Admin | Get user's gamification statistics summary | Yes |
 | **Admin** | `DELETE` | `/api/v1/admin/users/{user}` | Admin | Soft-delete a user (except admins) | Yes |
 | **Admin** | `GET` | `/api/v1/admin/courses` | Admin | List all courses with moderation filters | Yes |
 | **Admin** | `PUT` | `/api/v1/admin/courses/{course}/status` | Admin | Update course status (draft/published/archived) | Yes |
@@ -2288,7 +2289,7 @@ Update user details (Admin only). All request body fields are optional.
 ---
 
 #### `PUT /api/v1/admin/users/{user}/role`
-Update a user's role.
+Update a user's role and synchronize student gamification state within a database transaction.
 
 * **Headers:** `Authorization: Bearer <token>` (admin only)
 * **Request Body:**
@@ -2297,7 +2298,7 @@ Update a user's role.
   "role": "instructor"
 }
 ```
-* **Success Response (`200 OK`):**
+* **Success Response (`200 OK` when converting student to instructor):**
 ```json
 {
   "success": true,
@@ -2308,7 +2309,91 @@ Update a user's role.
       "email": "user@example.com",
       "full_name": "Budi Santoso",
       "role": "instructor"
+    },
+    "previous_role": "student",
+    "new_role": "instructor",
+    "gamification_action": "destroyed",
+    "gamification": null
+  },
+  "error": null,
+  "meta": null
+}
+```
+* **Success Response (`200 OK` when converting instructor to student):**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "username": "penjelajah_baru",
+      "email": "user@example.com",
+      "full_name": "Budi Santoso",
+      "role": "student"
+    },
+    "previous_role": "instructor",
+    "new_role": "student",
+    "gamification_action": "initialized",
+    "gamification": {
+      "xp": 0,
+      "pearls": 0,
+      "level": 1,
+      "streak_days": 0
     }
+  },
+  "error": null,
+  "meta": null
+}
+```
+* **Error Response (`422 Unprocessable Content` if invalid role):**
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "INVALID_ROLE",
+    "message": "Role yang dipilih tidak valid.",
+    "details": {
+      "allowed_roles": ["student", "instructor", "admin"]
+    }
+  },
+  "meta": null
+}
+```
+* **Error Response (`422 Unprocessable Content` if editing own role):**
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "CANNOT_CHANGE_OWN_ROLE",
+    "message": "Admin tidak dapat mengubah role akunnya sendiri."
+  },
+  "meta": null
+}
+```
+
+---
+
+#### `GET /api/v1/admin/users/{user}/gamification`
+Get user's gamification statistics summary for admin management.
+
+* **Headers:** `Authorization: Bearer <token>` (admin only)
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "user_id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+    "role": "student",
+    "xp": 0,
+    "pearls": 0,
+    "level": 1,
+    "streak_days": 0,
+    "completed_courses_count": 0,
+    "completed_lessons_count": 0,
+    "achievement_count": 0,
+    "mascot_count": 1
   },
   "error": null,
   "meta": null

@@ -155,6 +155,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::get('users', [AdminUserController::class, 'index'])->name('admin.users.index');
             Route::put('users/{user}', [AdminUserController::class, 'update'])->name('admin.users.update');
             Route::put('users/{user}/role', [AdminUserController::class, 'updateRole'])->name('admin.users.role.update');
+            Route::get('users/{user}/gamification', [AdminUserController::class, 'getGamification'])->name('admin.users.gamification');
             Route::delete('users/{user}', [AdminUserController::class, 'destroy'])->name('admin.users.destroy');
 
             Route::get('courses', [AdminCourseController::class, 'index'])->name('admin.courses.index');
