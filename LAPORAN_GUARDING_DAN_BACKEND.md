@@ -20,7 +20,7 @@ Frontend (browser A) tidak dapat berkomunikasi secara langsung dengan browser B 
 Untuk menerapkan penguncian sesi tunggal (*Single Active Session*):
 1. **Sanctum Token Invalidation**: Saat user berhasil login di `POST /api/v1/auth/login`, hapus/revokasi semua token lama user tersebut (`$user->tokens()->delete()`) sebelum memunculkan token baru.
 2. **Custom Error Response (401)**: Jika request masuk menggunakan token lama yang sudah di-revoke, Laravel Sanctum akan mengembalikan status `401 Unauthorized`. Ubah pesan error di `app/Exceptions/Handler.php` atau Middleware Sanctum menjadi:
-   ```json
+   ```jsonn
    {
      "success": false,
      "data": null,
