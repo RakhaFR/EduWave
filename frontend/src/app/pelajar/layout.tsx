@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function PelajarLayout({ children }: { children: React.ReactNode }) {
   return (
-    <AuthGuard allowedRoles={["student", "instructor", "admin"]}>
+    <AuthGuard allowedRoles={["student"]}>
       {children}
     </AuthGuard>
   );

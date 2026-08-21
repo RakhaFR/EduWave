@@ -85,8 +85,24 @@ export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
 
     checkAuth();
 
+    // Guard: Deteksi jika user di-logout atau login dengan akun lain di tab browser yang sama
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "token" || e.key === "user") {
+        const currentToken = localStorage.getItem("token");
+        if (!currentToken) {
+          router.replace("/auth/login");
+        } else {
+          // Re-check auth jika akun berubah di tab lain
+          checkAuth();
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
     return () => {
       isMounted = false;
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, [pathname, router, allowedRoles]);
 

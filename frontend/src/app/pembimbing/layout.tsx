@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function PembimbingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <AuthGuard allowedRoles={["instructor", "admin"]}>
+    <AuthGuard allowedRoles={["instructor"]}>
       <PembimbingProvider>
         <DashboardLayout>{children}</DashboardLayout>
       </PembimbingProvider>
