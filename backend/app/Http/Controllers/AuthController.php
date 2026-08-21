@@ -73,7 +73,11 @@ class AuthController extends ApiController
             return $this->error('AUTH_INVALID_CREDENTIALS', 'Email atau password salah.', 401);
         }
 
-        // Create token
+        // Revoke all existing tokens so only one active session is allowed at a time.
+        // Any device still holding an old token will receive 401 SESSION_EXPIRED.
+        $user->tokens()->delete();
+
+        // Create a fresh token for this session
         $token = $user->createToken('eduwave-api', ['*'], now()->addDays(7));
 
         return $this->success([

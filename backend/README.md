@@ -165,6 +165,7 @@ The table below reflects confirmed implementation status and auth boundaries:
 | **Exam Question** | `PUT` | `/api/v1/exams/{exam}/questions/{question}` | Admin/Instructor | Update an individual exam question | Yes |
 | **Exam Question** | `DELETE` | `/api/v1/exams/{exam}/questions/{question}` | Admin/Instructor | Delete an individual exam question | Yes |
 | **Admin** | `GET` | `/api/v1/admin/users` | Admin | List all users with filters and pagination | Yes |
+| **Admin** | `PUT` | `/api/v1/admin/users/{user}` | Admin | Update user details (full_name, email, username, role, is_active) | Yes |
 | **Admin** | `PUT` | `/api/v1/admin/users/{user}/role` | Admin | Update user role | Yes |
 | **Admin** | `DELETE` | `/api/v1/admin/users/{user}` | Admin | Soft-delete a user (except admins) | Yes |
 | **Admin** | `GET` | `/api/v1/admin/courses` | Admin | List all courses with moderation filters | Yes |
@@ -257,6 +258,8 @@ The `role` field is optional. Omit it to register a student, or set it to `instr
 #### `POST /api/v1/auth/login`
 Authenticate using email or username.
 
+> **Single Active Session Guard:** Upon successful login, all previously issued access tokens for the account are automatically revoked. If the account is accessed from another device/browser using an old token, backend returns `401 Unauthorized` with error code `SESSION_EXPIRED`.
+
 * **Request Body:**
 ```json
 {
@@ -285,6 +288,18 @@ Authenticate using email or username.
     "token_type": "Bearer"
   },
   "error": null,
+  "meta": null
+}
+```
+* **Session Expired Response (`401 Unauthorized` on old device):**
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "SESSION_EXPIRED",
+    "message": "Sesi tidak valid atau akun sedang dipakai di perangkat lain. Silakan login kembali."
+  },
   "meta": null
 }
 ```
@@ -2214,6 +2229,53 @@ List all users with filtering and pagination.
     "total": 50,
     "last_page": 3
   }
+}
+```
+
+---
+
+#### `PUT /api/v1/admin/users/{user}`
+Update user details (Admin only). All request body fields are optional.
+
+* **Headers:** `Authorization: Bearer <token>` (admin only)
+* **Request Body:**
+```json
+{
+  "full_name": "Budi Santoso Updated",
+  "username": "budi_baru",
+  "email": "budi_baru@example.com",
+  "role": "instructor",
+  "is_active": true
+}
+```
+* **Success Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+      "username": "budi_baru",
+      "email": "budi_baru@example.com",
+      "full_name": "Budi Santoso Updated",
+      "role": "instructor",
+      "is_active": true
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+* **Error Response (`422 Unprocessable Content` if trying to demote last admin):**
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "LAST_ADMIN",
+    "message": "Tidak dapat mengubah role admin terakhir."
+  },
+  "meta": null
 }
 ```
 
