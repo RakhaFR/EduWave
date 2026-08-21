@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\ApiController;
+use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Http\Requests\Admin\UpdateUserRoleRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -52,6 +53,38 @@ class UserController extends ApiController
                 'created_at' => $user->created_at,
             ];
         });
+    }
+
+    public function update(UpdateUserRequest $request, User $user): JsonResponse
+    {
+        $validated = $request->validated();
+
+        // Prevent demoting the last admin
+        if (
+            isset($validated['role']) &&
+            $validated['role'] !== 'admin' &&
+            $user->role === 'admin' &&
+            User::where('role', 'admin')->count() <= 1
+        ) {
+            return $this->error(
+                'LAST_ADMIN',
+                'Tidak dapat mengubah role admin terakhir.',
+                422
+            );
+        }
+
+        $user->update($validated);
+
+        return $this->success([
+            'user' => [
+                'id'        => $user->id,
+                'username'  => $user->username,
+                'email'     => $user->email,
+                'full_name' => $user->full_name,
+                'role'      => $user->role,
+                'is_active' => $user->is_active,
+            ],
+        ]);
     }
 
     public function updateRole(UpdateUserRoleRequest $request, User $user): JsonResponse

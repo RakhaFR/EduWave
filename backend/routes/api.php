@@ -153,6 +153,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         // Admin only — user management, course moderation, analytics
         Route::middleware('role:admin')->prefix('admin')->group(function () {
             Route::get('users', [AdminUserController::class, 'index'])->name('admin.users.index');
+            Route::put('users/{user}', [AdminUserController::class, 'update'])->name('admin.users.update');
             Route::put('users/{user}/role', [AdminUserController::class, 'updateRole'])->name('admin.users.role.update');
             Route::delete('users/{user}', [AdminUserController::class, 'destroy'])->name('admin.users.destroy');
 
