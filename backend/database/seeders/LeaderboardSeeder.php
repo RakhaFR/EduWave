@@ -22,5 +22,9 @@ class LeaderboardSeeder extends Seeder
         foreach ($users as $user) {
             $service->updateScore($user);
         }
+
+        // Reset prev_ranks after initial seeding so all seeded users start at rank_change = 0 (-)
+        $service->syncPrevRanks('global');
+        $service->syncPrevRanks('weekly');
     }
 }

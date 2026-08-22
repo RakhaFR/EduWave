@@ -444,4 +444,23 @@ class LeaderboardTest extends TestCase
         $this->assertEquals(2500, $rankings[2]['xp']);
         $this->assertEquals(0, $rankings[2]['rank_change']);
     }
+
+    public function test_new_user_entering_leaderboard_starts_with_zero_rank_change(): void
+    {
+        $service = app(LeaderboardService::class);
+
+        $user1 = User::factory()->create(['xp' => 1000]);
+        $user2 = User::factory()->create(['xp' => 500]);
+        $service->updateScore($user1);
+        $service->updateScore($user2);
+
+        // Sync baseline ranks
+        $service->syncPrevRanks('global');
+
+        $response = $this->getJson('/api/v1/leaderboard');
+        $rankings = $response->json('data.rankings');
+
+        $this->assertEquals(0, $rankings[0]['rank_change']);
+        $this->assertEquals(0, $rankings[1]['rank_change']);
+    }
 }

@@ -42,6 +42,10 @@ class LeaderboardService
             // Update weekly leaderboard
             Redis::zadd($weeklyKey, $score, $userId);
 
+            // Ensure brand new users get their initial rank recorded as prev_rank (rank_change = 0)
+            $this->ensurePrevRankExists(self::GLOBAL_KEY, self::PREV_RANKS_GLOBAL_KEY, $userId);
+            $this->ensurePrevRankExists($weeklyKey, $prevWeeklyRanksKey, $userId);
+
             // Set expiry on weekly keys (8 days to cover week transition overlap)
             Redis::expire($weeklyKey, 60 * 60 * 24 * 8);
             Redis::expire($prevWeeklyRanksKey, 60 * 60 * 24 * 8);
@@ -176,6 +180,36 @@ class LeaderboardService
     }
 
     /**
+     * Synchronize prev_ranks with current ranks (resets rank_change to 0 for all users in scope).
+     */
+    public function syncPrevRanks(string $scope = 'global'): void
+    {
+        try {
+            $key = $this->getKeyForScope($scope);
+            $prevKey = match ($scope) {
+                'global' => self::PREV_RANKS_GLOBAL_KEY,
+                'weekly' => self::PREV_RANKS_WEEKLY_PREFIX.now()->format('o-\WW'),
+                default => self::PREV_RANKS_GLOBAL_KEY,
+            };
+
+            $allUserIds = Redis::zrevrange($key, 0, -1);
+            if (empty($allUserIds)) {
+                return;
+            }
+
+            $ranksData = [];
+            foreach ($allUserIds as $index => $userId) {
+                $ranksData[$userId] = $index + 1;
+            }
+
+            Redis::del($prevKey);
+            Redis::hmset($prevKey, $ranksData);
+        } catch (Throwable $e) {
+            // Fail silently if Redis unavailable
+        }
+    }
+
+    /**
      * Snapshot current ranks from sorted set to prev_ranks hash before score update.
      */
     private function snapshotRanks(string $leaderboardKey, string $prevRanksKey, string $updatingUserId): void
@@ -183,23 +217,25 @@ class LeaderboardService
         $allUserIds = Redis::zrevrange($leaderboardKey, 0, -1);
 
         $prevRanksData = [];
-        $updatingUserFound = false;
-
         if (! empty($allUserIds)) {
             foreach ($allUserIds as $index => $userId) {
                 $prevRanksData[$userId] = $index + 1; // 1-indexed rank
-                if ((string) $userId === (string) $updatingUserId) {
-                    $updatingUserFound = true;
-                }
             }
-        }
-
-        if (! $updatingUserFound) {
-            $prevRanksData[$updatingUserId] = count($allUserIds) + 1;
-        }
-
-        if (! empty($prevRanksData)) {
             Redis::hmset($prevRanksKey, $prevRanksData);
+        }
+    }
+
+    /**
+     * Ensure a user has a prev_rank entry. If missing (e.g. brand new user), set it to their new current rank.
+     */
+    private function ensurePrevRankExists(string $leaderboardKey, string $prevRanksKey, string $userId): void
+    {
+        $hasPrev = Redis::hexists($prevRanksKey, $userId);
+        if (! $hasPrev) {
+            $currentRank = Redis::zrevrank($leaderboardKey, $userId);
+            if ($currentRank !== null) {
+                Redis::hset($prevRanksKey, $userId, (int) $currentRank + 1);
+            }
         }
     }
 
