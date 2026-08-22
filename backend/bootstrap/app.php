@@ -30,9 +30,9 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
                     'success' => false,
-                    'data'    => null,
-                    'error'   => [
-                        'code'    => 'SESSION_EXPIRED',
+                    'data' => null,
+                    'error' => [
+                        'code' => 'SESSION_EXPIRED',
                         'message' => 'Sesi tidak valid atau akun sedang dipakai di perangkat lain. Silakan login kembali.',
                     ],
                     'meta' => null,

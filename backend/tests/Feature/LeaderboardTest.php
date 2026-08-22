@@ -403,4 +403,45 @@ class LeaderboardTest extends TestCase
         $this->assertEquals(21, $rankings[0]['rank']);
         $this->assertEquals(40, $rankings[19]['rank']);
     }
+
+    public function test_leaderboard_calculates_rank_change_correctly_when_user_overtakes_another(): void
+    {
+        $service = app(LeaderboardService::class);
+
+        $budi = User::factory()->create(['username' => 'budi', 'xp' => 10000]);
+        $toni = User::factory()->create(['username' => 'toni', 'xp' => 5000]);
+        $john = User::factory()->create(['username' => 'john', 'xp' => 2500]);
+
+        $service->updateScore($budi);
+        $service->updateScore($toni);
+        $service->updateScore($john);
+
+        // Toni grinds 6000 XP -> total 11000 XP
+        $toni->xp = 11000;
+        $toni->save();
+        $service->updateScore($toni);
+
+        $response = $this->getJson('/api/v1/leaderboard');
+
+        $response->assertStatus(200);
+        $rankings = $response->json('data.rankings');
+
+        // Check Toni (Rank 1, +1 rank change)
+        $this->assertEquals($toni->id, $rankings[0]['user_id']);
+        $this->assertEquals(1, $rankings[0]['rank']);
+        $this->assertEquals(11000, $rankings[0]['xp']);
+        $this->assertEquals(1, $rankings[0]['rank_change']);
+
+        // Check Budi (Rank 2, -1 rank change)
+        $this->assertEquals($budi->id, $rankings[1]['user_id']);
+        $this->assertEquals(2, $rankings[1]['rank']);
+        $this->assertEquals(10000, $rankings[1]['xp']);
+        $this->assertEquals(-1, $rankings[1]['rank_change']);
+
+        // Check John (Rank 3, 0 rank change)
+        $this->assertEquals($john->id, $rankings[2]['user_id']);
+        $this->assertEquals(3, $rankings[2]['rank']);
+        $this->assertEquals(2500, $rankings[2]['xp']);
+        $this->assertEquals(0, $rankings[2]['rank_change']);
+    }
 }

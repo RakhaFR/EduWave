@@ -20,8 +20,8 @@ class RecalcUserLevels extends Command
     public function handle(): int
     {
         $isDryRun = $this->option('dry-run');
-        $updated  = 0;
-        $total    = 0;
+        $updated = 0;
+        $total = 0;
 
         $this->info($isDryRun ? '[DRY RUN] Scanning users...' : 'Recalculating user levels...');
 
@@ -32,13 +32,12 @@ class RecalcUserLevels extends Command
                 $correctLevel = (int) floor(sqrt($user->xp / 100)) + 1;
 
                 if ($user->level !== $correctLevel) {
-                    if (!$isDryRun) {
+                    if (! $isDryRun) {
                         // Update without triggering the observer (avoids infinite loop)
                         // and without firing timestamps churn on unrelated records.
-                        User::withoutEvents(fn () =>
-                            User::withTrashed()
-                                ->where('id', $user->id)
-                                ->update(['level' => $correctLevel])
+                        User::withoutEvents(fn () => User::withTrashed()
+                            ->where('id', $user->id)
+                            ->update(['level' => $correctLevel])
                         );
                     }
 

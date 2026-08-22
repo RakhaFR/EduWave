@@ -110,7 +110,7 @@ class LeaderboardController extends ApiController
      * Enrich leaderboard rankings with user data.
      *
      * @param  array  $rankings  [{user_id, score, rank}, ...]
-     * @param  string $scope     ('global' | 'weekly')
+     * @param  string  $scope  ('global' | 'weekly')
      * @return array [{rank, user_id, xp, rank_change, user: {...}}, ...]
      */
     private function enrichWithUserData(array $rankings, string $scope = 'global'): array

@@ -90,11 +90,11 @@ class UserController extends ApiController
 
         return $this->success([
             'user' => [
-                'id'        => $user->id,
-                'username'  => $user->username,
-                'email'     => $user->email,
+                'id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
                 'full_name' => $user->full_name,
-                'role'      => $user->role,
+                'role' => $user->role,
                 'is_active' => $user->is_active,
             ],
         ]);

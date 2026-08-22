@@ -18,9 +18,9 @@ class UpdateUserRequest extends BaseRequest
 
         return [
             'full_name' => ['sometimes', 'string', 'max:100'],
-            'username'  => ['sometimes', 'string', 'max:50', Rule::unique('users', 'username')->ignore($userId)],
-            'email'     => ['sometimes', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
-            'role'      => ['sometimes', 'in:student,instructor,admin'],
+            'username' => ['sometimes', 'string', 'max:50', Rule::unique('users', 'username')->ignore($userId)],
+            'email' => ['sometimes', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
+            'role' => ['sometimes', 'in:student,instructor,admin'],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }

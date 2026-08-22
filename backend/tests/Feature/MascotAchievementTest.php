@@ -12,6 +12,7 @@ use Tests\TestCase;
 class MascotAchievementTest extends TestCase
 {
     use RefreshDatabase;
+
     protected $gamificationService;
 
     protected function setUp(): void

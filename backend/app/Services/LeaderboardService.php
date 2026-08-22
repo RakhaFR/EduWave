@@ -28,20 +28,13 @@ class LeaderboardService
             $score = (float) $user->xp;
             $userId = $user->id;
 
-            // Track old rank before updating score if not tracked yet
-            $oldGlobalRank = Redis::zrevrank(self::GLOBAL_KEY, $userId);
-            if ($oldGlobalRank !== null) {
-                Redis::hsetnx(self::PREV_RANKS_GLOBAL_KEY, $userId, (int) $oldGlobalRank + 1);
-            }
-
             $currentWeek = now()->format('o-\WW');
             $weeklyKey = self::WEEKLY_KEY_PREFIX.$currentWeek;
             $prevWeeklyRanksKey = self::PREV_RANKS_WEEKLY_PREFIX.$currentWeek;
 
-            $oldWeeklyRank = Redis::zrevrank($weeklyKey, $userId);
-            if ($oldWeeklyRank !== null) {
-                Redis::hsetnx($prevWeeklyRanksKey, $userId, (int) $oldWeeklyRank + 1);
-            }
+            // Snapshot current global and weekly ranks before updating scores
+            $this->snapshotRanks(self::GLOBAL_KEY, self::PREV_RANKS_GLOBAL_KEY, $userId);
+            $this->snapshotRanks($weeklyKey, $prevWeeklyRanksKey, $userId);
 
             // Update global leaderboard
             Redis::zadd(self::GLOBAL_KEY, $score, $userId);
@@ -153,13 +146,23 @@ class LeaderboardService
             };
 
             $userIds = collect($rankings)->pluck('user_id')->all();
-            $prevRanks = Redis::hmget($prevKey, $userIds);
+            $rawPrevRanks = Redis::hmget($prevKey, $userIds);
+
+            $prevRanks = [];
+            if (is_array($rawPrevRanks)) {
+                foreach ($userIds as $index => $id) {
+                    $val = $rawPrevRanks[$id] ?? $rawPrevRanks[$index] ?? null;
+                    if ($val !== null && $val !== false) {
+                        $prevRanks[$id] = (int) $val;
+                    }
+                }
+            }
 
             $changes = [];
             foreach ($rankings as $item) {
                 $userId = $item['user_id'];
                 $currentRank = (int) $item['rank'];
-                $prevRank = isset($prevRanks[$userId]) && $prevRanks[$userId] !== false ? (int) $prevRanks[$userId] : null;
+                $prevRank = $prevRanks[$userId] ?? null;
 
                 // rank_change = prev_rank - current_rank
                 // (e.g. prev 5, current 3 => 5 - 3 = +2, meaning moved up 2 ranks)
@@ -169,6 +172,34 @@ class LeaderboardService
             return $changes;
         } catch (Throwable $e) {
             return [];
+        }
+    }
+
+    /**
+     * Snapshot current ranks from sorted set to prev_ranks hash before score update.
+     */
+    private function snapshotRanks(string $leaderboardKey, string $prevRanksKey, string $updatingUserId): void
+    {
+        $allUserIds = Redis::zrevrange($leaderboardKey, 0, -1);
+
+        $prevRanksData = [];
+        $updatingUserFound = false;
+
+        if (! empty($allUserIds)) {
+            foreach ($allUserIds as $index => $userId) {
+                $prevRanksData[$userId] = $index + 1; // 1-indexed rank
+                if ((string) $userId === (string) $updatingUserId) {
+                    $updatingUserFound = true;
+                }
+            }
+        }
+
+        if (! $updatingUserFound) {
+            $prevRanksData[$updatingUserId] = count($allUserIds) + 1;
+        }
+
+        if (! empty($prevRanksData)) {
+            Redis::hmset($prevRanksKey, $prevRanksData);
         }
     }
 

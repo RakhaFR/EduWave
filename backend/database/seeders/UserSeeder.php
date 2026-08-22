@@ -113,7 +113,7 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($indonesianNames as $index => $name) {
-            $username = strtolower(str_replace(' ', '_', $name)) . '_' . ($index + 1);
+            $username = strtolower(str_replace(' ', '_', $name)).'_'.($index + 1);
             $xp = rand(100, 15000);
             $level = max(1, (int) floor($xp / 500) + 1);
             $pearls = rand(50, 3000);
