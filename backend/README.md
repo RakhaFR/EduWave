@@ -161,6 +161,7 @@ The table below reflects confirmed implementation status and auth boundaries:
 | **Exam** | `GET` | `/api/v1/exams` | Admin/Instructor | List all exams (filtered by ownership for instructors) | Yes |
 | **Exam Question** | `GET` | `/api/v1/exams/{exam}/questions` | Admin/Instructor | List questions for an exam with full answer keys | Yes |
 | **Exam Question** | `POST` | `/api/v1/exams/{exam}/questions` | Admin/Instructor | Add a new question to an exam | Yes |
+| **Exam Question** | `POST` | `/api/v1/exams/{exam}/questions/import-pdf` | Admin/Instructor | Bulk import multiple-choice questions from a PDF | Yes |
 | **Exam Question** | `GET` | `/api/v1/exams/{exam}/questions/{question}` | Admin/Instructor | Get single question details with answer key | Yes |
 | **Exam Question** | `PUT` | `/api/v1/exams/{exam}/questions/{question}` | Admin/Instructor | Update an individual exam question | Yes |
 | **Exam Question** | `DELETE` | `/api/v1/exams/{exam}/questions/{question}` | Admin/Instructor | Delete an individual exam question | Yes |
@@ -1379,6 +1380,70 @@ Add a new question to an exam.
   "meta": null
 }
 ```
+
+---
+
+#### `POST /api/v1/exams/{exam}/questions/import-pdf`
+Bulk import multiple-choice questions from a text-based PDF. The caller must be an admin or the owner instructor of the exam's course.
+
+* **Headers:** `Authorization: Bearer <token>`, `Accept: application/json`
+* **Content Type:** `multipart/form-data`
+* **Form field:** `file` - required PDF, maximum 5 MB.
+* **Atomic behavior:** All extracted questions are created with sequential `order` values after the current last question. If the PDF cannot be parsed or any question block is invalid, no questions are created.
+* **Response (`201 Created`):**
+```json
+{
+  "success": true,
+  "data": {
+    "imported_count": 2,
+    "questions": [
+      {
+        "id": "q1f2e3d4-5678-90ab-cdef-1234567890ab",
+        "exam_id": "x1f2e3d4-5678-90ab-cdef-1234567890ab",
+        "question_text": "Apa zona laut terdalam di bumi?",
+        "type": "multiple_choice",
+        "options": [
+          { "key": "A", "value": "Zona Pelagis" },
+          { "key": "B", "value": "Zona Mesopelagis" },
+          { "key": "C", "value": "Zona Hadapelagis" }
+        ],
+        "correct_answer": "C",
+        "explanation": "Zona Hadapelagis adalah wilayah palung laut terdalam.",
+        "points": 15,
+        "order": 1
+      }
+    ]
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+**Required PDF format**
+
+The PDF must contain selectable text, not scanned images. Every question starts on a new line with a number; options use `A.` through `E.`; and `Kunci:` contains the correct option letter. `Pembahasan:` and `Poin:` are optional. A question must have at least two options and a key that matches one of its options.
+
+```text
+1. Apa zona laut terdalam di bumi?
+A. Zona Pelagis
+B. Zona Mesopelagis
+C. Zona Hadapelagis
+D. Zona Abisal
+Kunci: C
+Pembahasan: Zona Hadapelagis adalah wilayah palung laut terdalam.
+Poin: 15
+
+2. Berapa persentase wilayah perairan laut di permukaan bumi?
+A. 50 persen
+B. 60 persen
+C. 71 persen
+D. 85 persen
+Kunci: C
+```
+
+`sample_exam_questions.pdf` in the repository root is a ready-to-upload example. Import `eduwave-exam-pdf-import.postman_collection.json` into Postman, set `instructor_token` and `exam_id`, and use its default `pdf_file_path` or choose the sample PDF manually in the `file` form field.
+
+All EduWave exam questions are multiple choice. The APIs reject `essay` and `true_false` values for `type`.
 
 ---
 

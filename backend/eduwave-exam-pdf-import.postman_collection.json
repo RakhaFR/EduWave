@@ -1,0 +1,84 @@
+{
+  "info": {
+    "_postman_id": "4dfbd2e2-5e91-4bd0-b16c-6cbb6172080d",
+    "name": "EduWave - Exam PDF Import",
+    "description": "Imports multiple-choice exam questions from sample_exam_questions.pdf. Set instructor_token and exam_id before sending.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "instructor_token",
+      "value": ""
+    },
+    {
+      "key": "exam_id",
+      "value": ""
+    },
+    {
+      "key": "pdf_file_path",
+      "value": "C:/Users/pc3as/Documents/gio/project/EduWave/backend/sample_exam_questions.pdf"
+    }
+  ],
+  "item": [
+    {
+      "name": "Import Multiple-Choice Questions from PDF",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{instructor_token}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "{{pdf_file_path}}"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/exams/{{exam_id}}/questions/import-pdf",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "exams",
+            "{{exam_id}}",
+            "questions",
+            "import-pdf"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 201 Created', function () { pm.response.to.have.status(201); });",
+              "pm.test('Imported questions response is valid', function () {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body.success).to.eql(true);",
+              "    pm.expect(body.data.imported_count).to.be.above(0);",
+              "    pm.expect(body.data.questions).to.have.lengthOf(body.data.imported_count);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "response": []
+    }
+  ]
+}

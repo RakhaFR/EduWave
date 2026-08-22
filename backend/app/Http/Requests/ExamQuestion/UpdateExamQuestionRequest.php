@@ -15,8 +15,8 @@ class UpdateExamQuestionRequest extends BaseRequest
     {
         return [
             'question_text' => ['sometimes', 'string'],
-            'type' => ['sometimes', 'string', 'in:multiple_choice,essay,true_false'],
-            'options' => ['sometimes', 'nullable', 'array'],
+            'type' => ['sometimes', 'string', 'in:multiple_choice'],
+            'options' => ['sometimes', 'array', 'min:2'],
             'correct_answer' => ['sometimes', 'string'],
             'explanation' => ['sometimes', 'nullable', 'string'],
             'points' => ['sometimes', 'integer', 'min:1'],

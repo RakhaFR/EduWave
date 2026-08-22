@@ -145,6 +145,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             // Exam question management
             Route::get('exams/{exam}/questions', [ExamQuestionController::class, 'index'])->name('exams.questions.index');
             Route::post('exams/{exam}/questions', [ExamQuestionController::class, 'store'])->name('exams.questions.store');
+            Route::post('exams/{exam}/questions/import-pdf', [ExamQuestionController::class, 'importPdf'])->name('exams.questions.import-pdf');
             Route::get('exams/{exam}/questions/{question}', [ExamQuestionController::class, 'show'])->name('exams.questions.show');
             Route::put('exams/{exam}/questions/{question}', [ExamQuestionController::class, 'update'])->name('exams.questions.update');
             Route::delete('exams/{exam}/questions/{question}', [ExamQuestionController::class, 'destroy'])->name('exams.questions.destroy');

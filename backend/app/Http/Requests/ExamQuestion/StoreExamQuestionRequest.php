@@ -15,8 +15,8 @@ class StoreExamQuestionRequest extends BaseRequest
     {
         return [
             'question_text' => ['required', 'string'],
-            'type' => ['nullable', 'string', 'in:multiple_choice,essay,true_false'],
-            'options' => ['nullable', 'array'],
+            'type' => ['nullable', 'string', 'in:multiple_choice'],
+            'options' => ['required', 'array', 'min:2'],
             'correct_answer' => ['required', 'string'],
             'explanation' => ['nullable', 'string'],
             'points' => ['nullable', 'integer', 'min:1'],
