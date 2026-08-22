@@ -117,6 +117,29 @@ export default function PelajarExamPage() {
       }));
       const res = await courseService.submitExamAttempt(id, attempt.attempt_id, formatted);
       setResult(res.data);
+
+      // Auto-complete lesson jika ujian terhubung dengan lesson atau kuis lulus
+      if (exam?.lesson_id && res.data?.passed) {
+        await courseService.completeLesson(exam.lesson_id).catch(() => null);
+
+        // Backup completed ID ke localStorage
+        if (typeof window !== "undefined") {
+          let currentUserId = "";
+          try {
+            const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+            currentUserId = userObj?.id || "";
+          } catch {
+            currentUserId = "";
+          }
+          const userCompletedKey = currentUserId ? `completed_lesson_ids_${currentUserId}` : "completed_lesson_ids";
+          const localCompleted = JSON.parse(localStorage.getItem(userCompletedKey) || "[]");
+          if (!localCompleted.includes(exam.lesson_id)) {
+            localCompleted.push(exam.lesson_id);
+            localStorage.setItem(userCompletedKey, JSON.stringify(localCompleted));
+          }
+        }
+      }
+
       const histRes = await courseService.getExamAttempts(id).catch(() => ({ data: [] }));
       const raw = histRes.data ?? histRes ?? [];
       setHistory(Array.isArray(raw) ? raw : []);

@@ -27,7 +27,7 @@ export default function DashboardHome() {
   const { user } = useCurrentUser();
   const displayName = user?.full_name || user?.username || "Penyelam EduWave";
 
-  const [myCourses, setMyCourses] = useState<(Course & { progress_pct: number })[]>([]);
+  const [myCourses, setMyCourses] = useState<(Course & { progress_pct: number; hasNewLessons?: boolean })[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [topPenyelam, setTopPenyelam] = useState<{ rank: number; name: string; xp: number; me: boolean; avatarUrl?: string | null }[]>([]);
   const [activeMascot, setActiveMascot] = useState<InventoryMascot | null>(null);
@@ -87,23 +87,50 @@ export default function DashboardHome() {
         }
 
         if (resCourses?.success && resCourses.data) {
+          let currentUserId = "";
+          try {
+            const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+            currentUserId = userObj?.id || "";
+          } catch {
+            currentUserId = "";
+          }
+          const userCompletedKey = currentUserId ? `completed_lesson_ids_${currentUserId}` : "completed_lesson_ids";
+          const localCompleted = typeof window !== "undefined" ? JSON.parse(localStorage.getItem(userCompletedKey) || "[]") : [];
+
           const allCourses: Course[] = resCourses.data;
           const enrollments: any[] = resProgress?.success && resProgress.data?.enrollments ? resProgress.data.enrollments : [];
           const completedLessonsList: any[] = resProgress?.success && resProgress.data?.completed_lessons ? resProgress.data.completed_lessons : [];
-          const completedLessonIds = new Set(completedLessonsList.map((cl: any) => cl.lesson_id || cl.id || cl));
+          const completedLessonIds = new Set([
+            ...localCompleted,
+            ...completedLessonsList.map((cl: any) => cl.lesson_id || cl.id || cl)
+          ]);
 
-          const list: (Course & { progress_pct: number })[] = [];
+          // Also fetch full course details for enrolled courses to get accurate total lessons count if c.lessons is not present
+          const list: (Course & { progress_pct: number; hasNewLessons?: boolean })[] = [];
           for (const c of allCourses) {
             const enr = enrollments.find((e: any) => e.course_id === c.id);
             if (enr) {
-              const totalLessons = c.lessons?.length || c.lesson_count || 1;
-              const finishedCount = c.lessons
-                ? c.lessons.filter((l: any) => completedLessonIds.has(l.id) || l.is_completed).length
+              let courseLessons = c.lessons;
+              if (!courseLessons) {
+                try {
+                  const detailRes = await courseService.getCourseById(c.id);
+                  if (detailRes?.success && detailRes.data?.lessons) {
+                    courseLessons = detailRes.data.lessons;
+                  }
+                } catch {
+                  // ignore
+                }
+              }
+
+              const totalLessons = courseLessons?.length || c.lesson_count || 1;
+              const finishedCount = courseLessons
+                ? courseLessons.filter((l: any) => completedLessonIds.has(l.id) || l.is_completed).length
                 : Math.min(totalLessons, (enr.completed_lessons_count ?? Math.round(((enr.progress_pct || 0) / 100) * totalLessons)));
 
               const dynamicPct = totalLessons > 0 ? Math.round((finishedCount / totalLessons) * 100) : (enr.progress_pct || 0);
+              const hasNewLessons = finishedCount < totalLessons && (enr.progress_pct >= 100 || enr.status === "completed");
 
-              list.push({ ...c, progress_pct: dynamicPct });
+              list.push({ ...c, lessons: courseLessons, progress_pct: dynamicPct, hasNewLessons } as any);
             }
           }
           setMyCourses(list.slice(0, 4));
@@ -214,12 +241,19 @@ export default function DashboardHome() {
                     <div className="p-3 flex flex-col flex-1">
                       <p className="text-xs font-bold text-[#00172e] line-clamp-2 mb-0.5 min-h-[2.5rem]">{course.title}</p>
                       <p className="text-[10px] text-slate-400 mb-2">{course.instructor?.full_name || "Instruktur EduWave"}</p>
+                      {course.hasNewLessons && (
+                        <p className="text-[10px] font-bold text-amber-500 mb-1 flex items-center gap-1 animate-pulse">
+                          <span>🔔</span> Materi Baru Ditambahkan!
+                        </p>
+                      )}
                       <div className="mt-auto">
                         <div className="h-1.5 rounded-full bg-slate-100 mb-1">
-                          <div className="h-1.5 rounded-full bg-green-400" style={{ width: `${course.progress_pct}%` }} />
+                          <div className={`h-1.5 rounded-full ${course.progress_pct >= 100 ? "bg-green-400" : "bg-[#008be3]"}`} style={{ width: `${course.progress_pct}%` }} />
                         </div>
-                        <div className="flex items-center justify-between mt-2">
-                          <span className="text-[10px] text-green-500 font-semibold">Progres {Math.round(course.progress_pct)}%</span>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className={`text-[10px] font-semibold ${course.progress_pct >= 100 ? "text-green-500" : "text-[#008be3]"}`}>
+                            Progres {Math.round(course.progress_pct)}%
+                          </span>
                         </div>
                       </div>
                     </div>

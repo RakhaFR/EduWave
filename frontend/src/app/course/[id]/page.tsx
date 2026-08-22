@@ -31,9 +31,24 @@ export default function CourseDetailPage() {
         const lessonProgress = progressResponse?.data?.lessons_progress || [];
         setCourse(courseData?.course || courseData || null);
         const rawLessons = courseData?.lessons || [];
+
+        let currentUserId = "";
+        try {
+          const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+          currentUserId = userObj?.id || "";
+        } catch {
+          currentUserId = "";
+        }
+        const userCompletedKey = currentUserId ? `completed_lesson_ids_${currentUserId}` : "completed_lesson_ids";
+        const localCompleted = typeof window !== "undefined" ? JSON.parse(localStorage.getItem(userCompletedKey) || "[]") : [];
+        const completedIds = new Set([
+          ...localCompleted,
+          ...(progressResponse?.success && progressResponse.data?.completed_lessons ? progressResponse.data.completed_lessons.map((l: any) => l.lesson_id || l.id || l) : []),
+        ]);
+
         const mappedLessons = rawLessons.map((lesson: Lesson) => ({
           ...lesson,
-          is_completed: lessonProgress.find((item: { id: string }) => item.id === lesson.id)?.is_completed || false,
+          is_completed: Boolean(lesson.is_completed) || completedIds.has(lesson.id) || lessonProgress.find((item: { id: string }) => item.id === lesson.id)?.is_completed || false,
         }));
         setLessons(mappedLessons);
         
@@ -187,7 +202,7 @@ export default function CourseDetailPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        {lesson.exam_id && !isLocked && (
+                        {lesson.type !== "quiz" && lesson.exam_id && !isLocked && (
                           <Link
                             href={`/pelajar/exam/${lesson.exam_id}`}
                             className="flex items-center gap-1 rounded-full bg-amber-500/10 px-3 py-1.5 text-[11px] font-bold text-amber-600 hover:bg-amber-500/20"
@@ -203,6 +218,14 @@ export default function CourseDetailPage() {
                           >
                             Terkunci 🔒
                           </button>
+                        ) : lesson.type === "quiz" ? (
+                          <Link
+                            href={lesson.exam_id ? `/pelajar/exam/${lesson.exam_id}` : `/pelajar/lesson/${lesson.id}`}
+                            className="rounded-full bg-amber-500 hover:bg-amber-600 px-4 py-1.5 text-[11px] font-bold text-white shadow-sm transition-all active:scale-95 flex items-center gap-1.5"
+                          >
+                            <Trophy className="w-3 h-3" />
+                            Enter Ujian
+                          </Link>
                         ) : (
                           <Link
                             href={`/pelajar/lesson/${lesson.id}`}

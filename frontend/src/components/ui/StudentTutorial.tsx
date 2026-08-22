@@ -96,6 +96,19 @@ export default function StudentTutorial() {
   const changeStep = (next: number) => {
     localStorage.setItem("eduwave_student_tutorial_step", String(next));
     setStep(next);
+
+    // Auto-navigate / direct ke halaman yang ditutorialkan jika step memiliki href
+    const nextStepObj = STEPS[next];
+    if (nextStepObj && nextStepObj.href) {
+      if (nextStepObj.href === "/course/" || nextStepObj.href === "/pelajar/lesson/") {
+        // Jika butuh ID dinamis tapi belum di halaman terkait, arahkan ke all-course / my-courses
+        if (!pathname.startsWith(nextStepObj.href)) {
+          router.push(nextStepObj.href === "/course/" ? "/pelajar/all-course" : "/pelajar/my-courses");
+        }
+      } else if (pathname !== nextStepObj.href && !pathname.startsWith(nextStepObj.href)) {
+        router.push(nextStepObj.href);
+      }
+    }
   };
 
   const content = (

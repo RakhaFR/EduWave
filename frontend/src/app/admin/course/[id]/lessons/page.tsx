@@ -112,23 +112,24 @@ export default function AdminCourseLessonsPage() {
       showToast("Judul lesson tidak boleh kosong!", "error");
       return;
     }
-    if (!formData.duration_minutes || formData.duration_minutes < 1) {
+    if (formData.type !== "quiz" && (!formData.duration_minutes || formData.duration_minutes < 1)) {
       showToast("Durasi lesson wajib diisi minimal 1 menit!", "error");
       return;
     }
 
     setSaveLoading(true);
     try {
+      const isQuiz = formData.type === "quiz";
       const payload = {
         course_id: courseId,
         title: formData.title,
         type: formData.type,
-        content: formData.content || undefined,
-        video_url: formData.video_url || undefined,
-        duration_minutes: formData.duration_minutes,
+        content: isQuiz ? undefined : formData.content || undefined,
+        video_url: isQuiz ? undefined : formData.video_url || undefined,
+        duration_minutes: isQuiz ? 1 : formData.duration_minutes,
         order: formData.order,
-        xp_reward: formData.xp_reward,
-        is_preview: formData.is_preview,
+        xp_reward: isQuiz ? 0 : formData.xp_reward,
+        is_preview: isQuiz ? false : formData.is_preview,
       };
 
       if (editingLesson) {
@@ -237,31 +238,44 @@ export default function AdminCourseLessonsPage() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">URL Video</label>
-                  <input type="url" value={formData.video_url} onChange={(e) => setFormData({ ...formData, video_url: e.target.value })} placeholder="https://example.com/video.mp4" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700" />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Konten Teks</label>
-                  <textarea rows={4} value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} placeholder="Isi konten lesson..." className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700 resize-none" />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+                {formData.type === "video" && (
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Durasi (menit) *</label>
-                    <input type="number" required min="1" max="10000" value={formData.duration_minutes} onChange={(e) => setFormData({ ...formData, duration_minutes: Math.max(1, parseInt(e.target.value) || 5) })} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700" />
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">URL Video (Opsional)</label>
+                    <input type="url" value={formData.video_url} onChange={(e) => setFormData({ ...formData, video_url: e.target.value })} placeholder="https://example.com/video.mp4" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700" />
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">XP Reward *</label>
-                    <input type="number" required min="0" max="1000000" value={formData.xp_reward} onChange={(e) => setFormData({ ...formData, xp_reward: parseInt(e.target.value) || 0 })} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700" />
-                  </div>
-                </div>
+                )}
 
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="is_preview" checked={formData.is_preview} onChange={(e) => setFormData({ ...formData, is_preview: e.target.checked })} className="w-4 h-4 cursor-pointer" />
-                  <label htmlFor="is_preview" className="text-sm font-semibold text-slate-700 cursor-pointer">Preview (bisa diakses tanpa enroll)</label>
-                </div>
+                {formData.type === "text" && (
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">URL Foto / Gambar (Opsional)</label>
+                    <input type="url" value={formData.video_url} onChange={(e) => setFormData({ ...formData, video_url: e.target.value })} placeholder="https://example.com/gambar.jpg (Opsional)" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700" />
+                  </div>
+                )}
+
+                {formData.type !== "quiz" && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">Konten Teks (Opsional)</label>
+                      <textarea rows={4} value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} placeholder="Isi konten lesson..." className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700 resize-none" />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Durasi (menit) *</label>
+                        <input type="number" required min="1" max="10000" value={formData.duration_minutes} onChange={(e) => setFormData({ ...formData, duration_minutes: Math.max(1, parseInt(e.target.value) || 5) })} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">XP Reward *</label>
+                        <input type="number" required min="0" max="1000000" value={formData.xp_reward} onChange={(e) => setFormData({ ...formData, xp_reward: parseInt(e.target.value) || 0 })} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700" />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input type="checkbox" id="is_preview" checked={formData.is_preview} onChange={(e) => setFormData({ ...formData, is_preview: e.target.checked })} className="w-4 h-4 cursor-pointer" />
+                      <label htmlFor="is_preview" className="text-sm font-semibold text-slate-700 cursor-pointer">Preview (bisa diakses tanpa enroll)</label>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="flex gap-3 mt-6">

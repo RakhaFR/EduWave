@@ -8,7 +8,7 @@ import { courseService, Course } from "@/services/courseService";
 import { GridSkeleton } from "@/components/ui/PageSkeleton";
 
 export default function PelajarMyCoursesPage() {
-  const [enrolledCourses, setEnrolledCourses] = useState<(Course & { progress_pct: number })[]>([]);
+  const [enrolledCourses, setEnrolledCourses] = useState<(Course & { progress_pct: number; hasNewLessons?: boolean })[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchMyCourses = async () => {
@@ -23,23 +23,51 @@ export default function PelajarMyCoursesPage() {
       const enrollments: any[] = resProgress?.success && resProgress.data?.enrollments ? resProgress.data.enrollments : [];
 
       // Map progress to course data dynamically based on actual completed lessons / total lessons count
-      const completedLessonsList: any[] = resProgress?.success && resProgress.data?.completed_lessons ? resProgress.data.completed_lessons : [];
-      const completedLessonIds = new Set(completedLessonsList.map((cl: any) => cl.lesson_id || cl.id || cl));
+      let currentUserId = "";
+      try {
+        const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+        currentUserId = userObj?.id || "";
+      } catch {
+        currentUserId = "";
+      }
+      const userCompletedKey = currentUserId ? `completed_lesson_ids_${currentUserId}` : "completed_lesson_ids";
+      const localCompleted = typeof window !== "undefined" ? JSON.parse(localStorage.getItem(userCompletedKey) || "[]") : [];
 
-      const enrolledList: (Course & { progress_pct: number })[] = [];
+      const completedLessonsList: any[] = resProgress?.success && resProgress.data?.completed_lessons ? resProgress.data.completed_lessons : [];
+      const completedLessonIds = new Set([
+        ...localCompleted,
+        ...completedLessonsList.map((cl: any) => cl.lesson_id || cl.id || cl)
+      ]);
+
+      const enrolledList: (Course & { progress_pct: number; hasNewLessons?: boolean })[] = [];
       for (const course of allCourses) {
         const enr = enrollments.find((e: any) => e.course_id === course.id);
         if (enr) {
-          const totalLessons = course.lessons?.length || course.lesson_count || 1;
-          const finishedCount = course.lessons
-            ? course.lessons.filter((l: any) => completedLessonIds.has(l.id) || l.is_completed).length
+          let courseLessons = course.lessons;
+          if (!courseLessons) {
+            try {
+              const detailRes = await courseService.getCourseById(course.id);
+              if (detailRes?.success && detailRes.data?.lessons) {
+                courseLessons = detailRes.data.lessons;
+              }
+            } catch {
+              // ignore
+            }
+          }
+
+          const totalLessons = courseLessons?.length || course.lesson_count || 1;
+          const finishedCount = courseLessons
+            ? courseLessons.filter((l: any) => completedLessonIds.has(l.id) || l.is_completed).length
             : Math.min(totalLessons, (enr.completed_lessons_count ?? Math.round(((enr.progress_pct || 0) / 100) * totalLessons)));
 
           const dynamicPct = totalLessons > 0 ? Math.round((finishedCount / totalLessons) * 100) : (enr.progress_pct || 0);
+          const hasNewLessons = finishedCount < totalLessons && (enr.progress_pct >= 100 || enr.status === "completed");
 
           enrolledList.push({
             ...course,
+            lessons: courseLessons,
             progress_pct: dynamicPct,
+            hasNewLessons,
           });
         }
       }
@@ -114,7 +142,12 @@ export default function PelajarMyCoursesPage() {
                     <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1">
                       <span className="text-[10px] font-semibold text-[#008be3]">{course.category || "Umum"}</span>
                     </div>
-                    <div className="absolute top-3 right-3 bg-green-500 rounded-full px-2.5 py-1 flex items-center gap-1 shadow-sm">
+                    {course.hasNewLessons && (
+                      <div className="absolute bottom-3 left-3 bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md animate-pulse">
+                        🔔 Materi Baru Ditambahkan!
+                      </div>
+                    )}
+                    <div className={`absolute top-3 right-3 rounded-full px-2.5 py-1 flex items-center gap-1 shadow-sm ${isFinished ? "bg-green-500" : "bg-[#008be3]"}`}>
                       {isFinished ? (
                         <CheckCircle2 className="w-3 h-3 text-white" />
                       ) : (
