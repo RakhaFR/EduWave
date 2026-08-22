@@ -463,4 +463,43 @@ class LeaderboardTest extends TestCase
         $this->assertEquals(0, $rankings[0]['rank_change']);
         $this->assertEquals(0, $rankings[1]['rank_change']);
     }
+
+    public function test_user_earning_xp_multiple_times_retains_original_prev_rank(): void
+    {
+        $service = app(LeaderboardService::class);
+
+        $user1 = User::factory()->create(['xp' => 10000]);
+        $user2 = User::factory()->create(['xp' => 5000]);
+        $user3 = User::factory()->create(['xp' => 1000]);
+
+        $service->updateScore($user1);
+        $service->updateScore($user2);
+        $service->updateScore($user3);
+
+        // Sync baseline ranks
+        $service->syncPrevRanks('global');
+
+        // First XP gain (User 3 goes to 2000 XP -> still Rank 3)
+        $user3->xp = 2000;
+        $user3->save();
+        $service->updateScore($user3);
+
+        // Second XP gain in same session (User 3 goes to 15000 XP -> jumps to Rank 1!)
+        $user3->xp = 15000;
+        $user3->save();
+        $service->updateScore($user3);
+
+        $response = $this->getJson('/api/v1/leaderboard');
+        $rankings = $response->json('data.rankings');
+
+        // User 3 is now Rank 1, was originally Rank 3 => rank_change = +2
+        $this->assertEquals($user3->id, $rankings[0]['user_id']);
+        $this->assertEquals(1, $rankings[0]['rank']);
+        $this->assertEquals(2, $rankings[0]['rank_change']);
+
+        // User 1 is now Rank 2, was originally Rank 1 => rank_change = -1
+        $this->assertEquals($user1->id, $rankings[1]['user_id']);
+        $this->assertEquals(2, $rankings[1]['rank']);
+        $this->assertEquals(-1, $rankings[1]['rank_change']);
+    }
 }

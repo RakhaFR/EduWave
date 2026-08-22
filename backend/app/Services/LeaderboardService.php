@@ -211,17 +211,16 @@ class LeaderboardService
 
     /**
      * Snapshot current ranks from sorted set to prev_ranks hash before score update.
+     * Uses hsetnx so that existing prev_rank baseline entries are preserved.
      */
     private function snapshotRanks(string $leaderboardKey, string $prevRanksKey, string $updatingUserId): void
     {
         $allUserIds = Redis::zrevrange($leaderboardKey, 0, -1);
 
-        $prevRanksData = [];
         if (! empty($allUserIds)) {
             foreach ($allUserIds as $index => $userId) {
-                $prevRanksData[$userId] = $index + 1; // 1-indexed rank
+                Redis::hsetnx($prevRanksKey, $userId, $index + 1);
             }
-            Redis::hmset($prevRanksKey, $prevRanksData);
         }
     }
 
