@@ -249,9 +249,23 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
           {BOTTOM_NAV.map((item) => {
             const active = pathname === item.href;
             return (
-              <Link key={item.label} href={item.href}
+              <Link
+                key={item.label}
+                href={item.href}
+                data-tour={
+                  item.href === "/pelajar"
+                    ? "home, mobile-home"
+                    : item.href === "/pelajar/all-course"
+                    ? "all-course, mobile-all-course"
+                    : item.href === "/pelajar/my-courses"
+                    ? "my-courses, mobile-my-courses"
+                    : item.href === "/pelajar/report"
+                    ? "report, mobile-report"
+                    : undefined
+                }
                 className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all
-                  ${active ? "text-[#008be3]" : "text-slate-400 hover:text-[#008be3]"}`}>
+                  ${active ? "text-[#008be3]" : "text-slate-400 hover:text-[#008be3]"}`}
+              >
                 {item.icon}
                 <span className="text-[9px] font-semibold">{item.label}</span>
               </Link>
