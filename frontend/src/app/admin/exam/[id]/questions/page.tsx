@@ -19,7 +19,7 @@ const DEFAULT_QUESTION_FORM: ExamQuestionForm = {
 export default function AdminExamQuestionsPage() {
   const params = useParams();
   const router = useRouter();
-  const examId = params.id as string;
+  const examId = (params?.id as string) || "";
 
   const [questions, setQuestions] = useState<ExamQuestion[]>([]);
   const [loading, setLoading] = useState(true);
