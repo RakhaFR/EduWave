@@ -276,8 +276,9 @@ export default function AdminExamQuestionsPage() {
               {/* Options */}
               {Array.isArray(q.options) && q.options.length > 0 && (
                 <div className="grid sm:grid-cols-2 gap-2 mt-1">
-                  {q.options.map((opt, oIdx) => {
-                    const isCorrect = opt === q.correct_answer;
+                  {q.options.map((optItem, oIdx) => {
+                    const optText = typeof optItem === "string" ? optItem : (optItem as any)?.option_text || (optItem as any)?.text || String(optItem || "");
+                    const isCorrect = optText === q.correct_answer || (typeof optItem === "object" && Boolean((optItem as any)?.is_correct));
                     return (
                       <div
                         key={oIdx}
@@ -288,7 +289,7 @@ export default function AdminExamQuestionsPage() {
                         }`}
                       >
                         <span className="mr-2 font-mono text-slate-400">{String.fromCharCode(65 + oIdx)}.</span>
-                        {opt}
+                        {optText}
                         {isCorrect && <span className="ml-2 text-[10px] bg-emerald-200 text-emerald-900 px-1.5 py-0.5 rounded">Jawaban Benar</span>}
                       </div>
                     );
