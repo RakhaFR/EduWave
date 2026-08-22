@@ -183,35 +183,35 @@ export default function ExamQuestionsPage() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto flex flex-col gap-6">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto flex flex-col gap-5 sm:gap-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.back()}
-            className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer"
+            className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer shrink-0"
           >
             <ArrowLeft className="w-5 h-5 text-slate-600" />
           </button>
           <div>
-            <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-              <HelpCircle className="w-5 h-5 text-[#0073e6]" />
-              <span>Kelola Soal Ujian (Pilihan Ganda)</span>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+              <HelpCircle className="w-5 h-5 text-[#0073e6] shrink-0" />
+              <span>Kelola Soal Ujian</span>
             </h1>
-            <p className="text-xs text-slate-500 font-mono mt-0.5">Exam ID: {examId}</p>
+            <p className="text-[11px] sm:text-xs text-slate-500 font-mono mt-0.5 break-all">ID: {examId}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button
             onClick={() => setShowTemplateModal(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all cursor-pointer shadow-sm"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all cursor-pointer shadow-sm"
           >
             <FileText className="w-4 h-4 text-[#0073e6]" />
             <span>Format PDF</span>
           </button>
 
-          <label className={`inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-[#0073e6] text-xs font-bold transition-all cursor-pointer shadow-sm ${importLoading ? "opacity-50 cursor-not-allowed" : ""}`}>
+          <label className={`inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-[#0073e6] text-xs font-bold transition-all cursor-pointer shadow-sm ${importLoading ? "opacity-50 cursor-not-allowed" : ""}`}>
             {importLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileUp className="w-4 h-4" />}
             <span>{importLoading ? "Mengimpor..." : "Import PDF"}</span>
             <input
@@ -225,7 +225,7 @@ export default function ExamQuestionsPage() {
 
           <button
             onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0073e6] hover:bg-[#0052cc] text-white text-xs font-bold shadow-md shadow-blue-200 transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-[#0073e6] hover:bg-[#0052cc] text-white text-xs font-bold shadow-md shadow-blue-200 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Tambah Soal</span>
