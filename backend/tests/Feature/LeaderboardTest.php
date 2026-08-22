@@ -193,7 +193,7 @@ class LeaderboardTest extends TestCase
         Event::fake([XpAwarded::class]);
 
         $user = User::factory()->create();
-        $course = Course::factory()->create();
+        $course = Course::factory()->create(['status' => 'published']);
         $exam = Exam::factory()->create([
             'course_id' => $course->id,
             'passing_score' => 70,

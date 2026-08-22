@@ -37,7 +37,9 @@ class MascotController extends Controller
         $sortOrder = $request->get('sort', 'asc'); // asc or desc
         $query->orderBy('unlock_cost', $sortOrder);
 
-        $mascots = $query->get()->map(function ($mascot) use ($request) {
+        $user = $request->user() ?? auth('sanctum')->user();
+
+        $mascots = $query->get()->map(function ($mascot) use ($user) {
             $data = [
                 'id' => $mascot->id,
                 'name' => $mascot->name,
@@ -49,7 +51,7 @@ class MascotController extends Controller
             ];
 
             // If authenticated, include ownership status
-            if ($user = $request->user()) {
+            if ($user) {
                 $data['is_owned'] = $user->mascots()->where('mascot_id', $mascot->id)->exists();
             }
 

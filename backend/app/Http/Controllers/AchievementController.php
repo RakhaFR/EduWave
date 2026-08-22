@@ -35,7 +35,9 @@ class AchievementController extends ApiController
             $query->orderBy($sortBy, $sortOrder);
         }
 
-        $achievements = $query->get()->map(function ($achievement) use ($request) {
+        $user = $request->user() ?? auth('sanctum')->user();
+
+        $achievements = $query->get()->map(function ($achievement) use ($user) {
             $data = [
                 'id' => $achievement->id,
                 'name' => $achievement->name,
@@ -47,7 +49,7 @@ class AchievementController extends ApiController
             ];
 
             // If authenticated, include earned status
-            if ($user = $request->user()) {
+            if ($user) {
                 $earned = $user->achievements()->where('achievement_id', $achievement->id)->first();
                 $data['is_earned'] = $earned !== null;
                 $data['earned_at'] = $earned ? $earned->pivot->earned_at : null;
@@ -122,7 +124,8 @@ class AchievementController extends ApiController
         ];
 
         // If authenticated, include earned status and progress
-        if ($user = $request->user()) {
+        $user = $request->user() ?? auth('sanctum')->user();
+        if ($user) {
             $earned = $user->achievements()->where('achievement_id', $achievement->id)->first();
             $data['is_earned'] = $earned !== null;
             $data['earned_at'] = $earned ? $earned->pivot->earned_at : null;

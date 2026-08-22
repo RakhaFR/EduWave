@@ -21,7 +21,7 @@ class CourseController extends ApiController
             ->withCount(['lessons', 'enrollments']);
 
         // Role-based visibility: non-admin/instructor only see published
-        $user = $request->user();
+        $user = $request->user() ?? auth('sanctum')->user();
         if (! $user || ! in_array($user->role, ['admin', 'instructor'])) {
             $query->where('status', 'published');
         } elseif ($user && $user->role === 'instructor') {
@@ -78,7 +78,7 @@ class CourseController extends ApiController
     public function show(Request $request, Course $course): JsonResponse
     {
         // Draft and archived courses are visible only to admins and their owner.
-        $user = $request->user();
+        $user = $request->user() ?? auth('sanctum')->user();
         $canViewUnpublished = $user && (
             $user->role === 'admin'
             || ($user->role === 'instructor' && $course->instructor_id === $user->id)
