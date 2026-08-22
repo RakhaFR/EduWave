@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Plus, Pencil, Trash2, Loader2, HelpCircle, FileUp } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, Loader2, HelpCircle, FileUp, FileText, Download, Eye, X } from "lucide-react";
 import { adminService, ExamQuestion, ExamQuestionForm } from "@/services/adminService";
 import { usePageToast, PageToast } from "@/components/ui/PageToast";
 
@@ -31,6 +31,7 @@ export default function AdminExamQuestionsPage() {
   const [saveLoading, setSaveLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [importLoading, setImportLoading] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -201,10 +202,18 @@ export default function AdminExamQuestionsPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowTemplateModal(true)}
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all cursor-pointer shadow-sm"
+          >
+            <FileText className="w-4 h-4 text-[#0073e6]" />
+            <span>Format PDF</span>
+          </button>
+
           <label className={`inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-[#0073e6] text-xs font-bold transition-all cursor-pointer shadow-sm ${importLoading ? "opacity-50 cursor-not-allowed" : ""}`}>
             {importLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileUp className="w-4 h-4" />}
-            <span>{importLoading ? "Mengimpor..." : "Import Soal PDF"}</span>
+            <span>{importLoading ? "Mengimpor..." : "Import PDF"}</span>
             <input
               type="file"
               accept=".pdf,application/pdf"
@@ -277,8 +286,20 @@ export default function AdminExamQuestionsPage() {
               {Array.isArray(q.options) && q.options.length > 0 && (
                 <div className="grid sm:grid-cols-2 gap-2 mt-1">
                   {q.options.map((optItem, oIdx) => {
-                    const optText = typeof optItem === "string" ? optItem : (optItem as any)?.option_text || (optItem as any)?.text || String(optItem || "");
-                    const isCorrect = optText === q.correct_answer || (typeof optItem === "object" && Boolean((optItem as any)?.is_correct));
+                    let optKey = String.fromCharCode(65 + oIdx);
+                    let optVal = "";
+                    
+                    if (typeof optItem === "string") {
+                      optVal = optItem;
+                    } else if (typeof optItem === "object" && optItem !== null) {
+                      optKey = (optItem as any).key || optKey;
+                      optVal = (optItem as any).value || (optItem as any).option_text || (optItem as any).text || "";
+                    }
+
+                    const isCorrectKey = q.correct_answer && q.correct_answer.trim().toUpperCase() === optKey.toUpperCase();
+                    const isCorrectVal = q.correct_answer && optVal && q.correct_answer.trim().toLowerCase() === optVal.trim().toLowerCase();
+                    const isCorrect = isCorrectKey || isCorrectVal || (typeof optItem === "object" && Boolean((optItem as any)?.is_correct));
+
                     return (
                       <div
                         key={oIdx}
@@ -288,8 +309,8 @@ export default function AdminExamQuestionsPage() {
                             : "bg-slate-50 border-slate-100 text-slate-600"
                         }`}
                       >
-                        <span className="mr-2 font-mono text-slate-400">{String.fromCharCode(65 + oIdx)}.</span>
-                        {optText}
+                        <span className="mr-2 font-mono text-slate-400">{optKey}.</span>
+                        {optVal}
                         {isCorrect && <span className="ml-2 text-[10px] bg-emerald-200 text-emerald-900 px-1.5 py-0.5 rounded">Jawaban Benar</span>}
                       </div>
                     );
@@ -423,6 +444,83 @@ export default function AdminExamQuestionsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Format PDF / Template */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowTemplateModal(false)} />
+          <div className="relative bg-white border border-slate-100 rounded-2xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-blue-50 text-[#0073e6]">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-800">Panduan & Template Soal PDF</h2>
+                  <p className="text-xs text-slate-400">Gunakan format teks berikut di dokumen PDF Anda.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowTemplateModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="bg-slate-900 text-slate-100 p-4 rounded-xl font-mono text-xs overflow-x-auto leading-relaxed select-all mb-4">
+              {`1. Apa zona laut terdalam di bumi?
+A. Zona Pelagis
+B. Zona Mesopelagis
+C. Zona Hadapelagis
+D. Zona Abisal
+Kunci: C
+Pembahasan: Zona Hadapelagis adalah wilayah palung laut terdalam.
+Poin: 15
+
+2. Berapa persentase wilayah perairan laut di permukaan bumi?
+A. 50 persen
+B. 60 persen
+C. 71 persen
+D. 85 persen
+Kunci: C
+Pembahasan: Lautan mencakup sekitar 71 persen dari permukaan bumi.
+Poin: 10`}
+            </div>
+
+            <div className="space-y-2 text-xs text-slate-600 mb-6 bg-blue-50/60 p-3.5 rounded-xl border border-blue-100">
+              <p className="font-bold text-slate-800">Aturan Penulisan Dokumen:</p>
+              <ul className="list-disc list-inside space-y-1 text-slate-600">
+                <li>Awali setiap nomor soal dengan angka (contoh: <code className="text-[#0073e6] font-mono font-bold">1.</code>, <code className="text-[#0073e6] font-mono font-bold">2.</code>).</li>
+                <li>Pilihan jawaban menggunakan huruf abjad kapital <code className="text-[#0073e6] font-mono font-bold">A.</code>, <code className="text-[#0073e6] font-mono font-bold">B.</code>, <code className="text-[#0073e6] font-mono font-bold">C.</code>, <code className="text-[#0073e6] font-mono font-bold">D.</code>.</li>
+                <li>Baris kunci jawaban diawali kata <code className="text-[#0073e6] font-mono font-bold">Kunci:</code> diikuti abjad jawaban (contoh: <code className="text-[#0073e6] font-mono font-bold">Kunci: C</code>).</li>
+                <li>Baris pembahasan bersifat opsional, diawali <code className="text-[#0073e6] font-mono font-bold">Pembahasan:</code>.</li>
+                <li>Baris poin bersifat opsional, diawali <code className="text-[#0073e6] font-mono font-bold">Poin:</code> (default: 10 poin).</li>
+              </ul>
+            </div>
+
+            <div className="flex items-center justify-end gap-2">
+              <a
+                href="/template-soal-ujian.pdf"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all cursor-pointer"
+              >
+                <Eye className="w-3.5 h-3.5 text-slate-500" />
+                <span>Buka PDF Contoh</span>
+              </a>
+              <a
+                href="/template-soal-ujian.pdf"
+                download="template-soal-ujian.pdf"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0073e6] hover:bg-[#0052cc] text-white text-xs font-bold transition-all shadow-md shadow-blue-200 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download Template PDF</span>
+              </a>
+            </div>
           </div>
         </div>
       )}
