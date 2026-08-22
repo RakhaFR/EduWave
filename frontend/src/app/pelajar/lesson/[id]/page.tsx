@@ -166,9 +166,14 @@ export default function PelajarLessonDetailPage() {
           const courseData = courseResponse.data?.course ?? courseResponse.data ?? courseResponse;
           setCourseTitle(courseData?.title ?? "");
 
-          // Mark completed status on course lessons list
-          const rawLessons: Lesson[] = courseData?.lessons ?? [];
-          setCourseLessons(rawLessons.map((l) => ({ ...l, is_completed: l.is_completed || completedIds.has(l.id) })));
+        // Mark completed status on course lessons list
+        const rawLessons: Lesson[] = courseData?.lessons ?? [];
+        setCourseLessons(
+          rawLessons.map((l) => {
+            const isFinished = Boolean(l.is_completed) || completedIds.has(l.id) || (l.id === params.id && completed);
+            return { ...l, is_completed: isFinished };
+          })
+        );
         }
       } catch (err: any) {
         if (err?.response?.status === 403 || err?.response?.data?.error?.code === "LESSON_LOCKED") {

@@ -25,6 +25,7 @@ export interface Course {
   updated_at: string;
   progress_pct?: number;
   is_enrolled?: boolean;
+  lessons?: Lesson[];
 }
 
 export interface Lesson {

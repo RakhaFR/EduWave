@@ -22,14 +22,24 @@ export default function PelajarMyCoursesPage() {
       const allCourses: Course[] = resCourses?.success && resCourses.data ? resCourses.data : [];
       const enrollments: any[] = resProgress?.success && resProgress.data?.enrollments ? resProgress.data.enrollments : [];
 
-      // Map progress to course data
+      // Map progress to course data dynamically based on actual completed lessons / total lessons count
+      const completedLessonsList: any[] = resProgress?.success && resProgress.data?.completed_lessons ? resProgress.data.completed_lessons : [];
+      const completedLessonIds = new Set(completedLessonsList.map((cl: any) => cl.lesson_id || cl.id || cl));
+
       const enrolledList: (Course & { progress_pct: number })[] = [];
       for (const course of allCourses) {
         const enr = enrollments.find((e: any) => e.course_id === course.id);
         if (enr) {
+          const totalLessons = course.lessons?.length || course.lesson_count || 1;
+          const finishedCount = course.lessons
+            ? course.lessons.filter((l: any) => completedLessonIds.has(l.id) || l.is_completed).length
+            : Math.min(totalLessons, (enr.completed_lessons_count ?? Math.round(((enr.progress_pct || 0) / 100) * totalLessons)));
+
+          const dynamicPct = totalLessons > 0 ? Math.round((finishedCount / totalLessons) * 100) : (enr.progress_pct || 0);
+
           enrolledList.push({
             ...course,
-            progress_pct: enr.progress_pct || 0,
+            progress_pct: dynamicPct,
           });
         }
       }
