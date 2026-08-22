@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
+import { usePathname } from "next/navigation";
 import { PembimbingCourse, Exam } from "./types";
 import { pembimbingService } from "@/services/pembimbingService";
 
@@ -22,6 +23,7 @@ interface PembimbingContextType {
 const PembimbingContext = createContext<PembimbingContextType | undefined>(undefined);
 
 export function PembimbingProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [courses, setCourses] = useState<PembimbingCourse[]>([]);
   const [coursesLoading, setCoursesLoading] = useState(true);
   const [examsLoading, setExamsLoading] = useState(true);
@@ -65,7 +67,7 @@ export function PembimbingProvider({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     Promise.all([refreshCourses(), refreshExams()]).finally(() => setDataLoading(false));
-  }, [refreshCourses, refreshExams]);
+  }, [refreshCourses, refreshExams, pathname]);
 
   const contextValue = useMemo(() => ({
     courses, setCourses, coursesLoading, dataLoading, refreshCourses, refreshExams,

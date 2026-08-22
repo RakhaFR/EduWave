@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Plus, Pencil, Trash2, Loader2, HelpCircle } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, Loader2, HelpCircle, FileUp } from "lucide-react";
 import { adminService, ExamQuestion, ExamQuestionForm } from "@/services/adminService";
 import { usePageToast, PageToast } from "@/components/ui/PageToast";
 
@@ -30,6 +30,38 @@ export default function AdminExamQuestionsPage() {
   const [formData, setFormData] = useState<ExamQuestionForm>(DEFAULT_QUESTION_FORM);
   const [saveLoading, setSaveLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [importLoading, setImportLoading] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith(".pdf") && file.type !== "application/pdf") {
+      showToast("File harus berformat PDF!", "error");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("Ukuran file maksimal 5 MB!", "error");
+      return;
+    }
+
+    setImportLoading(true);
+    try {
+      const res = await adminService.importExamPdf(examId, file);
+      if (res.success) {
+        showToast(`Berhasil mengimpor ${res.data?.imported_count || "beberapa"} soal dari PDF!`);
+        await loadQuestions();
+      } else {
+        showToast(res.error?.message || "Gagal mengimpor soal dari PDF.", "error");
+      }
+    } catch (err: any) {
+      showToast(err?.response?.data?.error?.message || "Format PDF tidak sesuai template.", "error");
+    } finally {
+      setImportLoading(false);
+      e.target.value = "";
+    }
+  };
 
   useEffect(() => {
     loadQuestions();
@@ -169,13 +201,27 @@ export default function AdminExamQuestionsPage() {
           </div>
         </div>
 
-        <button
-          onClick={handleOpenAdd}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0073e6] hover:bg-[#0052cc] text-white text-xs font-bold shadow-md shadow-blue-200 transition-all cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Tambah Soal</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <label className={`inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-[#0073e6] text-xs font-bold transition-all cursor-pointer shadow-sm ${importLoading ? "opacity-50 cursor-not-allowed" : ""}`}>
+            {importLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileUp className="w-4 h-4" />}
+            <span>{importLoading ? "Mengimpor..." : "Import Soal PDF"}</span>
+            <input
+              type="file"
+              accept=".pdf,application/pdf"
+              disabled={importLoading}
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+          </label>
+
+          <button
+            onClick={handleOpenAdd}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0073e6] hover:bg-[#0052cc] text-white text-xs font-bold shadow-md shadow-blue-200 transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tambah Soal</span>
+          </button>
+        </div>
       </div>
 
       {/* Content */}

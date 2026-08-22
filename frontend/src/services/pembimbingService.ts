@@ -173,4 +173,13 @@ export const pembimbingService = {
     const response = await api.delete(`/exams/${examId}/questions/${questionId}`);
     return response.data;
   },
+
+  async importExamPdf(examId: string, file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post(`/exams/${examId}/questions/import-pdf`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  },
 };

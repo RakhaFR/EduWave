@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
+import { usePathname } from "next/navigation";
 import { Course, UserType, Category, Registration } from "./types";
 import { adminService, AdminAnalytics } from "@/services/adminService";
 
@@ -26,6 +27,7 @@ interface AdminContextType {
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export function AdminProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [courses, setCourses] = useState<Course[]>([]);
   const [coursesLoading, setCoursesLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(true);
@@ -132,7 +134,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     refreshCourses();
-  }, [refreshCourses]);
+  }, [refreshCourses, pathname]);
 
   const contextValue = useMemo(() => ({
     courses, setCourses, coursesLoading, dataLoading, refreshCourses, users, setUsers,
