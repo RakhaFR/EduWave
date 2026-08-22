@@ -84,7 +84,9 @@ export function clearUserCache() {
   if (typeof window !== "undefined") {
     for (let index = localStorage.length - 1; index >= 0; index -= 1) {
       const key = localStorage.key(index);
-      if (key && (key.startsWith("lesson_time_") || key.startsWith("lesson_scrolled_"))) localStorage.removeItem(key);
+      if (key && (key.startsWith("lesson_time_") || key.startsWith("lesson_scrolled_") || key.startsWith("completed_lesson_ids"))) {
+        localStorage.removeItem(key);
+      }
     }
     localStorage.removeItem("completed_lesson_ids");
     localStorage.removeItem("active_mascot");

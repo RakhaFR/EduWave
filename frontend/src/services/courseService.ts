@@ -207,10 +207,8 @@ export const courseService = {
   },
 
   async getLeaderboard(perPage: number = 50, page: number = 1) {
-    return cachedRequest(`leaderboard:${accountCacheScope()}:${perPage}:${page}`, async () => {
-      const response = await api.get("/leaderboard", { params: { page, per_page: Math.min(perPage, 100) } });
-      return response.data;
-    });
+    const response = await api.get("/leaderboard", { params: { page, per_page: Math.min(perPage, 100) } });
+    return response.data;
   },
 
   async getWeeklyLeaderboard(limit: number = 50, page: number = 1) {
