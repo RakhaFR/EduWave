@@ -142,8 +142,16 @@ export default function PelajarLessonDetailPage() {
         const lessonData = response.data?.lesson ?? response.lesson ?? response.data ?? response;
         setLesson(lessonData);
 
-        // Check completion status from localStorage backup + progressRes + lessonData
-        const localCompleted = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("completed_lesson_ids") || "[]") : [];
+        // Check completion status from DB / progressRes + lessonData (isolated per current user)
+        let currentUserId = "";
+        try {
+          const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+          currentUserId = userObj?.id || "";
+        } catch {
+          currentUserId = "";
+        }
+        const userCompletedKey = currentUserId ? `completed_lesson_ids_${currentUserId}` : "completed_lesson_ids";
+        const localCompleted = typeof window !== "undefined" ? JSON.parse(localStorage.getItem(userCompletedKey) || "[]") : [];
         const completedIds = new Set([
           ...localCompleted,
           ...(progressRes?.success && progressRes.data?.completed_lessons ? progressRes.data.completed_lessons.map((l: any) => l.lesson_id || l.id || l) : []),
@@ -184,12 +192,20 @@ export default function PelajarLessonDetailPage() {
       setIsCompleted(true);
       setCourseLessons((prev) => prev.map((l) => l.id === lesson.id ? { ...l, is_completed: true } : l));
 
-      // Save to localStorage completed IDs backup
+      // Save to localStorage completed IDs backup (isolated per current user)
       if (typeof window !== "undefined") {
-        const localCompleted = JSON.parse(localStorage.getItem("completed_lesson_ids") || "[]");
+        let currentUserId = "";
+        try {
+          const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+          currentUserId = userObj?.id || "";
+        } catch {
+          currentUserId = "";
+        }
+        const userCompletedKey = currentUserId ? `completed_lesson_ids_${currentUserId}` : "completed_lesson_ids";
+        const localCompleted = JSON.parse(localStorage.getItem(userCompletedKey) || "[]");
         if (!localCompleted.includes(lesson.id)) {
           localCompleted.push(lesson.id);
-          localStorage.setItem("completed_lesson_ids", JSON.stringify(localCompleted));
+          localStorage.setItem(userCompletedKey, JSON.stringify(localCompleted));
         }
       }
     } catch (err: any) {

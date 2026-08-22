@@ -30,14 +30,19 @@ export default function CourseDetailPage() {
         const courseData = courseResponse.data;
         const lessonProgress = progressResponse?.data?.lessons_progress || [];
         setCourse(courseData?.course || courseData || null);
-        setLessons((courseData?.lessons || []).map((lesson: Lesson) => ({
+        const rawLessons = courseData?.lessons || [];
+        const mappedLessons = rawLessons.map((lesson: Lesson) => ({
           ...lesson,
           is_completed: lessonProgress.find((item: { id: string }) => item.id === lesson.id)?.is_completed || false,
-        })));
+        }));
+        setLessons(mappedLessons);
         
         if (progressResponse?.success && progressResponse?.data?.enrollment) {
           setIsEnrolled(true);
-          setProgress(Number(progressResponse.data.enrollment.progress_pct || 0));
+          // Hitung progress aktual berdasarkan total lesson terkini (bukan hardcode enrollment lama)
+          const completedCount = mappedLessons.filter((l: Lesson) => l.is_completed).length;
+          const actualProgress = mappedLessons.length > 0 ? Math.round((completedCount / mappedLessons.length) * 100) : 0;
+          setProgress(actualProgress);
         } else {
           setIsEnrolled(false);
         }
