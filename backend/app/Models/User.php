@@ -120,4 +120,33 @@ class User extends Authenticatable
         return $this->belongsToMany(Achievement::class, 'user_achievements')
             ->withPivot(['earned_at']);
     }
+
+    public function following(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'friendships', 'follower_id', 'following_id')
+            ->withTimestamps();
+    }
+
+    public function followers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'friendships', 'following_id', 'follower_id')
+            ->withTimestamps();
+    }
+
+    public function friends(): BelongsToMany
+    {
+        return $this->following()->whereHas('following', function ($query) {
+            $query->where('following_id', $this->id);
+        });
+    }
+
+    public function isFollowing(User $user): bool
+    {
+        return $this->following()->where('following_id', $user->id)->exists();
+    }
+
+    public function isFriendWith(User $user): bool
+    {
+        return $this->isFollowing($user) && $user->isFollowing($this);
+    }
 }

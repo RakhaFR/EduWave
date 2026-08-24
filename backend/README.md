@@ -152,6 +152,14 @@ The table below reflects confirmed implementation status and auth boundaries:
 | **Study Room** | `POST` | `/api/v1/study-rooms/{room}/messages` | Bearer | Send a message to a study room | Yes |
 | **Study Room** | `PUT` | `/api/v1/study-rooms/{room}/messages/{message}` | Bearer | Edit your own message in a study room | Yes |
 | **Study Room** | `DELETE` | `/api/v1/study-rooms/{room}/messages/{message}` | Bearer | Delete your own message from a study room | Yes |
+| **Friend** | `GET` | `/api/v1/friends` | Bearer | List active mutual friends | Yes |
+| **Friend** | `GET` | `/api/v1/friends/requests` | Bearer | Get incoming follow requests & outgoing follows | Yes |
+| **Friend** | `POST` | `/api/v1/friends/follow/{user}` | Bearer | Follow user (mutual follow automatically creates a friend relation) | Yes |
+| **Friend** | `DELETE` | `/api/v1/friends/unfollow/{user}` | Bearer | Unfollow user | Yes |
+| **Private Chat** | `GET` | `/api/v1/private-chats` | Bearer | List private chat conversations with friends | Yes |
+| **Private Chat** | `POST` | `/api/v1/private-chats/start/{friend}` | Bearer | Start or get private conversation with mutual friend | Yes |
+| **Private Chat** | `GET` | `/api/v1/private-chats/{conversation}/messages` | Bearer | List messages in a private conversation | Yes |
+| **Private Chat** | `POST` | `/api/v1/private-chats/{conversation}/messages` | Bearer | Send private chat message (broadcasts `private-chat.{conversationId}`) | Yes |
 | **Mascot** | `GET` | `/api/v1/mascots` | Bearer | List all available mascots in catalog | Yes |
 | **Mascot** | `GET` | `/api/v1/mascots/inventory` | Bearer | Get authenticated user's owned mascots | Yes |
 | **Mascot** | `POST` | `/api/v1/mascots/{mascot}/purchase` | Bearer | Purchase a mascot using pearls | Yes |
@@ -3281,15 +3289,290 @@ Get achievement details with user's current progress.
     "pearls_reward": 500,
     "is_earned": false,
     "earned_at": null,
-    "progress": {
-      "current": 3,
-      "target": 10,
-      "percentage": 30.0
-    }
+}
+```
+
+---
+
+## Friends and Private Chat
+
+This section documents the backend contract for the frontend Friend tab and private chat screen.
+
+### Important Rules
+
+- Every endpoint in this section requires `Authorization: Bearer <sanctum_token>`.
+- A follow is one-way. It becomes a friend only after both users follow each other.
+- Only mutual friends can create a private conversation.
+- A conversation is always between exactly two users and is reused when the same pair starts chatting again.
+- Only the two conversation participants can read or send messages.
+- User IDs and conversation IDs are UUID strings.
+- All responses use the standard `{ success, data, error, meta }` envelope described above.
+
+### Friend Tab Flow
+
+#### Find users to add
+
+Use the existing user search endpoint to populate the add-friend search results:
+
+```http
+GET /api/v1/users/invite-candidates?search=andi&per_page=25
+Authorization: Bearer <token>
+```
+
+The result excludes the authenticated user and inactive users. It does not expose email or password data.
+
+#### Follow a user
+
+```http
+POST /api/v1/friends/follow/{userId}
+Authorization: Bearer <token>
+```
+
+No request body is required. A first follow returns `status: "following"`. If the other user already follows the authenticated user, it returns `status: "friend"` and `is_mutual: true`.
+
+Example response when the relationship becomes mutual:
+
+```json
+{
+  "success": true,
+  "data": {
+    "following_id": "user-uuid",
+    "is_mutual": true,
+    "status": "friend"
   },
   "error": null,
   "meta": null
 }
+```
+
+Possible errors include `CANNOT_FOLLOW_SELF` (`422`) and `ALREADY_FOLLOWING` (`409`).
+
+#### Load the friend list
+
+```http
+GET /api/v1/friends
+Authorization: Bearer <token>
+```
+
+Example response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "friends": [
+      {
+        "id": "user-uuid",
+        "username": "andi",
+        "full_name": "Andi Pratama",
+        "avatar_url": null,
+        "bio": "Belajar navigasi",
+        "level": 4,
+        "xp": 820,
+        "last_active": "2026-08-24T07:00:00.000000Z",
+        "status": "friend"
+      }
+    ]
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+#### Load pending relationships
+
+```http
+GET /api/v1/friends/requests
+Authorization: Bearer <token>
+```
+
+The response has two arrays:
+
+- `incoming`: users who follow the authenticated user but are not followed back yet.
+- `outgoing`: users followed by the authenticated user who have not followed back yet.
+
+There is no separate accept endpoint. To accept an incoming follow, call `POST /api/v1/friends/follow/{userId}`. This creates the reverse follow and makes the relationship mutual.
+
+#### Unfollow
+
+```http
+DELETE /api/v1/friends/unfollow/{userId}
+Authorization: Bearer <token>
+```
+
+Unfollowing removes only the authenticated user's outgoing follow. If the other user still follows the authenticated user, the relationship is no longer mutual and private chat initiation is no longer allowed.
+
+### Private Chat Flow
+
+#### Load conversation list
+
+Call this when opening the Chat/Friends tab:
+
+```http
+GET /api/v1/private-chats
+Authorization: Bearer <token>
+```
+
+Each item contains the conversation ID, the other participant, and the latest message:
+
+```json
+{
+  "success": true,
+  "data": {
+    "conversations": [
+      {
+        "id": "conversation-uuid",
+        "friend": {
+          "id": "user-uuid",
+          "username": "andi",
+          "full_name": "Andi Pratama",
+          "avatar_url": null
+        },
+        "last_message": {
+          "id": "message-uuid",
+          "content": "Sampai ketemu di study room.",
+          "sender_id": "user-uuid",
+          "sent_at": "2026-08-24T07:15:00.000000Z"
+        },
+        "updated_at": "2026-08-24T07:15:00.000000Z"
+      }
+    ]
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+`last_message` is `null` for a conversation that has not received a message yet.
+
+#### Open or create a chat with a friend
+
+When the user clicks the Chat button on a friend card, call:
+
+```http
+POST /api/v1/private-chats/start/{friendId}
+Authorization: Bearer <token>
+```
+
+No request body is required. Store `data.conversation.id` in the chat screen state and use it for the next requests. Calling this endpoint repeatedly for the same friend returns the same conversation instead of creating duplicates.
+
+If the users are not mutual friends, the endpoint returns:
+
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "NOT_MUTUAL_FRIENDS",
+    "message": "Anda hanya dapat mengobrol privat dengan pengguna yang saling berteman."
+  },
+  "meta": null
+}
+```
+
+#### Load message history
+
+```http
+GET /api/v1/private-chats/{conversationId}/messages?page=1&per_page=50
+Authorization: Bearer <token>
+```
+
+Messages are returned oldest first for straightforward rendering. Pagination metadata is returned in `meta`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "messages": [
+      {
+        "id": "message-uuid",
+        "content": "Halo!",
+        "sender_id": "user-uuid",
+        "sent_at": "2026-08-24T07:10:00.000000Z",
+        "sender": {
+          "id": "user-uuid",
+          "username": "andi",
+          "full_name": "Andi Pratama",
+          "avatar_url": null
+        }
+      }
+    ]
+  },
+  "error": null,
+  "meta": {
+    "current_page": 1,
+    "per_page": 50,
+    "total": 1,
+    "last_page": 1
+  }
+}
+```
+
+#### Send a message
+
+```http
+POST /api/v1/private-chats/{conversationId}/messages
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "content": "Halo, sudah selesai belajar?"
+}
+```
+
+`content` is required, must be a string, and has a maximum length of 5,000 characters. A successful request returns `201 Created` and the created message under `data.message`.
+
+### Realtime Private Chat with Laravel Reverb
+
+The backend broadcasts a `PrivateMessageSent` event after a message is stored. The frontend should:
+
+1. Authenticate the current user with the Sanctum Bearer token.
+2. Subscribe to the private channel `private-chat.{conversationId}`.
+3. Listen for the event name `.message_sent` because the event uses `broadcastAs()`.
+4. Append the event payload to the message list, ignoring a duplicate if the HTTP response has already added the same message ID.
+5. Unsubscribe when leaving the conversation screen.
+
+Channel authorization is handled by `routes/channels.php`; only `user_one_id` and `user_two_id` may subscribe. The broadcast payload is:
+
+```json
+{
+  "id": "message-uuid",
+  "conversation_id": "conversation-uuid",
+  "sender_id": "user-uuid",
+  "content": "Halo!",
+  "sent_at": "2026-08-24T07:10:00+00:00",
+  "sender": {
+    "id": "user-uuid",
+    "username": "andi",
+    "full_name": "Andi Pratama",
+    "avatar_url": null
+  }
+}
+```
+
+Example frontend pseudocode:
+
+```js
+const start = await api.post(`/private-chats/start/${friendId}`);
+const conversationId = start.data.conversation.id;
+
+const history = await api.get(`/private-chats/${conversationId}/messages`);
+setMessages(history.data.messages);
+
+reverb.private(`private-chat.${conversationId}`)
+  .listen('.message_sent', (message) => {
+    setMessages((current) => current.some((item) => item.id === message.id)
+      ? current
+      : [...current, message]);
+  });
+
+await api.post(`/private-chats/${conversationId}/messages`, {
+  content: draftMessage,
+});
 ```
 
 ---

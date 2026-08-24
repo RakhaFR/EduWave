@@ -10,9 +10,11 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\ExamQuestionController;
+use App\Http\Controllers\FriendshipController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\MascotController;
+use App\Http\Controllers\PrivateChatController;
 use App\Http\Controllers\PublicDataController;
 use App\Http\Controllers\RoomMessageController;
 use App\Http\Controllers\StudyRoomController;
@@ -127,6 +129,18 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::post('study-rooms/{room}/messages', [RoomMessageController::class, 'store'])->name('study-rooms.messages.store');
         Route::put('study-rooms/{room}/messages/{message}', [RoomMessageController::class, 'update'])->name('study-rooms.messages.update');
         Route::delete('study-rooms/{room}/messages/{message}', [RoomMessageController::class, 'destroy'])->name('study-rooms.messages.destroy');
+
+        // Friends & Follow System
+        Route::get('friends', [FriendshipController::class, 'index'])->name('friends.index');
+        Route::get('friends/requests', [FriendshipController::class, 'requests'])->name('friends.requests');
+        Route::post('friends/follow/{user}', [FriendshipController::class, 'follow'])->name('friends.follow');
+        Route::delete('friends/unfollow/{user}', [FriendshipController::class, 'unfollow'])->name('friends.unfollow');
+
+        // Private Friend Chat
+        Route::get('private-chats', [PrivateChatController::class, 'index'])->name('private-chats.index');
+        Route::post('private-chats/start/{friend}', [PrivateChatController::class, 'start'])->name('private-chats.start');
+        Route::get('private-chats/{conversation}/messages', [PrivateChatController::class, 'messages'])->name('private-chats.messages.index');
+        Route::post('private-chats/{conversation}/messages', [PrivateChatController::class, 'sendMessage'])->name('private-chats.messages.store');
 
         // Admin / Instructor only — course management
         Route::middleware('role:admin,instructor')->group(function () {
