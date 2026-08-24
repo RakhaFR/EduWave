@@ -213,6 +213,10 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
                     className="flex items-center gap-2 px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
                     <Users className="w-4 h-4" />Profil
                   </Link>
+                  <Link href="/pelajar/friends" onClick={() => setAvatarOpen(false)}
+                    className="flex items-center gap-2 px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+                    <Users2 className="w-4 h-4" />Friends
+                  </Link>
                   <div className="border-t border-slate-100" />
                   <Link href="/auth/login" onClick={handleLogout}
                     className="flex items-center gap-2 px-4 py-3 text-sm text-red-400 hover:bg-red-50 transition-colors">

@@ -239,6 +239,46 @@ export const courseService = {
     return response.data;
   },
 
+  async getFriends() {
+    const response = await api.get("/friends");
+    return response.data;
+  },
+
+  async getFriendRequests() {
+    const response = await api.get("/friends/requests");
+    return response.data;
+  },
+
+  async followFriend(userId: string) {
+    const response = await api.post(`/friends/follow/${userId}`);
+    return response.data;
+  },
+
+  async unfollowFriend(userId: string) {
+    const response = await api.delete(`/friends/unfollow/${userId}`);
+    return response.data;
+  },
+
+  async getPrivateChats() {
+    const response = await api.get("/private-chats");
+    return response.data;
+  },
+
+  async startPrivateChat(friendId: string) {
+    const response = await api.post(`/private-chats/start/${friendId}`);
+    return response.data;
+  },
+
+  async getPrivateChatMessages(conversationId: string, page = 1, perPage = 50) {
+    const response = await api.get(`/private-chats/${conversationId}/messages`, { params: { page, per_page: perPage } });
+    return response.data;
+  },
+
+  async sendPrivateChatMessage(conversationId: string, content: string) {
+    const response = await api.post(`/private-chats/${conversationId}/messages`, { content });
+    return response.data;
+  },
+
   async inviteStudyRoomParticipant(roomId: string, userId: string) {
     const response = await api.post(`/study-rooms/${roomId}/invite`, { user_id: userId });
     return response.data;
