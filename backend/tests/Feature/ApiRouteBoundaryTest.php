@@ -79,6 +79,31 @@ class ApiRouteBoundaryTest extends TestCase
         $this->postJson('/api/broadcasting/auth')->assertUnauthorized();
     }
 
+    public function test_root_broadcast_auth_alias_uses_sanctum_authentication(): void
+    {
+        $route = Route::getRoutes()->match(
+            Request::create('/broadcasting/auth', 'POST'),
+        );
+
+        $this->assertContains('auth:sanctum', $route->gatherMiddleware());
+        $this->postJson('/broadcasting/auth')->assertUnauthorized();
+    }
+
+    public function test_broadcast_auth_preflight_allows_frontend_origin(): void
+    {
+        $headers = [
+            'Origin' => 'http://localhost:3000',
+            'Access-Control-Request-Method' => 'POST',
+            'Access-Control-Request-Headers' => 'Authorization, Content-Type, Accept',
+        ];
+
+        $this->withHeaders($headers)
+            ->options('/broadcasting/auth')
+            ->assertNoContent()
+            ->assertHeader('Access-Control-Allow-Origin', 'http://localhost:3000')
+            ->assertHeader('Access-Control-Allow-Methods');
+    }
+
     public function test_only_participants_can_authorize_the_study_room_channel(): void
     {
         $participant = User::factory()->create(['role' => 'student']);

@@ -15,7 +15,14 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'storage/*', 'sanctum/csrf-cookie'],
+    // Broadcasting auth is exposed both under the API prefix (the canonical
+    // route) and at the legacy root path used by the current web client.
+    'paths' => [
+        'api/*',
+        'broadcasting/auth',
+        'storage/*',
+        'sanctum/csrf-cookie',
+    ],
 
     'allowed_methods' => ['*'],
 
