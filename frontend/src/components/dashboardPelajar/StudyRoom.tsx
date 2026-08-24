@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Users, Plus, MessageSquare, LogOut, X, Send, ArrowLeft } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { courseService } from "@/services/courseService";
+import { getEcho } from "@/lib/echo";
 
 type Room = { id: string; name: string; topic?: string; max_capacity: number; current_capacity: number; is_public: boolean; status: string; host?: { username?: string; avatar_url?: string | null } };
 type Message = { id: string; content: string; sent_at: string; user?: { username?: string; avatar_url?: string | null } };
@@ -42,6 +43,23 @@ export default function StudyRoomComponent() {
   };
 
   useEffect(() => { loadRooms(); }, []);
+
+  useEffect(() => {
+    if (!selected) return;
+    const echo = getEcho();
+    if (!echo) return;
+    const channel = echo.private(`study-room.${selected.id}`);
+    channel.listen(".message", (event: any) => {
+      const incoming = event.message ?? event;
+      if (incoming?.id) setMessages((current) => current.some((item) => item.id === incoming.id) ? current : [...current, incoming]);
+    });
+    channel.listen(".room_closed", () => {
+      setError("Study room telah ditutup oleh host.");
+      setSelected(null);
+      loadRooms();
+    });
+    return () => { echo.leave(`private-study-room.${selected.id}`); };
+  }, [selected]);
 
   const openRoom = async (room: Room) => {
     setBusy(true); setError("");
