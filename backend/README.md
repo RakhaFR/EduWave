@@ -106,6 +106,7 @@ The table below reflects confirmed implementation status and auth boundaries:
 | **Auth** | `POST` | `/api/v1/auth/logout` | Bearer | Revoke current authenticated token | Yes |
 | **Auth** | `GET` | `/api/v1/auth/me` | Bearer | Fetch basic auth user state | Yes |
 | **User** | `GET` | `/api/v1/users/me` | Bearer | Get detailed authenticated user profile | Yes |
+| **User** | `GET` | `/api/v1/users/invite-candidates` | Student | List active users available for private study-room invites | Yes |
 | **User** | `PUT` | `/api/v1/users/me` | Bearer | Update user profile details | Yes |
 | **User** | `PUT` | `/api/v1/users/me/password` | Bearer | Change user password | Yes |
 | **User** | `GET` | `/api/v1/users/me/stats` | Bearer | Get gamification stats (pearls, xp, level, streak) | Yes |
@@ -142,6 +143,7 @@ The table below reflects confirmed implementation status and auth boundaries:
 | **Study Room** | `POST` | `/api/v1/study-rooms` | Bearer | Create a new study room | Yes |
 | **Study Room** | `GET` | `/api/v1/study-rooms/{room}` | Bearer | Get study room details with participants | Yes |
 | **Study Room** | `POST` | `/api/v1/study-rooms/{room}/join` | Bearer | Join an active study room | Yes |
+| **Study Room** | `POST` | `/api/v1/study-rooms/join-by-code` | Bearer | Join a private room using its join code | Yes |
 | **Study Room** | `POST` | `/api/v1/study-rooms/{room}/invite` | Bearer | Host invites a user directly into a room | Yes |
 | **Study Room** | `DELETE` | `/api/v1/study-rooms/{room}/leave` | Bearer | Leave a study room | Yes |
 | **Study Room** | `DELETE` | `/api/v1/study-rooms/{room}/participants/{user}` | Bearer | Host kicks a participant | Yes |
@@ -449,6 +451,80 @@ Get full profile payload of current user.
   "meta": null
 }
 ```
+
+---
+
+#### `GET /api/v1/users/invite-candidates`
+List active users that a student can select when inviting participants to a
+private study room. This endpoint is restricted to users with the `student`
+role. The current authenticated user is excluded from the results.
+
+* **Headers:** `Authorization: Bearer <student_token>`
+
+* **Query Parameters:**
+  - `search` (optional): Search by partial `username` or `full_name`
+  - `per_page` (optional): Results per page, from 1 to 100, default: 25
+  - `page` (optional): Page number, default: 1
+
+* **Frontend Usage (`fetch`):**
+```javascript
+const params = new URLSearchParams({
+  search: searchText,
+  per_page: '25',
+  page: '1',
+});
+
+const response = await fetch(
+  `${API_BASE_URL}/users/invite-candidates?${params}`,
+  {
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${studentToken}`,
+    },
+  },
+);
+
+const result = await response.json();
+if (!response.ok) {
+  throw new Error(result.error?.message ?? 'Unable to load invite candidates');
+}
+
+const candidates = result.data.users;
+const pagination = result.meta;
+```
+
+* **Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "users": [
+      {
+        "id": "user-uuid",
+        "username": "jane_smith",
+        "full_name": "Jane Smith",
+        "avatar_url": null,
+        "role": "student"
+      }
+    ]
+  },
+  "error": null,
+  "meta": {
+    "current_page": 1,
+    "per_page": 25,
+    "total": 1,
+    "last_page": 1
+  }
+}
+```
+
+The response intentionally does not include email addresses, passwords, XP,
+pearls, tokens, or other private account data. Use the returned `id` as the
+`user_id` in `POST /api/v1/study-rooms/{room}/invite`.
+
+* **Error Responses:**
+  - `401 Unauthorized` - Missing or invalid token
+  - `403 Forbidden` - Authenticated user is not a student
 
 ---
 
@@ -1937,6 +2013,75 @@ const result = await response.json();
 * **WebSocket Event Broadcast:**
   - Event: `user_joined` on channel `private-study-room.{room_id}`
   - Sent to all participants except the joining user
+
+---
+
+#### `POST /api/v1/study-rooms/join-by-code`
+Join a private study room without knowing its room ID. The server looks up an
+active private room by its generated join code, validates capacity, adds the
+authenticated user as a participant, and broadcasts the `user_joined` event.
+
+* **Headers:** `Authorization: Bearer <token>`
+
+* **Request Body:**
+```json
+{
+  "code": "ABC123"
+}
+```
+
+The code comparison is case-insensitive. The code is generated when a private
+room is created and is returned to the host in `data.room.join_code`.
+
+* **Frontend Usage (`fetch`):**
+```javascript
+const response = await fetch(`${API_BASE_URL}/study-rooms/join-by-code`, {
+  method: 'POST',
+  headers: {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+  },
+  body: JSON.stringify({ code: joinCode }),
+});
+
+const result = await response.json();
+if (!response.ok) {
+  throw new Error(result.error?.message ?? 'Unable to join room');
+}
+
+const joinedRoomId = result.data.room_id;
+const joinedUser = result.data.user;
+```
+
+* **Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "room_id": "room-uuid",
+    "user": {
+      "id": "user-uuid",
+      "username": "jane_smith",
+      "avatar_url": null
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+* **Error Responses:**
+  - `401 Unauthorized` - Missing or invalid Bearer token
+  - `404 Not Found` - Unknown code, public-room code, or code with no matching private room: `INVALID_JOIN_CODE`
+  - `409 Conflict` - User is already a participant: `ALREADY_JOINED`
+  - `403 Forbidden` - Room is closed: `ROOM_CLOSED`
+  - `403 Forbidden` - Room has reached capacity: `ROOM_FULL`
+  - `422 Unprocessable Entity` - Missing or invalid `code`
+
+* **WebSocket Event Broadcast:**
+  - Event: `user_joined` on channel `private-study-room.{room_id}`
+  - Sent to existing participants except the joining user
 
 ---
 

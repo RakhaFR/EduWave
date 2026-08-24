@@ -9,6 +9,44 @@ use Tests\TestCase;
 
 class UserControllerTest extends TestCase
 {
+    public function test_student_can_list_active_invite_candidates_without_sensitive_data(): void
+    {
+        $student = User::factory()->create(['role' => 'student']);
+        $candidate = User::factory()->create([
+            'role' => 'student',
+            'username' => 'candidate_user',
+            'full_name' => 'Candidate User',
+            'is_active' => true,
+        ]);
+        User::factory()->create(['role' => 'student', 'is_active' => false]);
+
+        $response = $this->actingAs($student)
+            ->getJson('/api/v1/users/invite-candidates?search=candidate');
+
+        $response->assertOk()
+            ->assertJsonPath('data.users.0.id', $candidate->id)
+            ->assertJsonPath('data.users.0.username', 'candidate_user')
+            ->assertJsonMissingPath('data.users.0.email')
+            ->assertJsonMissingPath('data.users.0.password');
+        $this->assertCount(1, $response->json('data.users'));
+    }
+
+    public function test_invite_candidate_list_excludes_current_user_and_non_students_are_forbidden(): void
+    {
+        $student = User::factory()->create(['role' => 'student']);
+        User::factory()->create(['role' => 'instructor', 'is_active' => true]);
+
+        $this->actingAs($student)
+            ->getJson('/api/v1/users/invite-candidates')
+            ->assertOk()
+            ->assertJsonMissing(['id' => $student->id]);
+
+        $this->actingAs(User::factory()->create(['role' => 'instructor']))
+            ->getJson('/api/v1/users/invite-candidates')
+            ->assertForbidden()
+            ->assertJsonPath('error.code', 'FORBIDDEN');
+    }
+
     public function test_me_returns_current_user_profile()
     {
         $user = User::factory()->create([

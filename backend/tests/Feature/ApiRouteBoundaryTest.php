@@ -34,6 +34,15 @@ class ApiRouteBoundaryTest extends TestCase
         $this->getJson('/api/v1/admin/users')->assertUnauthorized();
     }
 
+    public function test_invite_candidate_route_is_student_only(): void
+    {
+        $route = Route::getRoutes()->getByName('api.v1.users.invite-candidates.index');
+
+        $this->assertNotNull($route);
+        $this->assertContains('auth:sanctum', $route->gatherMiddleware());
+        $this->assertContains('role:student', $route->gatherMiddleware());
+    }
+
     public function test_student_and_instructor_role_boundaries_are_enforced(): void
     {
         $student = User::factory()->create(['role' => 'student']);
@@ -67,6 +76,10 @@ class ApiRouteBoundaryTest extends TestCase
             'App\\Http\\Controllers\\RoomMessageController@store',
             $route->getActionName(),
         );
+
+        $joinByCode = Route::getRoutes()->getByName('api.v1.study-rooms.join-by-code');
+        $this->assertNotNull($joinByCode);
+        $this->assertContains('auth:sanctum', $joinByCode->gatherMiddleware());
     }
 
     public function test_broadcast_auth_route_uses_sanctum_authentication(): void

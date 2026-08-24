@@ -44,6 +44,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     // ──────────────────────────────────────────────────────
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('users/me', [UserController::class, 'me'])->name('users.me.show');
+        Route::middleware('role:student')->get('users/invite-candidates', [UserController::class, 'inviteCandidates'])->name('users.invite-candidates.index');
         Route::put('users/me', [UserController::class, 'updateProfile'])->name('users.me.update');
         Route::put('users/me/password', [UserController::class, 'changePassword'])->name('users.me.password.update');
         Route::get('users/me/stats', [UserController::class, 'stats'])->name('users.me.stats');
@@ -116,6 +117,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('study-rooms', [StudyRoomController::class, 'index'])->name('study-rooms.index');
         Route::post('study-rooms', [StudyRoomController::class, 'store'])->name('study-rooms.store');
         Route::get('study-rooms/{room}', [StudyRoomController::class, 'show'])->name('study-rooms.show');
+        Route::post('study-rooms/join-by-code', [StudyRoomController::class, 'joinByCode'])->name('study-rooms.join-by-code');
         Route::post('study-rooms/{room}/join', [StudyRoomController::class, 'join'])->name('study-rooms.join');
         Route::post('study-rooms/{room}/invite', [StudyRoomController::class, 'invite'])->name('study-rooms.invite');
         Route::delete('study-rooms/{room}/participants/{user}', [StudyRoomController::class, 'kick'])->name('study-rooms.participants.kick');

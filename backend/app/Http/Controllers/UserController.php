@@ -39,6 +39,47 @@ class UserController extends ApiController
     }
 
     /**
+     * List active users that a student can select for a study-room invite.
+     * GET /api/v1/users/invite-candidates
+     */
+    public function inviteCandidates(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $perPage = min(100, max(1, (int) $request->query('per_page', 25)));
+        $search = trim((string) $request->query('search', ''));
+
+        $query = User::query()
+            ->where('is_active', true)
+            ->whereKeyNot($user->id)
+            ->select(['id', 'username', 'full_name', 'avatar_url', 'role'])
+            ->orderBy('username');
+
+        if ($search !== '') {
+            $query->where(function ($query) use ($search) {
+                $query->where('username', 'like', "%{$search}%")
+                    ->orWhere('full_name', 'like', "%{$search}%");
+            });
+        }
+
+        $paginator = $query->paginate($perPage);
+
+        return $this->success([
+            'users' => $paginator->getCollection()->map(fn (User $candidate) => [
+                'id' => $candidate->id,
+                'username' => $candidate->username,
+                'full_name' => $candidate->full_name,
+                'avatar_url' => $candidate->avatar_url,
+                'role' => $candidate->role,
+            ])->values(),
+        ], '', 200, [
+            'current_page' => $paginator->currentPage(),
+            'per_page' => $paginator->perPage(),
+            'total' => $paginator->total(),
+            'last_page' => $paginator->lastPage(),
+        ]);
+    }
+
+    /**
      * Update user profile.
      */
     public function updateProfile(UpdateProfileRequest $request): JsonResponse

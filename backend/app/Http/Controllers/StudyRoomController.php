@@ -197,6 +197,29 @@ class StudyRoomController extends ApiController
     }
 
     /**
+     * Join a private study room using its join code.
+     * POST /api/v1/study-rooms/join-by-code
+     */
+    public function joinByCode(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:12'],
+        ]);
+
+        $room = StudyRoom::where('is_public', false)
+            ->where('join_code', strtoupper(trim($validated['code'])))
+            ->first();
+
+        if (! $room) {
+            return $this->error('INVALID_JOIN_CODE', 'Kode join ruang privat tidak valid.', 404);
+        }
+
+        $request->merge(['code' => strtoupper(trim($validated['code']))]);
+
+        return $this->join($request, $room);
+    }
+
+    /**
      * Invite a user to a study room. Host only.
      * POST /api/v1/study-rooms/{room}/invite
      */

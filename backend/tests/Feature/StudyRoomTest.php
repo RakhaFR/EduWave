@@ -148,6 +148,61 @@ class StudyRoomTest extends TestCase
             ->assertOk();
     }
 
+    public function test_user_can_join_private_room_by_code_without_room_id(): void
+    {
+        $host = $this->student();
+        $joiner = $this->instructor();
+        $room = StudyRoom::factory()->create([
+            'host_user_id' => $host->id,
+            'is_public' => false,
+            'join_code' => 'ABC123',
+            'status' => 'active',
+        ]);
+        $room->participants()->attach($host->id);
+
+        $response = $this->actingAs($joiner)->postJson('/api/v1/study-rooms/join-by-code', [
+            'code' => 'abc123',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.room_id', $room->id)
+            ->assertJsonPath('data.user.id', $joiner->id);
+        $this->assertDatabaseHas('study_room_participants', [
+            'room_id' => $room->id,
+            'user_id' => $joiner->id,
+        ]);
+    }
+
+    public function test_join_by_code_rejects_invalid_public_or_closed_rooms(): void
+    {
+        $user = $this->student();
+        StudyRoom::factory()->create([
+            'is_public' => true,
+            'join_code' => 'PUBLIC1',
+            'status' => 'active',
+        ]);
+        StudyRoom::factory()->create([
+            'is_public' => false,
+            'join_code' => 'CLOSED1',
+            'status' => 'closed',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/api/v1/study-rooms/join-by-code', ['code' => 'UNKNOWN'])
+            ->assertNotFound()
+            ->assertJsonPath('error.code', 'INVALID_JOIN_CODE');
+
+        $this->actingAs($user)
+            ->postJson('/api/v1/study-rooms/join-by-code', ['code' => 'PUBLIC1'])
+            ->assertNotFound()
+            ->assertJsonPath('error.code', 'INVALID_JOIN_CODE');
+
+        $this->actingAs($user)
+            ->postJson('/api/v1/study-rooms/join-by-code', ['code' => 'CLOSED1'])
+            ->assertForbidden()
+            ->assertJsonPath('error.code', 'ROOM_CLOSED');
+    }
+
     public function test_host_can_invite_user_to_room(): void
     {
         $host = $this->student();
