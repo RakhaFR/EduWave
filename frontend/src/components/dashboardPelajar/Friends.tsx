@@ -480,10 +480,9 @@ export default function FriendsComponent() {
                       <button
                         key={emoji}
                         type="button"
-                        onClick={() => {
-                          setDraft((value) => `${value}${emoji}`);
-                          setShowEmojiPicker(false);
-                        }}
+                         onClick={() => {
+                           setDraft((value) => `${value}${emoji}`);
+                         }}
                         className="rounded-lg p-1.5 text-lg hover:bg-blue-50"
                       >
                         {emoji}
