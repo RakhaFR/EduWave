@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\StudyRoomMessageDeleted;
 use App\Events\StudyRoomMessageSent;
+use App\Events\StudyRoomMessageUpdated;
 use App\Http\Requests\StudyRoom\SendMessageRequest;
 use App\Models\RoomMessage;
 use App\Models\StudyRoom;
@@ -100,5 +102,86 @@ class RoomMessageController extends ApiController
                 'sent_at' => $message->sent_at,
             ],
         ], 'Pesan berhasil dikirim.', 201);
+    }
+
+    /**
+     * Update a message owned by the authenticated participant.
+     * PUT /api/v1/study-rooms/{room}/messages/{message}
+     */
+    public function update(SendMessageRequest $request, StudyRoom $room, RoomMessage $message): JsonResponse
+    {
+        $authorizationError = $this->authorizeMessageAction($request, $room, $message);
+        if ($authorizationError) {
+            return $authorizationError;
+        }
+
+        if ($room->status !== 'active') {
+            return $this->error('ROOM_CLOSED', 'Ruang belajar ini sudah ditutup.', 403);
+        }
+
+        $message->update($request->validated());
+        $message->load('user:id,username,avatar_url');
+        broadcast(new StudyRoomMessageUpdated($room, $message))->toOthers();
+
+        return $this->success([
+            'message' => $this->messageData($message),
+        ], 'Pesan berhasil diperbarui.');
+    }
+
+    /**
+     * Delete a message owned by the authenticated participant.
+     * DELETE /api/v1/study-rooms/{room}/messages/{message}
+     */
+    public function destroy(Request $request, StudyRoom $room, RoomMessage $message): JsonResponse
+    {
+        $authorizationError = $this->authorizeMessageAction($request, $room, $message);
+        if ($authorizationError) {
+            return $authorizationError;
+        }
+
+        if ($room->status !== 'active') {
+            return $this->error('ROOM_CLOSED', 'Ruang belajar ini sudah ditutup.', 403);
+        }
+
+        broadcast(new StudyRoomMessageDeleted($room, $message->id))->toOthers();
+        $message->delete();
+
+        return $this->success([
+            'message_id' => $message->id,
+        ], 'Pesan berhasil dihapus.');
+    }
+
+    private function authorizeMessageAction(Request $request, StudyRoom $room, RoomMessage $message): ?JsonResponse
+    {
+        $user = $request->user();
+
+        if ($message->room_id !== $room->id) {
+            return $this->error('MESSAGE_NOT_FOUND', 'Pesan tidak ditemukan di ruang belajar ini.', 404);
+        }
+
+        if (! $room->participants()->where('user_id', $user->id)->exists()) {
+            return $this->error('NOT_A_PARTICIPANT', 'Anda bukan peserta ruang belajar ini.', 403);
+        }
+
+        if ($message->user_id !== $user->id) {
+            return $this->error('MESSAGE_NOT_OWNED', 'Anda hanya dapat mengubah atau menghapus pesan milik sendiri.', 403);
+        }
+
+        return null;
+    }
+
+    private function messageData(RoomMessage $message): array
+    {
+        return [
+            'id' => $message->id,
+            'content' => $message->content,
+            'type' => $message->type,
+            'user' => $message->user ? [
+                'id' => $message->user->id,
+                'username' => $message->user->username,
+                'avatar_url' => $message->user->avatar_url,
+            ] : null,
+            'sent_at' => $message->sent_at,
+        ];
     }
 }

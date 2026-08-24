@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Events\StudyRoomClosed;
+use App\Events\StudyRoomMessageDeleted;
 use App\Events\StudyRoomMessageSent;
+use App\Events\StudyRoomMessageUpdated;
 use App\Events\StudyRoomUserJoined;
 use App\Events\StudyRoomUserLeft;
 use App\Models\RoomMessage;
@@ -338,6 +340,117 @@ class StudyRoomTest extends TestCase
 
         $response->assertStatus(403)
             ->assertJsonPath('error.code', 'NOT_A_PARTICIPANT');
+    }
+
+    public function test_owner_can_update_message(): void
+    {
+        $user = $this->student();
+        $room = StudyRoom::factory()->create(['status' => 'active']);
+        $room->participants()->attach($user->id);
+        $message = RoomMessage::factory()->create([
+            'room_id' => $room->id,
+            'user_id' => $user->id,
+            'content' => 'Original message',
+        ]);
+
+        $response = $this->actingAs($user)->putJson("/api/v1/study-rooms/{$room->id}/messages/{$message->id}", [
+            'content' => 'Updated message',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.message.id', $message->id)
+            ->assertJsonPath('data.message.content', 'Updated message');
+        $this->assertDatabaseHas('room_messages', [
+            'id' => $message->id,
+            'content' => 'Updated message',
+        ]);
+    }
+
+    public function test_owner_can_delete_message(): void
+    {
+        $user = $this->student();
+        $room = StudyRoom::factory()->create(['status' => 'active']);
+        $room->participants()->attach($user->id);
+        $message = RoomMessage::factory()->create([
+            'room_id' => $room->id,
+            'user_id' => $user->id,
+        ]);
+
+        $response = $this->actingAs($user)->deleteJson("/api/v1/study-rooms/{$room->id}/messages/{$message->id}");
+
+        $response->assertOk()->assertJsonPath('data.message_id', $message->id);
+        $this->assertDatabaseMissing('room_messages', ['id' => $message->id]);
+    }
+
+    public function test_user_cannot_update_or_delete_another_users_message(): void
+    {
+        $owner = $this->student();
+        $other = $this->instructor();
+        $room = StudyRoom::factory()->create(['status' => 'active']);
+        $room->participants()->attach([$owner->id, $other->id]);
+        $message = RoomMessage::factory()->create([
+            'room_id' => $room->id,
+            'user_id' => $owner->id,
+        ]);
+
+        $this->actingAs($other)
+            ->putJson("/api/v1/study-rooms/{$room->id}/messages/{$message->id}", ['content' => 'No'])
+            ->assertForbidden()
+            ->assertJsonPath('error.code', 'MESSAGE_NOT_OWNED');
+
+        $this->actingAs($other)
+            ->deleteJson("/api/v1/study-rooms/{$room->id}/messages/{$message->id}")
+            ->assertForbidden()
+            ->assertJsonPath('error.code', 'MESSAGE_NOT_OWNED');
+    }
+
+    public function test_message_edit_and_delete_require_active_room_and_valid_content(): void
+    {
+        $user = $this->student();
+        $room = StudyRoom::factory()->create(['status' => 'closed']);
+        $room->participants()->attach($user->id);
+        $message = RoomMessage::factory()->create([
+            'room_id' => $room->id,
+            'user_id' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->putJson("/api/v1/study-rooms/{$room->id}/messages/{$message->id}", ['content' => ''])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('content');
+
+        $this->actingAs($user)
+            ->putJson("/api/v1/study-rooms/{$room->id}/messages/{$message->id}", ['content' => 'Updated'])
+            ->assertForbidden()
+            ->assertJsonPath('error.code', 'ROOM_CLOSED');
+
+        $this->actingAs($user)
+            ->deleteJson("/api/v1/study-rooms/{$room->id}/messages/{$message->id}")
+            ->assertForbidden()
+            ->assertJsonPath('error.code', 'ROOM_CLOSED');
+    }
+
+    public function test_message_edit_and_delete_dispatch_broadcast_events(): void
+    {
+        Event::fake([StudyRoomMessageUpdated::class, StudyRoomMessageDeleted::class]);
+        $user = $this->student();
+        $room = StudyRoom::factory()->create(['status' => 'active']);
+        $room->participants()->attach($user->id);
+        $message = RoomMessage::factory()->create([
+            'room_id' => $room->id,
+            'user_id' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->putJson("/api/v1/study-rooms/{$room->id}/messages/{$message->id}", ['content' => 'Updated'])
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->deleteJson("/api/v1/study-rooms/{$room->id}/messages/{$message->id}")
+            ->assertOk();
+
+        Event::assertDispatched(StudyRoomMessageUpdated::class);
+        Event::assertDispatched(StudyRoomMessageDeleted::class);
     }
 
     public function test_study_room_actions_dispatch_broadcast_events(): void

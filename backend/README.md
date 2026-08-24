@@ -146,6 +146,8 @@ The table below reflects confirmed implementation status and auth boundaries:
 | **Study Room** | `DELETE` | `/api/v1/study-rooms/{room}` | Bearer | Close a study room (host/admin only) | Yes |
 | **Study Room** | `GET` | `/api/v1/study-rooms/{room}/messages` | Bearer | Get message history for a study room | Yes |
 | **Study Room** | `POST` | `/api/v1/study-rooms/{room}/messages` | Bearer | Send a message to a study room | Yes |
+| **Study Room** | `PUT` | `/api/v1/study-rooms/{room}/messages/{message}` | Bearer | Edit your own message in a study room | Yes |
+| **Study Room** | `DELETE` | `/api/v1/study-rooms/{room}/messages/{message}` | Bearer | Delete your own message from a study room | Yes |
 | **Mascot** | `GET` | `/api/v1/mascots` | Bearer | List all available mascots in catalog | Yes |
 | **Mascot** | `GET` | `/api/v1/mascots/inventory` | Bearer | Get authenticated user's owned mascots | Yes |
 | **Mascot** | `POST` | `/api/v1/mascots/{mascot}/purchase` | Bearer | Purchase a mascot using pearls | Yes |
@@ -2050,6 +2052,155 @@ Send a message to a study room. This endpoint serves as an HTTP fallback; in pro
 
 ---
 
+#### `PUT /api/v1/study-rooms/{room}/messages/{message}`
+Edit a message owned by the authenticated user.
+
+* **Authorization:** Must be an active participant and the owner of the message
+
+* **Request Body:**
+```json
+{
+  "content": "Updated message content",
+  "type": "text"
+}
+```
+
+* **Validation:**
+  - `content`: Required, string, max 2000 characters
+  - `type`: Optional, enum (`text`, `file`, `ai`)
+
+* **Frontend Usage (`fetch`):**
+```javascript
+const response = await fetch(
+  `${API_BASE_URL}/study-rooms/${roomId}/messages/${messageId}`,
+  {
+    method: 'PUT',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      content: 'Updated message content',
+      type: 'text',
+    }),
+  },
+);
+
+const result = await response.json();
+if (!response.ok) {
+  throw new Error(result.error?.message ?? 'Message update failed');
+}
+
+const updatedMessage = result.data.message;
+```
+
+* **Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "message": {
+      "id": "message-uuid",
+      "content": "Updated message content",
+      "type": "text",
+      "user": {
+        "id": "user-uuid",
+        "username": "john_doe",
+        "avatar_url": null
+      },
+      "sent_at": "2026-08-24T10:00:00.000000Z"
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+* **Error Responses:**
+  - `403 Forbidden` - Not a participant: `NOT_A_PARTICIPANT`
+  - `403 Forbidden` - Room closed: `ROOM_CLOSED`
+  - `403 Forbidden` - Message belongs to another user: `MESSAGE_NOT_OWNED`
+  - `404 Not Found` - Message does not belong to the specified room: `MESSAGE_NOT_FOUND`
+  - `422 Unprocessable Entity` - Invalid or missing `content`
+
+* **WebSocket Event Broadcast:**
+  - Event: `message_updated` on channel `private-study-room.{room_id}`
+  - Sent to all participants except the editor
+  - Event payload contains the updated message object
+
+---
+
+#### `DELETE /api/v1/study-rooms/{room}/messages/{message}`
+Delete a message owned by the authenticated user.
+
+* **Authorization:** Must be an active participant and the owner of the message
+
+* **Frontend Usage (`fetch`):**
+```javascript
+const response = await fetch(
+  `${API_BASE_URL}/study-rooms/${roomId}/messages/${messageId}`,
+  {
+    method: 'DELETE',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  },
+);
+
+const result = await response.json();
+if (!response.ok) {
+  throw new Error(result.error?.message ?? 'Message deletion failed');
+}
+
+const deletedMessageId = result.data.message_id;
+```
+
+* **Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "message_id": "message-uuid"
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+* **Error Responses:**
+  - `403 Forbidden` - Not a participant: `NOT_A_PARTICIPANT`
+  - `403 Forbidden` - Room closed: `ROOM_CLOSED`
+  - `403 Forbidden` - Message belongs to another user: `MESSAGE_NOT_OWNED`
+  - `404 Not Found` - Message does not belong to the specified room: `MESSAGE_NOT_FOUND`
+
+* **WebSocket Event Broadcast:**
+  - Event: `message_deleted` on channel `private-study-room.{room_id}`
+  - Sent to all participants except the deleter
+  - Event payload:
+```json
+{
+  "id": "message-uuid",
+  "room_id": "room-uuid"
+}
+```
+
+* **Echo Listener Example:**
+```javascript
+Echo.private(`study-room.${roomId}`)
+  .listen('.message_updated', (event) => {
+    // Replace the matching message in local state.
+    updateMessageInState(event);
+  })
+  .listen('.message_deleted', (event) => {
+    // Remove event.id from local state.
+    removeMessageFromState(event.id);
+  });
+```
+
+---
+
 ### WebSocket (Laravel Reverb) Configuration
 
 **Channel Authorization:** `routes/channels.php`
@@ -2062,6 +2213,8 @@ Broadcast::channel('study-room.{roomId}', function ($user, $roomId) {
 
 **Events Broadcast:**
 - `message` - New message sent (`StudyRoomMessageSent`)
+- `message_updated` - Message edited (`StudyRoomMessageUpdated`)
+- `message_deleted` - Message deleted (`StudyRoomMessageDeleted`)
 - `user_joined` - User joined room (`StudyRoomUserJoined`)
 - `user_left` - User left room (`StudyRoomUserLeft`)
 - `room_closed` - Room closed (`StudyRoomClosed`)

@@ -121,6 +121,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::delete('study-rooms/{room}', [StudyRoomController::class, 'destroy'])->name('study-rooms.destroy');
         Route::get('study-rooms/{room}/messages', [RoomMessageController::class, 'index'])->name('study-rooms.messages.index');
         Route::post('study-rooms/{room}/messages', [RoomMessageController::class, 'store'])->name('study-rooms.messages.store');
+        Route::put('study-rooms/{room}/messages/{message}', [RoomMessageController::class, 'update'])->name('study-rooms.messages.update');
+        Route::delete('study-rooms/{room}/messages/{message}', [RoomMessageController::class, 'destroy'])->name('study-rooms.messages.destroy');
 
         // Admin / Instructor only — course management
         Route::middleware('role:admin,instructor')->group(function () {
