@@ -229,6 +229,11 @@ export const courseService = {
     return response.data;
   },
 
+  async searchStudyRoomUsers(username: string) {
+    const response = await api.get("/admin/users", { params: { search: username, per_page: 10 } });
+    return response.data;
+  },
+
   async inviteStudyRoomParticipant(roomId: string, userId: string) {
     const response = await api.post(`/study-rooms/${roomId}/invite`, { user_id: userId });
     return response.data;

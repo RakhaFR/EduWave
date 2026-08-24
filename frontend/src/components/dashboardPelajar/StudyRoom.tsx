@@ -9,6 +9,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 type Participant = { id: string; username?: string; full_name?: string; avatar_url?: string | null };
 type Room = { id: string; name: string; topic?: string; max_capacity: number; current_capacity: number; is_public: boolean; join_code?: string | null; status: string; host?: Participant; participants?: Participant[] };
+type UserSearchResult = Participant;
 type Message = { id: string; content: string; sent_at: string; type?: string; user_id?: string; sender_id?: string; user?: { id?: string; user_id?: string; username?: string; avatar_url?: string | null } };
 
 function formatMessageTime(value?: string) {
@@ -40,7 +41,9 @@ export default function StudyRoomComponent() {
   const [form, setForm] = useState({ name: "", topic: "", max_capacity: 20, is_public: true });
   const [joinCode, setJoinCode] = useState("");
   const [joinRoomTarget, setJoinRoomTarget] = useState<Room | null>(null);
-  const [inviteUserId, setInviteUserId] = useState("");
+  const [inviteUsername, setInviteUsername] = useState("");
+  const [inviteMatches, setInviteMatches] = useState<UserSearchResult[]>([]);
+  const [inviteTarget, setInviteTarget] = useState<UserSearchResult | null>(null);
   const [showInvite, setShowInvite] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
@@ -157,18 +160,24 @@ export default function StudyRoomComponent() {
   }, [selected, currentUser?.id]);
 
   const openRoom = async (room: Room, privateCode = "") => {
-    if (!room.is_public && !privateCode) {
-      setJoinRoomTarget(room);
-      setJoinCode("");
-      return;
-    }
+    const storedCode = typeof window !== "undefined" ? localStorage.getItem(`study_room_code_${room.id}`) || "" : "";
     setBusy(true); setError("");
     try {
       try {
-        await courseService.joinStudyRoom(room.id, privateCode || undefined);
+        const code = privateCode || room.join_code || storedCode || undefined;
+        await courseService.joinStudyRoom(room.id, code);
+        if (!room.is_public && code) localStorage.setItem(`study_room_code_${room.id}`, code);
       } catch (joinError: any) {
         const code = joinError?.response?.data?.error?.code;
-        if (code !== "ALREADY_JOINED") throw joinError;
+        if (code === "ALREADY_JOINED") {
+          // A current participant can re-enter without submitting the private code again.
+        } else if (code === "INVALID_JOIN_CODE" && !privateCode && !storedCode && !room.join_code) {
+          setJoinRoomTarget(room);
+          setJoinCode("");
+          return;
+        } else {
+          throw joinError;
+        }
       }
       const detail = await courseService.getStudyRoom(room.id);
       const current = detail.data?.room ?? detail.room ?? room;
@@ -195,6 +204,8 @@ export default function StudyRoomComponent() {
     try {
       const response = await courseService.createStudyRoom({ ...form, name: form.name.trim() });
       const room = response.data?.room ?? response.room;
+      const createdRoom = room as Room | undefined;
+      if (createdRoom?.join_code) localStorage.setItem(`study_room_code_${createdRoom.id}`, createdRoom.join_code);
       setShowCreate(false); setForm({ name: "", topic: "", max_capacity: 20, is_public: true });
       await loadRooms();
       if (room) await openRoom(room);
@@ -205,15 +216,25 @@ export default function StudyRoomComponent() {
 
   const inviteParticipant = async (event: FormEvent) => {
     event.preventDefault();
-    if (!selected || !inviteUserId.trim()) return;
+    if (!selected || !inviteTarget) return;
     setBusy(true); setError("");
     try {
-      const response = await courseService.inviteStudyRoomParticipant(selected.id, inviteUserId.trim());
+      const response = await courseService.inviteStudyRoomParticipant(selected.id, inviteTarget.id);
       const invited = response.data?.user ?? response.user;
       if (invited) setSelected((room) => room ? { ...room, participants: [...(room.participants ?? []), invited], current_capacity: room.current_capacity + 1 } : room);
-      setInviteUserId(""); setShowInvite(false);
+      setInviteUsername(""); setInviteMatches([]); setInviteTarget(null); setShowInvite(false);
     } catch (err: any) { setError(err?.response?.data?.error?.message || "Participant gagal diundang."); }
     finally { setBusy(false); }
+  };
+
+  const searchInviteUsers = async (value: string) => {
+    setInviteUsername(value);
+    setInviteTarget(null);
+    if (value.trim().length < 2) { setInviteMatches([]); return; }
+    try {
+      const response = await courseService.searchStudyRoomUsers(value.trim());
+      setInviteMatches(response.data?.users ?? response.users ?? response.data ?? []);
+    } catch { setInviteMatches([]); }
   };
 
   const kickParticipant = async (participant: Participant) => {
@@ -333,9 +354,9 @@ export default function StudyRoomComponent() {
         ) : (
           <section className="grid gap-4 md:grid-cols-2">{loading ? <div className="text-sm text-white/70">Memuat room...</div> : rooms.length === 0 ? <div className="rounded-3xl bg-white p-8 text-center text-sm text-slate-500 md:col-span-2">Belum ada study room aktif.</div> : rooms.map((room) => <button key={room.id} onClick={() => openRoom(room)} disabled={busy} className="rounded-3xl bg-white p-5 text-left shadow-lg transition hover:-translate-y-1 hover:shadow-xl disabled:opacity-60"><div className="flex items-start justify-between gap-3"><div><h2 className="font-extrabold text-[#00172e]">{room.name}</h2><p className="mt-1 text-xs text-slate-500">{room.topic || "Belajar bersama"}</p></div><MessageSquare className="h-5 w-5 text-[#008be3]" /></div><p className="mt-5 flex items-center gap-1 text-xs font-semibold text-slate-400"><Users className="h-4 w-4" />{room.current_capacity}/{room.max_capacity} peserta</p></button>)}</section>
         )}
-          {showCreate && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><form onSubmit={createRoom} className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl"><div className="mb-5 flex items-center justify-between"><h2 className="font-extrabold text-[#00172e]">Buat Study Room</h2><button type="button" onClick={() => setShowCreate(false)}><X className="h-5 w-5 text-slate-400" /></button></div><div className="space-y-3"><input required maxLength={100} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Nama room" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none" /><input value={form.topic} onChange={(event) => setForm({ ...form, topic: event.target.value })} placeholder="Topik (opsional)" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none" /><input type="number" min={2} max={100} value={form.max_capacity} onChange={(event) => setForm({ ...form, max_capacity: Number(event.target.value) })} className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none" /><label className="flex items-center gap-2 text-sm font-semibold text-slate-600"><input type="checkbox" checked={form.is_public} onChange={(event) => setForm({ ...form, is_public: event.target.checked })} className="h-4 w-4 accent-[#008be3]" />Room publik</label></div><button disabled={busy} className="mt-5 w-full rounded-xl bg-[#008be3] py-2.5 text-sm font-bold text-white disabled:opacity-50">Buat Room</button></form></div>}
+          {showCreate && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><form onSubmit={createRoom} className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl"><div className="mb-5 flex items-center justify-between"><h2 className="font-extrabold text-[#00172e]">Buat Study Room</h2><button type="button" onClick={() => setShowCreate(false)}><X className="h-5 w-5 text-slate-400" /></button></div><div className="space-y-3"><input required maxLength={100} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Nama room" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none" /><input value={form.topic} onChange={(event) => setForm({ ...form, topic: event.target.value })} placeholder="Topik (opsional)" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none" /><input type="number" min={2} max={100} value={form.max_capacity} onChange={(event) => setForm({ ...form, max_capacity: Number(event.target.value) })} className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none" /><div className="flex gap-3"><label className={`flex flex-1 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold ${form.is_public ? "border-[#008be3] bg-blue-50 text-[#008be3]" : "border-slate-200 text-slate-500"}`}><input type="radio" name="room-visibility" checked={form.is_public} onChange={() => setForm({ ...form, is_public: true })} className="accent-[#008be3]" />Publik</label><label className={`flex flex-1 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold ${!form.is_public ? "border-[#008be3] bg-blue-50 text-[#008be3]" : "border-slate-200 text-slate-500"}`}><input type="radio" name="room-visibility" checked={!form.is_public} onChange={() => setForm({ ...form, is_public: false })} className="accent-[#008be3]" />Privat</label></div></div><button disabled={busy} className="mt-5 w-full rounded-xl bg-[#008be3] py-2.5 text-sm font-bold text-white disabled:opacity-50">Buat Room</button></form></div>}
           {joinRoomTarget && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><form onSubmit={(event) => { event.preventDefault(); openRoom(joinRoomTarget, joinCode.trim()); }} className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl"><div className="mb-5 flex items-center justify-between"><h2 className="font-extrabold text-[#00172e]">Gabung Room Privat</h2><button type="button" onClick={() => setJoinRoomTarget(null)}><X className="h-5 w-5 text-slate-400" /></button></div><p className="mb-3 text-sm text-slate-500">Masukkan kode untuk bergabung ke <strong>{joinRoomTarget.name}</strong>.</p><input required autoFocus value={joinCode} onChange={(event) => setJoinCode(event.target.value)} placeholder="Kode join" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none" /><button disabled={busy} className="mt-5 w-full rounded-xl bg-[#008be3] py-2.5 text-sm font-bold text-white disabled:opacity-50">Gabung</button></form></div>}
-          {showInvite && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><form onSubmit={inviteParticipant} className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl"><div className="mb-5 flex items-center justify-between"><h2 className="font-extrabold text-[#00172e]">Undang Participant</h2><button type="button" onClick={() => setShowInvite(false)}><X className="h-5 w-5 text-slate-400" /></button></div><input required value={inviteUserId} onChange={(event) => setInviteUserId(event.target.value)} placeholder="UUID user" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none" /><button disabled={busy} className="mt-5 w-full rounded-xl bg-[#008be3] py-2.5 text-sm font-bold text-white disabled:opacity-50">Undang</button></form></div>}
+          {showInvite && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><form onSubmit={inviteParticipant} className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl"><div className="mb-5 flex items-center justify-between"><h2 className="font-extrabold text-[#00172e]">Undang Participant</h2><button type="button" onClick={() => setShowInvite(false)}><X className="h-5 w-5 text-slate-400" /></button></div><input required value={inviteUsername} onChange={(event) => searchInviteUsers(event.target.value)} placeholder="Cari berdasarkan username" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none" />{inviteMatches.length > 0 && <div className="mt-2 max-h-44 space-y-1 overflow-y-auto rounded-xl border border-slate-100 p-1">{inviteMatches.map((candidate) => <button type="button" key={candidate.id} onClick={() => { setInviteTarget(candidate); setInviteUsername(candidate.username || ""); setInviteMatches([]); }} className={`flex w-full items-center gap-2 rounded-lg p-2 text-left hover:bg-blue-50 ${inviteTarget?.id === candidate.id ? "bg-blue-50" : ""}`}><div className="h-8 w-8 rounded-full bg-[#008be3] text-center text-xs font-bold leading-8 text-white">{(candidate.username || candidate.full_name || "P").charAt(0).toUpperCase()}</div><span className="text-sm font-semibold text-slate-700">{candidate.username || candidate.full_name}</span></button>)}</div>}<button disabled={busy || !inviteTarget} className="mt-5 w-full rounded-xl bg-[#008be3] py-2.5 text-sm font-bold text-white disabled:opacity-50">Undang</button></form></div>}
          {deleteMessageId && <div className="fixed inset-0 z-50 flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDeleteMessageId(null)} /><div className="relative z-10 flex w-full max-w-sm flex-col gap-4 rounded-3xl bg-white p-6 text-center shadow-2xl"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-2xl font-bold text-red-500">!</div><div><h3 className="text-base font-extrabold text-[#00172e]">Konfirmasi Hapus</h3><p className="mt-2 font-medium text-slate-400">Apakah kamu yakin ingin menghapus pesan ini? Tindakan ini tidak dapat dibatalkan.</p></div><div className="mt-4 flex items-center justify-center gap-3.5"><button type="button" onClick={() => setDeleteMessageId(null)} className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 font-bold text-slate-500 transition-all hover:bg-slate-50">Batal</button><button type="button" onClick={() => deleteMessageId && deleteMessage(deleteMessageId)} disabled={messageActionId === deleteMessageId} className="flex-1 rounded-xl bg-red-500 px-4 py-2.5 font-bold text-white shadow-md transition-all hover:bg-red-600 disabled:opacity-60">Hapus</button></div></div></div>}
       </main>
     </DashboardLayout>
