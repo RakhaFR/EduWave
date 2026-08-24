@@ -144,7 +144,7 @@ class EnrollmentController extends ApiController
         $enrollments = Enrollment::query()
             ->where('user_id', $request->user()->id)
             ->whereIn('status', ['enrolled', 'completed'])
-            ->with('course:id,title')
+            ->with(['course' => fn ($query) => $query->withTrashed()->select('id', 'title')])
             ->get()
             ->map(fn (Enrollment $enrollment) => $this->formatEnrollment($enrollment, $enrollment->course));
 
@@ -157,12 +157,12 @@ class EnrollmentController extends ApiController
     // Private helpers
     // ──────────────────────────────────────────────────────────────────────────
 
-    private function formatEnrollment(Enrollment $enrollment, Course $course): array
+    private function formatEnrollment(Enrollment $enrollment, ?Course $course): array
     {
         return [
             'id' => $enrollment->id,
             'course_id' => $enrollment->course_id,
-            'course_title' => $course->title,
+            'course_title' => $course?->title,
             'user_id' => $enrollment->user_id,
             'progress_pct' => (float) $enrollment->progress_pct,
             'status' => $enrollment->status,

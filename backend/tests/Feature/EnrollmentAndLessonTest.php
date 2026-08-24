@@ -347,6 +347,26 @@ class EnrollmentAndLessonTest extends TestCase
             ]);
     }
 
+    public function test_all_progress_does_not_return_500_when_enrolled_course_is_soft_deleted(): void
+    {
+        $student = $this->student();
+        $course = $this->publishedCourse();
+
+        Enrollment::factory()->create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => 'enrolled',
+            'progress_pct' => 25,
+        ]);
+        $course->delete();
+
+        $this->actingAs($student)
+            ->getJson('/api/v1/users/me/course-progress')
+            ->assertOk()
+            ->assertJsonPath('data.enrollments.0.course_id', $course->id)
+            ->assertJsonPath('data.enrollments.0.course_title', $course->title);
+    }
+
     public function test_reenrolling_does_not_award_course_completion_pearls_again(): void
     {
         $student = $this->student();
