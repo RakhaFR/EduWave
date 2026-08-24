@@ -105,6 +105,30 @@ export default function StudyRoomComponent() {
   const [editingContent, setEditingContent] = useState("");
   const [messageActionId, setMessageActionId] = useState<string | null>(null);
   const [deleteMessageId, setDeleteMessageId] = useState<string | null>(null);
+  const unreadHydratedRef = useRef(false);
+
+  const unreadStorageKey = currentUser?.id
+    ? `study_room_unread_${currentUser.id}`
+    : "study_room_unread";
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const stored = JSON.parse(localStorage.getItem(unreadStorageKey) || "{}");
+      if (stored && typeof stored === "object") setUnreadByRoom(stored);
+    } catch {
+      setUnreadByRoom({});
+    } finally {
+      unreadHydratedRef.current = true;
+    }
+  }, [unreadStorageKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (unreadHydratedRef.current) {
+      localStorage.setItem(unreadStorageKey, JSON.stringify(unreadByRoom));
+    }
+  }, [unreadByRoom, unreadStorageKey]);
 
   const loadRooms = async () => {
     setLoading(true);
@@ -307,12 +331,6 @@ export default function StudyRoomComponent() {
         : "";
     setBusy(true);
     setError("");
-    setUnreadByRoom((current) => {
-      if (!(room.id in current)) return current;
-      const next = { ...current };
-      delete next[room.id];
-      return next;
-    });
     try {
       try {
         if (!alreadyJoined) {
@@ -343,6 +361,12 @@ export default function StudyRoomComponent() {
       const history = await courseService.getStudyRoomMessages(room.id);
       setSelected(current);
       setJoinRoomTarget(null);
+      setUnreadByRoom((unread) => {
+        if (!(room.id in unread)) return unread;
+        const next = { ...unread };
+        delete next[room.id];
+        return next;
+      });
       shouldScrollMessagesRef.current = true;
       setNewMessageCount(0);
       const loadedMessages = history.data?.messages ?? history.messages ?? [];
