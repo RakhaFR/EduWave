@@ -178,9 +178,20 @@ export default function StudyRoomComponent() {
       const response = await courseService.sendStudyRoomMessage(selected.id, message.trim());
       const sent = response.data?.message ?? response.message;
       if (sent) {
+        // The send response may omit the nested user object; enrich it locally so owner actions are available immediately.
+        const sentWithOwner: Message = {
+          ...sent,
+          sent_at: sent.sent_at ?? new Date().toISOString(),
+          user_id: sent.user_id ?? sent.sender_id ?? currentUser?.id,
+          user: sent.user ?? (currentUser ? {
+            id: currentUser.id,
+            username: currentUser.username,
+            avatar_url: currentUser.avatar_url,
+          } : undefined),
+        };
         shouldScrollMessagesRef.current = true;
         setNewMessageCount(0);
-        setMessages((current) => current.some((item) => item.id === sent.id) ? current : [...current, sent]);
+        setMessages((current) => current.some((item) => item.id === sentWithOwner.id) ? current : [...current, sentWithOwner]);
       }
       setMessage("");
     } catch (err: any) { setError(err?.response?.data?.error?.message || "Pesan gagal dikirim."); }
