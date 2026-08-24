@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   MessageCircle,
@@ -10,6 +10,8 @@ import {
   Users,
   X,
   Send,
+  Smile,
+  ArrowDown,
 } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { courseService } from "@/services/courseService";
@@ -75,7 +77,12 @@ export default function FriendsComponent() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [newMessageCount, setNewMessageCount] = useState(0);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const { user: currentUser } = useCurrentUser();
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const shouldScrollMessagesRef = useRef(true);
+  const emojiOptions = ["😀", "😂", "😍", "😊", "😎", "😭", "😡", "👍", "👏", "🙏", "🎉", "❤️", "🔥", "✨", "💡", "📚"];
 
   const loadData = async () => {
     setLoading(true);
@@ -173,6 +180,8 @@ export default function FriendsComponent() {
         conversation.id,
       );
       setSelectedChat({ id: conversation.id, friend });
+      shouldScrollMessagesRef.current = true;
+      setNewMessageCount(0);
       setMessages(history.data?.messages ?? history.messages ?? []);
     } catch (err: any) {
       setError(
@@ -185,6 +194,29 @@ export default function FriendsComponent() {
   };
 
   useEffect(() => {
+    if (!selectedChat || messages.length === 0 || !shouldScrollMessagesRef.current) return;
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+      requestAnimationFrame(() => { container.scrollTop = container.scrollHeight; });
+    }
+    setNewMessageCount(0);
+  }, [messages, selectedChat]);
+
+  const isMessagesAtBottom = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return true;
+    return container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+  };
+
+  const scrollToLatestMessages = () => {
+    shouldScrollMessagesRef.current = true;
+    setNewMessageCount(0);
+    const container = messagesContainerRef.current;
+    if (container) container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+  };
+
+  useEffect(() => {
     if (!selectedChat) return;
     const echo = getEcho();
     if (!echo) return;
@@ -194,12 +226,16 @@ export default function FriendsComponent() {
       ".message_sent",
       (event: PrivateMessage & { message?: PrivateMessage }) => {
         const incoming = event.message ?? event;
-        if (incoming?.id)
+        if (incoming?.id) {
+          const atBottom = isMessagesAtBottom();
+          shouldScrollMessagesRef.current = atBottom;
+          if (!atBottom) setNewMessageCount((count) => count + 1);
           setMessages((current) =>
             current.some((item) => item.id === incoming.id)
               ? current
               : [...current, incoming],
           );
+        }
       },
     );
     return () => {
@@ -265,7 +301,11 @@ export default function FriendsComponent() {
                 </p>
               </div>
             </div>
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-slate-50 p-4">
+            <div
+              ref={messagesContainerRef}
+              onScroll={() => { shouldScrollMessagesRef.current = isMessagesAtBottom(); }}
+              className="relative min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain bg-slate-50 p-4"
+            >
               {messages.length ? (
                 messages.map((item) => {
                   const own = isOwnMessage(item);
@@ -288,26 +328,41 @@ export default function FriendsComponent() {
                   );
                 })
               ) : (
-                <p className="text-center text-sm text-slate-400">Belum ada pesan.</p>
+                <p className="m-auto text-center text-sm text-slate-400">Belum ada pesan.</p>
+              )}
+              {newMessageCount > 0 && (
+                <button
+                  type="button"
+                  onClick={scrollToLatestMessages}
+                  className="sticky bottom-2 left-1/2 z-10 mx-auto flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-[#008be3] px-3 py-2 text-xs font-bold text-white shadow-lg hover:bg-[#007bc9]"
+                  aria-label="Lihat pesan baru"
+                >
+                  <ArrowDown className="h-4 w-4" />
+                  {newMessageCount === 1 ? "Pesan baru" : `${newMessageCount} pesan baru`}
+                </button>
               )}
             </div>
-            <form
-              onSubmit={sendMessage}
-              className="flex gap-2 border-t border-slate-100 p-4"
-            >
+            <form onSubmit={sendMessage} className="relative flex gap-2 border-t border-slate-100 p-4">
               <input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 maxLength={5000}
                 placeholder="Tulis pesan..."
-                className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#008be3]"
+                className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#008be3]"
               />
-              <button
-                disabled={busy}
-                className="rounded-xl bg-[#008be3] px-4 text-white"
-              >
-                <Send className="h-4 w-4" />
-              </button>
+              <div className="relative flex shrink-0 gap-2">
+                <button type="button" onClick={() => setShowEmojiPicker((open) => !open)} className="rounded-xl border border-slate-200 bg-white px-3 text-[#008be3] hover:bg-blue-50" aria-label="Pilih emoji">
+                  <Smile className="h-5 w-5" />
+                </button>
+                {showEmojiPicker && (
+                  <div className="absolute bottom-12 right-0 z-20 grid w-56 grid-cols-8 gap-1 rounded-2xl border border-slate-100 bg-white p-3 shadow-xl">
+                    {emojiOptions.map((emoji) => <button key={emoji} type="button" onClick={() => { setDraft((value) => `${value}${emoji}`); setShowEmojiPicker(false); }} className="rounded-lg p-1.5 text-lg hover:bg-blue-50">{emoji}</button>)}
+                  </div>
+                )}
+                <button disabled={busy} className="rounded-xl bg-[#008be3] px-4 text-white disabled:opacity-50">
+                  <Send className="h-4 w-4" />
+                </button>
+              </div>
             </form>
           </section>
         ) : (
