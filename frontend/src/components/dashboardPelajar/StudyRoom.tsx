@@ -53,12 +53,33 @@ export default function StudyRoomComponent() {
       const incoming = event.message ?? event;
       if (incoming?.id) setMessages((current) => current.some((item) => item.id === incoming.id) ? current : [...current, incoming]);
     });
+    channel.listen("StudyRoomMessageSent", (event: any) => {
+      const incoming = event.message ?? event;
+      if (incoming?.id) setMessages((current) => current.some((item) => item.id === incoming.id) ? current : [...current, incoming]);
+    });
+    channel.listen("message", (event: any) => {
+      const incoming = event.message ?? event;
+      if (incoming?.id) setMessages((current) => current.some((item) => item.id === incoming.id) ? current : [...current, incoming]);
+    });
     channel.listen(".room_closed", () => {
       setError("Study room telah ditutup oleh host.");
       setSelected(null);
       loadRooms();
     });
-    return () => { echo.leave(`private-study-room.${selected.id}`); };
+    channel.listen("StudyRoomClosed", () => {
+      setError("Study room telah ditutup oleh host.");
+      setSelected(null);
+      loadRooms();
+    });
+    return () => {
+      channel.stopListening(".message");
+      channel.stopListening("StudyRoomMessageSent");
+      channel.stopListening("message");
+      channel.stopListening(".room_closed");
+      channel.stopListening("StudyRoomClosed");
+      echo.leave(`study-room.${selected.id}`);
+      echo.leave(`private-study-room.${selected.id}`);
+    };
   }, [selected]);
 
   const openRoom = async (room: Room) => {
