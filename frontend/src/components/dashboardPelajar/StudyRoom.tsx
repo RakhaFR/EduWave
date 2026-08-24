@@ -8,7 +8,7 @@ import { getEcho } from "@/lib/echo";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 type Room = { id: string; name: string; topic?: string; max_capacity: number; current_capacity: number; is_public: boolean; status: string; host?: { username?: string; avatar_url?: string | null } };
-type Message = { id: string; content: string; sent_at: string; type?: string; user?: { id?: string; username?: string; avatar_url?: string | null } };
+type Message = { id: string; content: string; sent_at: string; type?: string; user_id?: string; sender_id?: string; user?: { id?: string; username?: string; avatar_url?: string | null } };
 
 function formatMessageTime(value?: string) {
   if (!value) return "";
@@ -58,7 +58,12 @@ export default function StudyRoomComponent() {
   useEffect(() => {
     if (!selected || messages.length === 0) return;
     if (shouldScrollMessagesRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      const scrollToBottom = () => {
+        const container = messagesContainerRef.current;
+        if (container) container.scrollTop = container.scrollHeight;
+      };
+      scrollToBottom();
+      requestAnimationFrame(scrollToBottom);
       setNewMessageCount(0);
     }
   }, [messages, selected]);
@@ -72,7 +77,8 @@ export default function StudyRoomComponent() {
   const scrollToLatestMessages = () => {
     shouldScrollMessagesRef.current = true;
     setNewMessageCount(0);
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    const container = messagesContainerRef.current;
+    if (container) container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -139,7 +145,12 @@ export default function StudyRoomComponent() {
       setSelected(current);
       shouldScrollMessagesRef.current = true;
       setNewMessageCount(0);
-      setMessages(history.data?.messages ?? history.messages ?? []);
+      const loadedMessages = history.data?.messages ?? history.messages ?? [];
+      setMessages([...loadedMessages].sort((first: Message, second: Message) => {
+        const firstTime = new Date(first.sent_at).getTime();
+        const secondTime = new Date(second.sent_at).getTime();
+        return firstTime - secondTime;
+      }));
     } catch (err: any) {
       setError(err?.response?.data?.error?.message || "Kamu tidak dapat bergabung ke room ini.");
     } finally { setBusy(false); }
@@ -175,7 +186,17 @@ export default function StudyRoomComponent() {
     } catch (err: any) { setError(err?.response?.data?.error?.message || "Pesan gagal dikirim."); }
   };
 
-  const isOwnMessage = (item: Message) => Boolean(currentUser?.id && item.user?.id === currentUser.id);
+  const isOwnMessage = (item: Message) => {
+    if (!currentUser) return false;
+    const currentId = String(currentUser.id);
+    const messageUserId = item.user?.id ?? item.user_id ?? item.sender_id;
+    if (messageUserId !== undefined && String(messageUserId) === currentId) return true;
+    return Boolean(
+      item.user?.username &&
+      currentUser.username &&
+      item.user.username.toLowerCase() === currentUser.username.toLowerCase(),
+    );
+  };
 
   const canEditMessage = (item: Message) => {
     const sentAt = new Date(item.sent_at).getTime();
