@@ -55,6 +55,7 @@ export default function PelajarLeaderboardPage() {
   const [top3, setTop3] = useState<LeaderboardUser[]>([]);
   const [myRank, setMyRank] = useState<{ rank: number | string; total_xp: number; name?: string; avatarUrl?: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [leaderboardError, setLeaderboardError] = useState("");
 
   const [page, setPage] = useState(1);
   const perPage = 10;
@@ -64,7 +65,7 @@ export default function PelajarLeaderboardPage() {
     async function loadTop3() {
       try {
         const top3Res = period === "minggu"
-          ? await courseService.getWeeklyLeaderboard(3).catch(() => courseService.getLeaderboard(3))
+          ? await courseService.getWeeklyLeaderboard(3)
           : await courseService.getLeaderboard(3);
 
         const rawTop3 = top3Res?.data?.rankings || top3Res?.data || top3Res || [];
@@ -75,7 +76,9 @@ export default function PelajarLeaderboardPage() {
             id: userObj.id || item.user_id,
             rank: item.rank || index + 1,
             name: fullName,
-            xp: item.xp !== undefined ? item.xp : item.total_xp || 0,
+            xp: period === "minggu"
+              ? Number(item.weekly_xp ?? item.xp_earned ?? item.xp ?? 0)
+              : Number(item.total_xp ?? item.xp ?? 0),
             streak: userObj.streak_days ?? item.streak_days ?? item.streak ?? 0,
             courses: userObj.completed_courses_count ?? userObj.completed_courses ?? item.completed_courses_count ?? 0,
             avatar: fullName[0].toUpperCase(),
@@ -87,6 +90,7 @@ export default function PelajarLeaderboardPage() {
         setTop3(withServerRankChanges(formattedTop3));
       } catch (err) {
         console.error("Gagal memuat top 3:", err);
+        setTop3([]);
       }
     }
     loadTop3();
@@ -95,13 +99,11 @@ export default function PelajarLeaderboardPage() {
   useEffect(() => {
     async function loadData() {
       setLoading(true);
+      setLeaderboardError("");
       try {
         const [lbRes, meRes] = await Promise.all([
           period === "minggu"
-            ? courseService.getWeeklyLeaderboard(perPage, page).catch((err) => {
-                console.error("Endpoint /leaderboard/weekly 500 error, fallback ke /leaderboard", err);
-                return courseService.getLeaderboard(perPage, page);
-              })
+            ? courseService.getWeeklyLeaderboard(perPage, page)
             : courseService.getLeaderboard(perPage, page),
           courseService.getMyRank(period === "minggu" ? "weekly" : "global").catch(() => null),
         ]);
@@ -114,7 +116,9 @@ export default function PelajarLeaderboardPage() {
             id: userObj.id || item.user_id,
             rank: item.rank || (page - 1) * perPage + index + 1,
             name: fullName,
-            xp: item.xp !== undefined ? item.xp : item.total_xp || 0,
+            xp: period === "minggu"
+              ? Number(item.weekly_xp ?? item.xp_earned ?? item.xp ?? 0)
+              : Number(item.total_xp ?? item.xp ?? 0),
             streak: userObj.streak_days ?? item.streak_days ?? item.streak ?? 0,
             courses: userObj.completed_courses_count ?? userObj.completed_courses ?? item.completed_courses_count ?? 0,
             avatar: fullName[0].toUpperCase(),
@@ -131,13 +135,21 @@ export default function PelajarLeaderboardPage() {
           const myNeighbor = meRes.data.neighbors?.find((n: any) => n.user?.id === currentUser?.id || n.is_me);
           setMyRank({
             rank: userRank || "-",
-            total_xp: myNeighbor?.xp ?? currentUser?.xp ?? 0,
+             total_xp: period === "minggu"
+               ? Number(meRes.data.weekly_xp ?? meRes.data.xp_earned ?? myNeighbor?.xp ?? 0)
+               : Number(myNeighbor?.xp ?? currentUser?.xp ?? 0),
             name: currentUser?.full_name || currentUser?.username || "Kamu",
             avatarUrl: currentUser?.avatar_url || undefined,
           });
         }
       } catch (err) {
         console.error("Gagal memuat leaderboard:", err);
+        setLeaderboard([]);
+        setTop3([]);
+        setMyRank(null);
+        setLeaderboardError(period === "minggu"
+          ? "Leaderboard mingguan belum dapat dimuat. Pastikan endpoint weekly mengirim XP yang didapat minggu ini."
+          : "Leaderboard belum dapat dimuat.");
       } finally {
         setLoading(false);
       }
@@ -149,7 +161,7 @@ export default function PelajarLeaderboardPage() {
   const me = leaderboard.find((u) => u.id === currentUser?.id) || {
     rank: myRank?.rank || "-",
     name: currentUser?.full_name || currentUser?.username || myRank?.name || "Kamu",
-    xp: myRank?.total_xp ?? currentUser?.xp ?? 0,
+    xp: Number(myRank?.total_xp ?? (period === "semua" ? currentUser?.xp ?? 0 : 0)),
     avatarUrl: currentUser?.avatar_url || myRank?.avatarUrl,
   };
 
@@ -243,6 +255,10 @@ export default function PelajarLeaderboardPage() {
         {/* Tabel Peringkat */}
         {loading ? (
           <div className="rounded-3xl bg-white/10 p-5"><ListSkeleton count={7} /></div>
+        ) : leaderboardError ? (
+          <div className="rounded-3xl bg-white p-8 text-center text-sm text-slate-500">
+            {leaderboardError}
+          </div>
         ) : leaderboard.length === 0 ? (
           <div className="bg-white rounded-3xl p-8 text-center text-slate-500">
             Belum ada data peringkat.
