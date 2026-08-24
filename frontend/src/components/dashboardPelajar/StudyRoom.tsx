@@ -81,6 +81,7 @@ export default function StudyRoomComponent() {
     "connecting" | "connected" | "fallback"
   >("connecting");
   const [newMessageCount, setNewMessageCount] = useState(0);
+  const [unreadByRoom, setUnreadByRoom] = useState<Record<string, number>>({});
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const shouldScrollMessagesRef = useRef(true);
@@ -123,6 +124,33 @@ export default function StudyRoomComponent() {
   useEffect(() => {
     loadRooms();
   }, []);
+
+  // Listen to room channels while the forum list is open so new messages are visible before entry.
+  useEffect(() => {
+    if (selected || rooms.length === 0) return;
+    const echo = getEcho();
+    if (!echo) return;
+    const subscriptions = rooms.map((room) => {
+      const channelName = `study-room.${room.id}`;
+      const channel = echo.private(channelName);
+      channel.listen(".message", (event: any) => {
+        const incoming = event.message ?? event;
+        if (incoming?.id) {
+          setUnreadByRoom((current) => ({
+            ...current,
+            [room.id]: (current[room.id] ?? 0) + 1,
+          }));
+        }
+      });
+      return { channel, channelName };
+    });
+    return () => {
+      subscriptions.forEach(({ channel, channelName }) => {
+        channel.stopListening(".message");
+        echo.leave(channelName);
+      });
+    };
+  }, [rooms, selected]);
 
   useEffect(() => {
     if (!selected || messages.length === 0) return;
@@ -279,6 +307,12 @@ export default function StudyRoomComponent() {
         : "";
     setBusy(true);
     setError("");
+    setUnreadByRoom((current) => {
+      if (!(room.id in current)) return current;
+      const next = { ...current };
+      delete next[room.id];
+      return next;
+    });
     try {
       try {
         if (!alreadyJoined) {
@@ -980,7 +1014,14 @@ export default function StudyRoomComponent() {
                         {room.topic || "Belajar bersama"}
                       </p>
                     </div>
-                    <MessageSquare className="h-5 w-5 text-[#008be3]" />
+                     <span className="relative shrink-0">
+                       <MessageSquare className="h-5 w-5 text-[#008be3]" />
+                       {unreadByRoom[room.id] > 0 && (
+                         <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-extrabold text-white">
+                           {unreadByRoom[room.id] > 9 ? "9+" : unreadByRoom[room.id]}
+                         </span>
+                       )}
+                     </span>
                   </div>
                   <p className="mt-5 flex items-center gap-1 text-xs font-semibold text-slate-400">
                     <Users className="h-4 w-4" />
