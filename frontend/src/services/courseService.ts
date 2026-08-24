@@ -224,8 +224,18 @@ export const courseService = {
     return response.data;
   },
 
-  async joinStudyRoom(roomId: string) {
-    const response = await api.post(`/study-rooms/${roomId}/join`);
+  async joinStudyRoom(roomId: string, code?: string) {
+    const response = await api.post(`/study-rooms/${roomId}/join`, code ? { code } : undefined);
+    return response.data;
+  },
+
+  async inviteStudyRoomParticipant(roomId: string, userId: string) {
+    const response = await api.post(`/study-rooms/${roomId}/invite`, { user_id: userId });
+    return response.data;
+  },
+
+  async kickStudyRoomParticipant(roomId: string, userId: string) {
+    const response = await api.delete(`/study-rooms/${roomId}/participants/${userId}`);
     return response.data;
   },
 

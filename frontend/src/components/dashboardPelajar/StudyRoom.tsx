@@ -1,14 +1,14 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { Users, Plus, MessageSquare, LogOut, X, Send, ArrowLeft, ArrowDown, Pencil, Trash2, Check } from "lucide-react";
+import { Users, Plus, MessageSquare, LogOut, X, Send, ArrowLeft, ArrowDown, Pencil, Trash2, Check, UserPlus, UserMinus } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { courseService } from "@/services/courseService";
 import { getEcho } from "@/lib/echo";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 type Participant = { id: string; username?: string; full_name?: string; avatar_url?: string | null };
-type Room = { id: string; name: string; topic?: string; max_capacity: number; current_capacity: number; is_public: boolean; status: string; host?: Participant; participants?: Participant[] };
+type Room = { id: string; name: string; topic?: string; max_capacity: number; current_capacity: number; is_public: boolean; join_code?: string | null; status: string; host?: Participant; participants?: Participant[] };
 type Message = { id: string; content: string; sent_at: string; type?: string; user_id?: string; sender_id?: string; user?: { id?: string; user_id?: string; username?: string; avatar_url?: string | null } };
 
 function formatMessageTime(value?: string) {
@@ -37,7 +37,11 @@ export default function StudyRoomComponent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const shouldScrollMessagesRef = useRef(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ name: "", topic: "", max_capacity: 20 });
+  const [form, setForm] = useState({ name: "", topic: "", max_capacity: 20, is_public: true });
+  const [joinCode, setJoinCode] = useState("");
+  const [joinRoomTarget, setJoinRoomTarget] = useState<Room | null>(null);
+  const [inviteUserId, setInviteUserId] = useState("");
+  const [showInvite, setShowInvite] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [messageActionId, setMessageActionId] = useState<string | null>(null);
@@ -47,7 +51,7 @@ export default function StudyRoomComponent() {
     setLoading(true);
     setError("");
     try {
-      const response = await courseService.getStudyRooms({ status: "active", is_public: true });
+      const response = await courseService.getStudyRooms({ status: "active" });
       setRooms(response.data?.rooms ?? response.rooms ?? []);
     } catch (err: any) {
       setError(err?.response?.data?.error?.message || "Study Room belum dapat dimuat.");
@@ -120,22 +124,48 @@ export default function StudyRoomComponent() {
       setSelected(null);
       loadRooms();
     });
+    channel.listen(".user_kicked", (event: any) => {
+      const kickedUserId = event?.user?.id ?? event?.user_id;
+      if (currentUser?.id && String(kickedUserId) === String(currentUser.id)) {
+        setError("Kamu telah dikeluarkan dari study room oleh host.");
+        setSelected(null);
+        loadRooms();
+      } else if (kickedUserId) {
+        setSelected((room) => room ? { ...room, participants: room.participants?.filter((participant) => String(participant.id) !== String(kickedUserId)), current_capacity: Math.max(0, room.current_capacity - 1) } : room);
+      }
+    });
+    channel.listen(".user_joined", (event: any) => {
+      const joined = event?.user;
+      if (joined?.id) setSelected((room) => room && !room.participants?.some((participant) => participant.id === joined.id) ? { ...room, participants: [...(room.participants ?? []), joined], current_capacity: room.current_capacity + 1 } : room);
+    });
+    channel.listen(".user_left", (event: any) => {
+      const leftUserId = event?.user?.id ?? event?.user_id;
+      if (leftUserId) setSelected((room) => room ? { ...room, participants: room.participants?.filter((participant) => String(participant.id) !== String(leftUserId)), current_capacity: Math.max(0, room.current_capacity - 1) } : room);
+    });
     return () => {
       channel.stopListening(".message");
       channel.stopListening(".message_updated");
       channel.stopListening(".message_deleted");
       channel.stopListening(".room_closed");
+      channel.stopListening(".user_kicked");
+      channel.stopListening(".user_joined");
+      channel.stopListening(".user_left");
       connection?.unbind("state_change", handleConnectionState);
       connection?.unbind("error", handleConnectionError);
       echo.leave(`study-room.${selected.id}`);
     };
-  }, [selected]);
+  }, [selected, currentUser?.id]);
 
-  const openRoom = async (room: Room) => {
+  const openRoom = async (room: Room, privateCode = "") => {
+    if (!room.is_public && !privateCode) {
+      setJoinRoomTarget(room);
+      setJoinCode("");
+      return;
+    }
     setBusy(true); setError("");
     try {
       try {
-        await courseService.joinStudyRoom(room.id);
+        await courseService.joinStudyRoom(room.id, privateCode || undefined);
       } catch (joinError: any) {
         const code = joinError?.response?.data?.error?.code;
         if (code !== "ALREADY_JOINED") throw joinError;
@@ -144,6 +174,7 @@ export default function StudyRoomComponent() {
       const current = detail.data?.room ?? detail.room ?? room;
       const history = await courseService.getStudyRoomMessages(room.id);
       setSelected(current);
+      setJoinRoomTarget(null);
       shouldScrollMessagesRef.current = true;
       setNewMessageCount(0);
       const loadedMessages = history.data?.messages ?? history.messages ?? [];
@@ -164,12 +195,35 @@ export default function StudyRoomComponent() {
     try {
       const response = await courseService.createStudyRoom({ ...form, name: form.name.trim() });
       const room = response.data?.room ?? response.room;
-      setShowCreate(false); setForm({ name: "", topic: "", max_capacity: 20 });
+      setShowCreate(false); setForm({ name: "", topic: "", max_capacity: 20, is_public: true });
       await loadRooms();
       if (room) await openRoom(room);
     } catch (err: any) {
       setError(err?.response?.data?.error?.message || "Room gagal dibuat.");
     } finally { setBusy(false); }
+  };
+
+  const inviteParticipant = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!selected || !inviteUserId.trim()) return;
+    setBusy(true); setError("");
+    try {
+      const response = await courseService.inviteStudyRoomParticipant(selected.id, inviteUserId.trim());
+      const invited = response.data?.user ?? response.user;
+      if (invited) setSelected((room) => room ? { ...room, participants: [...(room.participants ?? []), invited], current_capacity: room.current_capacity + 1 } : room);
+      setInviteUserId(""); setShowInvite(false);
+    } catch (err: any) { setError(err?.response?.data?.error?.message || "Participant gagal diundang."); }
+    finally { setBusy(false); }
+  };
+
+  const kickParticipant = async (participant: Participant) => {
+    if (!selected || !currentUser?.id || String(selected.host?.id) !== String(currentUser.id)) return;
+    setBusy(true); setError("");
+    try {
+      await courseService.kickStudyRoomParticipant(selected.id, participant.id);
+      setSelected((room) => room ? { ...room, participants: room.participants?.filter((item) => item.id !== participant.id), current_capacity: Math.max(0, room.current_capacity - 1) } : room);
+    } catch (err: any) { setError(err?.response?.data?.error?.message || "Participant gagal dikeluarkan."); }
+    finally { setBusy(false); }
   };
 
   const sendMessage = async (event: FormEvent) => {
@@ -271,7 +325,7 @@ export default function StudyRoomComponent() {
         {error && <p className="rounded-xl bg-red-50 p-3 text-xs text-red-600">{error}</p>}
         {selected ? (
            <section className="flex h-[calc(100vh-180px)] min-h-[420px] min-w-0 flex-col overflow-hidden rounded-3xl bg-white shadow-xl">
-             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4"><div className="flex min-w-0 items-center gap-3"><button onClick={() => setSelected(null)} disabled={busy} className="rounded-xl p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-[#008be3] disabled:opacity-50" aria-label="Kembali ke daftar study room"><ArrowLeft className="h-5 w-5" /></button><div><h2 className="font-extrabold text-[#00172e]">{selected.name}</h2><p className="text-xs text-slate-400">{selected.topic || "Study room"} · {selected.current_capacity}/{selected.max_capacity} peserta</p></div></div><div className="flex items-center gap-2"><details className="relative"><summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100"><Users className="h-3.5 w-3.5 text-[#008be3]" />Peserta ({selected.participants?.length ?? selected.current_capacity})</summary><div className="absolute right-0 z-20 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-100 bg-white p-3 shadow-xl"><p className="mb-2 text-xs font-extrabold text-[#00172e]">Peserta Study Room</p><div className="max-h-64 space-y-2 overflow-y-auto">{selected.participants?.length ? selected.participants.map((participant) => <div key={participant.id} className="flex items-center gap-2.5 rounded-xl p-2 hover:bg-slate-50"><div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-[#008be3] text-center text-xs font-bold leading-8 text-white">{participant.avatar_url ? <img src={participant.avatar_url} alt={participant.username || "Peserta"} className="h-full w-full object-cover" /> : (participant.username || participant.full_name || "P").charAt(0).toUpperCase()}</div><div className="min-w-0"><p className="truncate text-xs font-bold text-[#00172e]">{participant.username || participant.full_name || "Peserta"}</p>{participant.id === selected.host?.id && <p className="text-[10px] text-[#008be3]">Host</p>}</div></div>) : <p className="py-4 text-center text-xs text-slate-400">Data peserta belum tersedia.</p>}</div></div></details><button onClick={leaveRoom} disabled={busy} className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-2 text-xs font-bold text-red-500"><LogOut className="h-3.5 w-3.5" />Keluar</button></div></div>
+             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4"><div className="flex min-w-0 items-center gap-3"><button onClick={() => setSelected(null)} disabled={busy} className="rounded-xl p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-[#008be3] disabled:opacity-50" aria-label="Kembali ke daftar study room"><ArrowLeft className="h-5 w-5" /></button><div><h2 className="font-extrabold text-[#00172e]">{selected.name}</h2><p className="text-xs text-slate-400">{selected.topic || "Study room"} · {selected.current_capacity}/{selected.max_capacity} peserta</p></div></div><div className="flex items-center gap-2"><details className="relative"><summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100"><Users className="h-3.5 w-3.5 text-[#008be3]" />Peserta ({selected.participants?.length ?? selected.current_capacity})</summary><div className="absolute right-0 z-20 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-100 bg-white p-3 shadow-xl"><div className="mb-2 flex items-center justify-between"><p className="text-xs font-extrabold text-[#00172e]">Peserta Study Room</p>{String(selected.host?.id) === String(currentUser?.id) && <button type="button" onClick={() => setShowInvite(true)} className="rounded-lg p-1.5 text-[#008be3] hover:bg-blue-50" aria-label="Undang participant"><UserPlus className="h-4 w-4" /></button>}</div><div className="max-h-64 space-y-2 overflow-y-auto">{selected.participants?.length ? selected.participants.map((participant) => <div key={participant.id} className="flex items-center gap-2.5 rounded-xl p-2 hover:bg-slate-50"><div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-[#008be3] text-center text-xs font-bold leading-8 text-white">{participant.avatar_url ? <img src={participant.avatar_url} alt={participant.username || "Peserta"} className="h-full w-full object-cover" /> : (participant.username || participant.full_name || "P").charAt(0).toUpperCase()}</div><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-[#00172e]">{participant.username || participant.full_name || "Peserta"}</p>{participant.id === selected.host?.id && <p className="text-[10px] text-[#008be3]">Host</p>}</div>{String(selected.host?.id) === String(currentUser?.id) && participant.id !== selected.host?.id && <button type="button" onClick={() => kickParticipant(participant)} disabled={busy} className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500" aria-label={`Keluarkan ${participant.username || "participant"}`}><UserMinus className="h-3.5 w-3.5" /></button>}</div>) : <p className="py-4 text-center text-xs text-slate-400">Data peserta belum tersedia.</p>}</div></div></details><button onClick={leaveRoom} disabled={busy} className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-2 text-xs font-bold text-red-500"><LogOut className="h-3.5 w-3.5" />Keluar</button></div></div>
              <div className="sr-only" role="status" aria-live="polite">{realtimeStatus === "connected" ? "Realtime aktif" : realtimeStatus === "fallback" ? "Realtime tidak tersedia." : "Menghubungkan realtime..."}</div>
              <div ref={messagesContainerRef} onScroll={() => { shouldScrollMessagesRef.current = isMessagesAtBottom(); }} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50 p-4">{messages.length === 0 ? <p className="m-auto text-sm text-slate-400">Belum ada pesan.</p> : <div className="flex flex-col gap-3">{messages.map((item) => <div key={item.id} className="flex items-start gap-2.5"><div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-[#008be3] text-center text-xs font-bold leading-9 text-white">{item.user?.avatar_url ? <img src={item.user.avatar_url} alt={item.user.username || "Peserta"} className="h-full w-full object-cover" /> : (item.user?.username || "P").charAt(0).toUpperCase()}</div><div className="max-w-[85%] rounded-2xl bg-white p-3 shadow-sm">{editingMessageId === item.id ? <form onSubmit={(event) => updateMessage(event, item.id)} className="min-w-52"><input value={editingContent} onChange={(event) => setEditingContent(event.target.value)} maxLength={2000} autoFocus className="w-full rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 outline-none focus:border-[#008be3]" /><div className="mt-2 flex gap-2"><button type="submit" disabled={messageActionId === item.id} className="inline-flex items-center gap-1 rounded-lg bg-[#008be3] px-2 py-1 text-[10px] font-bold text-white"><Check className="h-3 w-3" />Simpan</button><button type="button" onClick={cancelEditingMessage} className="rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">Batal</button></div></form> : <><div className="flex items-start justify-between gap-3"><p className="text-[10px] font-bold text-[#008be3]">{item.user?.username || "Peserta"}</p>{isOwnMessage(item) && <div className="flex gap-1">{canEditMessage(item) && <button type="button" onClick={() => startEditingMessage(item)} disabled={messageActionId === item.id} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-[#008be3]" aria-label="Edit pesan"><Pencil className="h-3 w-3" /></button>}<button type="button" onClick={() => setDeleteMessageId(item.id)} disabled={messageActionId === item.id} className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-500" aria-label="Hapus pesan"><Trash2 className="h-3 w-3" /></button></div>}</div><p className="text-sm text-slate-700">{item.content}</p><p className="mt-1 text-[10px] text-slate-400">{formatMessageTime(item.sent_at)}</p></>}</div></div>)}<div ref={messagesEndRef} aria-hidden="true" /></div>}{newMessageCount > 0 && <button type="button" onClick={scrollToLatestMessages} className="sticky bottom-2 left-1/2 z-10 mx-auto flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-[#008be3] px-3 py-2 text-xs font-bold text-white shadow-lg hover:bg-[#007bc9]" aria-label="Lihat pesan baru"><ArrowDown className="h-4 w-4" />{newMessageCount === 1 ? "Pesan baru" : `${newMessageCount} pesan baru`}</button>}</div>
             <form onSubmit={sendMessage} className="flex gap-2 border-t border-slate-100 p-4"><input value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Tulis pesan..." maxLength={2000} className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#008be3]" /><button className="rounded-xl bg-[#008be3] px-4 text-white"><Send className="h-4 w-4" /></button></form>
@@ -279,7 +333,9 @@ export default function StudyRoomComponent() {
         ) : (
           <section className="grid gap-4 md:grid-cols-2">{loading ? <div className="text-sm text-white/70">Memuat room...</div> : rooms.length === 0 ? <div className="rounded-3xl bg-white p-8 text-center text-sm text-slate-500 md:col-span-2">Belum ada study room aktif.</div> : rooms.map((room) => <button key={room.id} onClick={() => openRoom(room)} disabled={busy} className="rounded-3xl bg-white p-5 text-left shadow-lg transition hover:-translate-y-1 hover:shadow-xl disabled:opacity-60"><div className="flex items-start justify-between gap-3"><div><h2 className="font-extrabold text-[#00172e]">{room.name}</h2><p className="mt-1 text-xs text-slate-500">{room.topic || "Belajar bersama"}</p></div><MessageSquare className="h-5 w-5 text-[#008be3]" /></div><p className="mt-5 flex items-center gap-1 text-xs font-semibold text-slate-400"><Users className="h-4 w-4" />{room.current_capacity}/{room.max_capacity} peserta</p></button>)}</section>
         )}
-         {showCreate && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><form onSubmit={createRoom} className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl"><div className="mb-5 flex items-center justify-between"><h2 className="font-extrabold text-[#00172e]">Buat Study Room</h2><button type="button" onClick={() => setShowCreate(false)}><X className="h-5 w-5 text-slate-400" /></button></div><div className="space-y-3"><input required maxLength={100} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Nama room" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none" /><input value={form.topic} onChange={(event) => setForm({ ...form, topic: event.target.value })} placeholder="Topik (opsional)" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none" /><input type="number" min={2} max={100} value={form.max_capacity} onChange={(event) => setForm({ ...form, max_capacity: Number(event.target.value) })} className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none" /></div><button disabled={busy} className="mt-5 w-full rounded-xl bg-[#008be3] py-2.5 text-sm font-bold text-white disabled:opacity-50">Buat Room</button></form></div>}
+          {showCreate && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><form onSubmit={createRoom} className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl"><div className="mb-5 flex items-center justify-between"><h2 className="font-extrabold text-[#00172e]">Buat Study Room</h2><button type="button" onClick={() => setShowCreate(false)}><X className="h-5 w-5 text-slate-400" /></button></div><div className="space-y-3"><input required maxLength={100} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Nama room" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none" /><input value={form.topic} onChange={(event) => setForm({ ...form, topic: event.target.value })} placeholder="Topik (opsional)" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none" /><input type="number" min={2} max={100} value={form.max_capacity} onChange={(event) => setForm({ ...form, max_capacity: Number(event.target.value) })} className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none" /><label className="flex items-center gap-2 text-sm font-semibold text-slate-600"><input type="checkbox" checked={form.is_public} onChange={(event) => setForm({ ...form, is_public: event.target.checked })} className="h-4 w-4 accent-[#008be3]" />Room publik</label></div><button disabled={busy} className="mt-5 w-full rounded-xl bg-[#008be3] py-2.5 text-sm font-bold text-white disabled:opacity-50">Buat Room</button></form></div>}
+          {joinRoomTarget && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><form onSubmit={(event) => { event.preventDefault(); openRoom(joinRoomTarget, joinCode.trim()); }} className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl"><div className="mb-5 flex items-center justify-between"><h2 className="font-extrabold text-[#00172e]">Gabung Room Privat</h2><button type="button" onClick={() => setJoinRoomTarget(null)}><X className="h-5 w-5 text-slate-400" /></button></div><p className="mb-3 text-sm text-slate-500">Masukkan kode untuk bergabung ke <strong>{joinRoomTarget.name}</strong>.</p><input required autoFocus value={joinCode} onChange={(event) => setJoinCode(event.target.value)} placeholder="Kode join" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none" /><button disabled={busy} className="mt-5 w-full rounded-xl bg-[#008be3] py-2.5 text-sm font-bold text-white disabled:opacity-50">Gabung</button></form></div>}
+          {showInvite && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><form onSubmit={inviteParticipant} className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl"><div className="mb-5 flex items-center justify-between"><h2 className="font-extrabold text-[#00172e]">Undang Participant</h2><button type="button" onClick={() => setShowInvite(false)}><X className="h-5 w-5 text-slate-400" /></button></div><input required value={inviteUserId} onChange={(event) => setInviteUserId(event.target.value)} placeholder="UUID user" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none" /><button disabled={busy} className="mt-5 w-full rounded-xl bg-[#008be3] py-2.5 text-sm font-bold text-white disabled:opacity-50">Undang</button></form></div>}
          {deleteMessageId && <div className="fixed inset-0 z-50 flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDeleteMessageId(null)} /><div className="relative z-10 flex w-full max-w-sm flex-col gap-4 rounded-3xl bg-white p-6 text-center shadow-2xl"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-2xl font-bold text-red-500">!</div><div><h3 className="text-base font-extrabold text-[#00172e]">Konfirmasi Hapus</h3><p className="mt-2 font-medium text-slate-400">Apakah kamu yakin ingin menghapus pesan ini? Tindakan ini tidak dapat dibatalkan.</p></div><div className="mt-4 flex items-center justify-center gap-3.5"><button type="button" onClick={() => setDeleteMessageId(null)} className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 font-bold text-slate-500 transition-all hover:bg-slate-50">Batal</button><button type="button" onClick={() => deleteMessageId && deleteMessage(deleteMessageId)} disabled={messageActionId === deleteMessageId} className="flex-1 rounded-xl bg-red-500 px-4 py-2.5 font-bold text-white shadow-md transition-all hover:bg-red-600 disabled:opacity-60">Hapus</button></div></div></div>}
       </main>
     </DashboardLayout>
