@@ -56,6 +56,7 @@ export default function PelajarLeaderboardPage() {
   const [myRank, setMyRank] = useState<{ rank: number | string; total_xp: number; name?: string; avatarUrl?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [leaderboardError, setLeaderboardError] = useState("");
+  const [weeklyTotal, setWeeklyTotal] = useState(0);
 
   const [page, setPage] = useState(1);
   const perPage = 10;
@@ -128,7 +129,11 @@ export default function PelajarLeaderboardPage() {
           };
         });
 
-        setLeaderboard(withServerRankChanges(formattedList));
+         setLeaderboard(withServerRankChanges(formattedList));
+         if (period === "minggu") {
+           const total = Number(lbRes?.meta?.total ?? lbRes?.data?.total ?? lbRes?.data?.pagination?.total ?? formattedList.length);
+           setWeeklyTotal(Number.isFinite(total) ? total : formattedList.length);
+         }
 
         if (meRes?.data) {
           const userRank = meRes.data.user_rank;
@@ -327,8 +332,7 @@ export default function PelajarLeaderboardPage() {
               </div>
             ))}
 
-            {/* Pagination 5 Halaman */}
-            <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-t border-slate-100">
+             {period === "minggu" && weeklyTotal < perPage ? null : <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-t border-slate-100">
               <span className="text-xs text-slate-500 font-medium">
                 Halaman {page} dari {maxPages} (Maks. 50 Penyelam)
               </span>
@@ -359,10 +363,10 @@ export default function PelajarLeaderboardPage() {
                   className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
                   <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
+                 </button>
+               </div>
+             </div>}
+           </div>
         )}
       </main>
     </DashboardLayout>

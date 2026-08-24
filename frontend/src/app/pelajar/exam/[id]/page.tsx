@@ -20,6 +20,7 @@ export default function PelajarExamPage() {
   const { id } = useParams<{ id: string }>();
 
   const [exam, setExam] = useState<Exam | null>(null);
+  const [examMode, setExamMode] = useState<"locked" | "quiz">("locked");
   const [history, setHistory] = useState<ExamAttemptHistory[]>([]);
   const [phase, setPhase] = useState<Phase>("info");
   const [loading, setLoading] = useState(true);
@@ -43,10 +44,17 @@ export default function PelajarExamPage() {
           courseService.getExamById(id),
           courseService.getExamAttempts(id).catch(() => ({ data: [] })),
         ]);
-        const examData = examRes.data?.exam ?? examRes.data ?? null;
-        setExam(examData);
+         const examData = examRes.data?.exam ?? examRes.data ?? null;
+         setExam(examData);
+         if (examData?.lesson_id) {
+           const lessonResponse = await courseService.getLessonById(examData.lesson_id).catch(() => null);
+           const lesson = lessonResponse?.data?.lesson ?? lessonResponse?.data ?? lessonResponse;
+           setExamMode(lesson?.type === "quiz" ? "quiz" : "locked");
+         } else {
+           setExamMode("locked");
+         }
 
-        const raw = histRes.data ?? histRes ?? [];
+         const raw = histRes.data ?? histRes ?? [];
         const list: ExamAttemptHistory[] = Array.isArray(raw) ? raw : [];
         setHistory(list);
       } catch (err: unknown) {
@@ -85,7 +93,10 @@ export default function PelajarExamPage() {
       setAnswers({});
        setTimeLeft(Math.max(0, Math.floor((new Date(data.expires_at).getTime() - Date.now()) / 1000)) || data.exam.time_limit_sec);
        setPhase("doing");
-    } catch (e: unknown) {
+       if (examMode === "locked") {
+         try { await document.documentElement.requestFullscreen?.(); } catch { setError("Mode ujian terkunci membutuhkan fullscreen."); }
+       }
+     } catch (e: unknown) {
       const err = e as { response?: { data?: { error?: { code?: string } } } };
       if (err?.response?.data?.error?.code === "MAX_ATTEMPTS_EXCEEDED") {
         setPhase("maxed");
@@ -116,7 +127,10 @@ export default function PelajarExamPage() {
         selected_key,
       }));
       const res = await courseService.submitExamAttempt(id, attempt.attempt_id, formatted);
-      setResult(res.data);
+       setResult(res.data);
+       if (examMode === "locked" && document.fullscreenElement) {
+         await document.exitFullscreen().catch(() => undefined);
+       }
 
       // Auto-complete lesson jika ujian terhubung dengan lesson atau kuis lulus
       if (exam?.lesson_id && res.data?.passed) {
@@ -207,7 +221,11 @@ export default function PelajarExamPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+             <div className={`rounded-2xl p-4 text-sm ${examMode === "locked" ? "bg-amber-50 text-amber-800" : "bg-blue-50 text-blue-800"}`}>
+               {examMode === "locked" ? "Mode ujian terkunci: layar akan dikunci selama pengerjaan." : "Mode quiz: kamu dapat mengerjakan tanpa fullscreen."}
+             </div>
+
+             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
                 { label: "Batas Waktu", value: `${Math.ceil(exam.time_limit_sec / 60)} menit`, icon: <Clock className="h-4 w-4 text-[#008be3]" /> },
                 { label: "Nilai Lulus", value: `${exam.passing_score}%`, icon: <Trophy className="h-4 w-4 text-amber-500" /> },
