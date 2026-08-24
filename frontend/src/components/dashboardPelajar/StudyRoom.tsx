@@ -54,7 +54,6 @@ export default function StudyRoomComponent() {
     }
     setRealtimeStatus("connecting");
     const channel = echo.private(`study-room.${selected.id}`);
-    const pusherChannel = channel as any;
     channel.listen(".message", (event: any) => {
       const incoming = event.message ?? event;
       if (incoming?.id) setMessages((current) => current.some((item) => item.id === incoming.id) ? current : [...current, incoming]);
@@ -65,12 +64,8 @@ export default function StudyRoomComponent() {
       setRealtimeStatus(states.current === "connected" ? "connected" : "connecting");
     };
     const handleConnectionError = () => setRealtimeStatus("fallback");
-    const handleSubscriptionSuccess = () => setRealtimeStatus("connected");
-    const handleSubscriptionError = () => setRealtimeStatus("fallback");
     connection?.bind("state_change", handleConnectionState);
     connection?.bind("error", handleConnectionError);
-    pusherChannel.bind("pusher:subscription_succeeded", handleSubscriptionSuccess);
-    pusherChannel.bind("pusher:subscription_error", handleSubscriptionError);
     channel.listen(".room_closed", () => {
       setError("Study room telah ditutup oleh host.");
       setSelected(null);
@@ -78,10 +73,9 @@ export default function StudyRoomComponent() {
     });
     return () => {
       channel.stopListening(".message");
+      channel.stopListening(".room_closed");
       connection?.unbind("state_change", handleConnectionState);
       connection?.unbind("error", handleConnectionError);
-      pusherChannel.unbind("pusher:subscription_succeeded", handleSubscriptionSuccess);
-      pusherChannel.unbind("pusher:subscription_error", handleSubscriptionError);
       echo.leave(`study-room.${selected.id}`);
     };
   }, [selected]);
