@@ -20,7 +20,7 @@ export function getEcho() {
     wssPort: Number(process.env.NEXT_PUBLIC_REVERB_PORT || 443),
     forceTLS: process.env.NEXT_PUBLIC_REVERB_SCHEME !== "http",
     enabledTransports: ["ws", "wss"],
-    authEndpoint: `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/api\/v1\/?$/, "")}/broadcasting/auth`,
+    authEndpoint: `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/api\/v1\/?$/, "")}/api/broadcasting/auth`,
     auth: {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
