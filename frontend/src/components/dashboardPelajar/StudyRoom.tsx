@@ -830,9 +830,9 @@ export default function StudyRoomComponent() {
                   Belum ada pesan.
                 </p>
               ) : (
-                <div className="flex flex-col gap-3">
+                 <div className="flex min-w-0 w-full flex-col gap-3">
                    {messages.map((item) => (
-                     <div key={item.id} className="flex min-w-0 items-start gap-2.5">
+                     <div key={item.id} className="flex min-w-0 w-full items-start gap-2.5">
                       <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-[#008be3] text-center text-xs font-bold leading-9 text-white">
                         {item.user?.avatar_url ? (
                           <img
@@ -844,7 +844,7 @@ export default function StudyRoomComponent() {
                           (item.user?.username || "P").charAt(0).toUpperCase()
                         )}
                       </div>
-                       <div className="min-w-0 max-w-[85%] overflow-hidden rounded-2xl bg-white p-3 shadow-sm">
+                       <div className="min-w-0 w-fit max-w-[calc(100%-3rem)] overflow-hidden rounded-2xl bg-white p-3 shadow-sm">
                         {editingMessageId === item.id ? (
                           <form
                             onSubmit={(event) => updateMessage(event, item.id)}
@@ -908,7 +908,10 @@ export default function StudyRoomComponent() {
                                 </div>
                               )}
                             </div>
-                             <p className="break-words text-sm text-slate-700 [overflow-wrap:anywhere]">
+                             <p
+                               className="max-w-full break-words text-sm text-slate-700"
+                               style={{ overflowWrap: "anywhere", wordBreak: "break-word" }}
+                             >
                               {item.content}
                             </p>
                             <p className="mt-1 text-[10px] text-slate-400">
