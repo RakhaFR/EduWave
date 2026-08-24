@@ -127,6 +127,7 @@ export default function StudyRoomComponent() {
     if (typeof window === "undefined") return;
     if (unreadHydratedRef.current) {
       localStorage.setItem(unreadStorageKey, JSON.stringify(unreadByRoom));
+      window.dispatchEvent(new Event("study-room-unread-changed"));
     }
   }, [unreadByRoom, unreadStorageKey]);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -48,6 +48,33 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
   const [search, setSearch] = useState("");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const { user } = useCurrentUser();
+  const [studyForumUnread, setStudyForumUnread] = useState(0);
+
+  useEffect(() => {
+    const storageKey = user?.id
+      ? `study_room_unread_${user.id}`
+      : "study_room_unread";
+    const readUnread = () => {
+      try {
+        const unread = JSON.parse(localStorage.getItem(storageKey) || "{}") as Record<string, unknown>;
+        setStudyForumUnread(
+          Object.values(unread).reduce<number>(
+            (total, count) => total + (typeof count === "number" ? count : 0),
+            0,
+          ),
+        );
+      } catch {
+        setStudyForumUnread(0);
+      }
+    };
+    readUnread();
+    window.addEventListener("storage", readUnread);
+    window.addEventListener("study-room-unread-changed", readUnread);
+    return () => {
+      window.removeEventListener("storage", readUnread);
+      window.removeEventListener("study-room-unread-changed", readUnread);
+    };
+  }, [user?.id]);
 
   const displayName = user?.full_name || user?.username || "Pelajar";
   const initial = displayName.charAt(0).toUpperCase();
@@ -108,7 +135,14 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
                       ? "bg-[#008be3]/10 text-[#008be3] border-l-4 border-[#008be3]"
                       : "text-slate-500 hover:bg-slate-50 hover:text-[#008be3]"}`}>
                   <span className="shrink-0">{item.icon}</span>
-                  <span>{item.label}</span>
+                   <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                     <span>{item.label}</span>
+                     {item.href === "/pelajar/study-room" && studyForumUnread > 0 && (
+                       <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-extrabold text-white">
+                         {studyForumUnread > 99 ? "99+" : studyForumUnread}
+                       </span>
+                     )}
+                   </span>
                 </Link>
               );
             })}
@@ -227,7 +261,15 @@ export default function DashboardLayout({ children, searchPlaceholder = "Search.
                       ${active
                         ? "bg-[#008be3]/10 text-[#008be3] border-l-4 border-[#008be3]"
                         : "text-slate-500 hover:bg-slate-50 hover:text-[#008be3]"}`}>
-                    {item.icon}{item.label}
+                     {item.icon}
+                     <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                       <span>{item.label}</span>
+                       {item.href === "/pelajar/study-room" && studyForumUnread > 0 && (
+                         <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-extrabold text-white">
+                           {studyForumUnread > 99 ? "99+" : studyForumUnread}
+                         </span>
+                       )}
+                     </span>
                   </Link>
                 );
               })}
