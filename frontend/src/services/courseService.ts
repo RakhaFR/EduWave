@@ -207,6 +207,48 @@ export const courseService = {
     return response.data;
   },
 
+  async getStudyRooms(params?: { status?: "active" | "closed"; is_public?: boolean }) {
+    const query = new URLSearchParams({ status: params?.status ?? "active" });
+    if (params?.is_public !== undefined) query.set("is_public", String(params.is_public));
+    const response = await api.get(`/study-rooms?${query.toString()}`);
+    return response.data;
+  },
+
+  async createStudyRoom(payload: { name: string; topic?: string; max_capacity?: number; is_public?: boolean }) {
+    const response = await api.post("/study-rooms", payload);
+    return response.data;
+  },
+
+  async getStudyRoom(roomId: string) {
+    const response = await api.get(`/study-rooms/${roomId}`);
+    return response.data;
+  },
+
+  async joinStudyRoom(roomId: string) {
+    const response = await api.post(`/study-rooms/${roomId}/join`);
+    return response.data;
+  },
+
+  async leaveStudyRoom(roomId: string) {
+    const response = await api.delete(`/study-rooms/${roomId}/leave`);
+    return response.data;
+  },
+
+  async closeStudyRoom(roomId: string) {
+    const response = await api.delete(`/study-rooms/${roomId}`);
+    return response.data;
+  },
+
+  async getStudyRoomMessages(roomId: string, params?: { limit?: number; before?: string }) {
+    const response = await api.get(`/study-rooms/${roomId}/messages`, { params });
+    return response.data;
+  },
+
+  async sendStudyRoomMessage(roomId: string, content: string, type = "text") {
+    const response = await api.post(`/study-rooms/${roomId}/messages`, { content, type });
+    return response.data;
+  },
+
   async getLeaderboard(perPage: number = 50, page: number = 1) {
     const response = await api.get("/leaderboard", { params: { page, per_page: Math.min(perPage, 100) } });
     return response.data;
