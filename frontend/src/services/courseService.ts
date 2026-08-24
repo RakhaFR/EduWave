@@ -249,6 +249,16 @@ export const courseService = {
     return response.data;
   },
 
+  async updateStudyRoomMessage(roomId: string, messageId: string, content: string, type = "text") {
+    const response = await api.put(`/study-rooms/${roomId}/messages/${messageId}`, { content, type });
+    return response.data;
+  },
+
+  async deleteStudyRoomMessage(roomId: string, messageId: string) {
+    const response = await api.delete(`/study-rooms/${roomId}/messages/${messageId}`);
+    return response.data;
+  },
+
   async getLeaderboard(perPage: number = 50, page: number = 1) {
     const response = await api.get("/leaderboard", { params: { page, per_page: Math.min(perPage, 100) } });
     return response.data;
