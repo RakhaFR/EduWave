@@ -58,11 +58,34 @@ class LeaderboardTest extends TestCase
         $user = User::factory()->create(['xp' => 250]);
 
         $service = app(LeaderboardService::class);
-        $service->updateScore($user);
+        $service->updateScore($user, 250);
 
         $weekKey = 'leaderboard:weekly:'.now()->format('o-\WW');
         $score = Redis::zscore($weekKey, $user->id);
         $this->assertEquals('250', $score);
+    }
+
+    public function test_global_sync_does_not_put_total_xp_in_weekly_leaderboard(): void
+    {
+        $user = User::factory()->create(['xp' => 1000]);
+        $service = app(LeaderboardService::class);
+
+        $service->updateScore($user);
+
+        $weekKey = 'leaderboard:weekly:'.now()->format('o-\\WW');
+        $this->assertFalse(Redis::zscore($weekKey, $user->id));
+    }
+
+    public function test_awarded_xp_increments_weekly_score_without_using_total_xp(): void
+    {
+        $user = User::factory()->create(['xp' => 1000]);
+        $service = app(LeaderboardService::class);
+
+        $service->updateScore($user);
+        $service->updateScore($user, 75);
+
+        $weekKey = 'leaderboard:weekly:'.now()->format('o-\\WW');
+        $this->assertEquals('75', Redis::zscore($weekKey, $user->id));
     }
 
     public function test_leaderboard_service_returns_correct_rank_using_zrevrank(): void
@@ -76,9 +99,9 @@ class LeaderboardTest extends TestCase
         $user4 = User::factory()->create(['xp' => 400]);
         $user5 = User::factory()->create(['xp' => 500]);
 
-        $service->updateScore($user1);
-        $service->updateScore($user2);
-        $service->updateScore($user3);
+        $service->updateScore($user1, 100);
+        $service->updateScore($user2, 200);
+        $service->updateScore($user3, 300);
         $service->updateScore($user4);
         $service->updateScore($user5);
 
@@ -292,9 +315,9 @@ class LeaderboardTest extends TestCase
         $user2 = User::factory()->create(['xp' => 200]);
         $user3 = User::factory()->create(['xp' => 300]);
 
-        $service->updateScore($user1);
-        $service->updateScore($user2);
-        $service->updateScore($user3);
+        $service->updateScore($user1, 100);
+        $service->updateScore($user2, 200);
+        $service->updateScore($user3, 300);
 
         $response = $this->getJson('/api/v1/leaderboard/weekly');
 
@@ -304,6 +327,7 @@ class LeaderboardTest extends TestCase
 
         $rankings = $response->json('data.rankings');
         $this->assertEquals(300, $rankings[0]['xp']);
+        $this->assertEquals(300, $rankings[0]['weekly_xp']);
     }
 
     public function test_leaderboard_me_returns_user_rank_and_neighbors(): void

@@ -111,7 +111,7 @@ class LeaderboardController extends ApiController
      *
      * @param  array  $rankings  [{user_id, score, rank}, ...]
      * @param  string  $scope  ('global' | 'weekly')
-     * @return array [{rank, user_id, xp, rank_change, user: {...}}, ...]
+     * @return array [{rank, user_id, xp, weekly_xp, rank_change, user: {...}}, ...]
      */
     private function enrichWithUserData(array $rankings, string $scope = 'global'): array
     {
@@ -129,7 +129,7 @@ class LeaderboardController extends ApiController
 
         $rankChanges = $this->leaderboardService->getRankChanges($scope, $rankings);
 
-        return collect($rankings)->map(function ($entry) use ($users, $rankChanges) {
+        return collect($rankings)->map(function ($entry) use ($users, $rankChanges, $scope) {
             $user = $users->get($entry['user_id']);
 
             if (! $user) {
@@ -140,6 +140,7 @@ class LeaderboardController extends ApiController
                 'rank' => $entry['rank'],
                 'user_id' => $user->id,
                 'xp' => (int) $entry['score'],
+                'weekly_xp' => $scope === 'weekly' ? (int) $entry['score'] : null,
                 'rank_change' => (int) ($rankChanges[$user->id] ?? 0),
                 'user' => [
                     'id' => $user->id,

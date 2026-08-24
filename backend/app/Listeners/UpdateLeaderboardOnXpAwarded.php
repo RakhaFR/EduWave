@@ -23,6 +23,6 @@ class UpdateLeaderboardOnXpAwarded implements ShouldQueue
      */
     public function handle(XpAwarded $event): void
     {
-        $this->leaderboardService->updateScore($event->user);
+        $this->leaderboardService->updateScore($event->user, $event->xpAmount);
     }
 }

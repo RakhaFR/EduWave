@@ -17,9 +17,13 @@ class LeaderboardService
     private const PREV_RANKS_WEEKLY_PREFIX = 'leaderboard:weekly:prev_ranks:';
 
     /**
-     * Update user's score in both global and weekly leaderboards.
+     * Update the user's all-time score and current-week score.
+     *
+     * When an XP amount is supplied, it is treated as a weekly increment.
+     * Without it, only the global score is synchronized. This prevents
+     * historical XP from being counted in the current week's leaderboard.
      */
-    public function updateScore(User $user): void
+    public function updateScore(User $user, ?int $weeklyXp = null): void
     {
         try {
             // Reload user to ensure we have the latest XP value
@@ -39,12 +43,17 @@ class LeaderboardService
             // Update global leaderboard
             Redis::zadd(self::GLOBAL_KEY, $score, $userId);
 
-            // Update weekly leaderboard
-            Redis::zadd($weeklyKey, $score, $userId);
+            // Awarded XP is incremental for the weekly leaderboard. A null
+            // amount is reserved for initial synchronization/bootstrap data.
+            if ($weeklyXp !== null && $weeklyXp > 0) {
+                Redis::zincrby($weeklyKey, $weeklyXp, $userId);
+            }
 
             // Ensure brand new users get their initial rank recorded as prev_rank (rank_change = 0)
             $this->ensurePrevRankExists(self::GLOBAL_KEY, self::PREV_RANKS_GLOBAL_KEY, $userId);
-            $this->ensurePrevRankExists($weeklyKey, $prevWeeklyRanksKey, $userId);
+            if ($weeklyXp !== null && $weeklyXp > 0) {
+                $this->ensurePrevRankExists($weeklyKey, $prevWeeklyRanksKey, $userId);
+            }
 
             // Set expiry on weekly keys (8 days to cover week transition overlap)
             Redis::expire($weeklyKey, 60 * 60 * 24 * 8);
