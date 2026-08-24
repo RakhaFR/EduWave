@@ -1,12 +1,23 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { Users, Plus, MessageSquare, LogOut, X, Send } from "lucide-react";
+import { Users, Plus, MessageSquare, LogOut, X, Send, ArrowLeft } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { courseService } from "@/services/courseService";
 
 type Room = { id: string; name: string; topic?: string; max_capacity: number; current_capacity: number; is_public: boolean; status: string; host?: { username?: string; avatar_url?: string | null } };
 type Message = { id: string; content: string; sent_at: string; user?: { username?: string; avatar_url?: string | null } };
+
+function formatMessageTime(value?: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
 
 export default function StudyRoomComponent() {
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -95,8 +106,8 @@ export default function StudyRoomComponent() {
         {error && <p className="rounded-xl bg-red-50 p-3 text-xs text-red-600">{error}</p>}
         {selected ? (
           <section className="overflow-hidden rounded-3xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-100 p-4"><div><h2 className="font-extrabold text-[#00172e]">{selected.name}</h2><p className="text-xs text-slate-400">{selected.topic || "Study room"} · {selected.current_capacity}/{selected.max_capacity} peserta</p></div><button onClick={leaveRoom} disabled={busy} className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-2 text-xs font-bold text-red-500"><LogOut className="h-3.5 w-3.5" />Keluar</button></div>
-            <div className="flex min-h-80 flex-col gap-3 bg-slate-50 p-4">{messages.length === 0 ? <p className="m-auto text-sm text-slate-400">Belum ada pesan.</p> : messages.map((item) => <div key={item.id} className="flex items-start gap-2.5"><div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-[#008be3] text-center text-xs font-bold leading-9 text-white">{item.user?.avatar_url ? <img src={item.user.avatar_url} alt={item.user.username || "Peserta"} className="h-full w-full object-cover" /> : (item.user?.username || "P").charAt(0).toUpperCase()}</div><div className="max-w-[85%] rounded-2xl bg-white p-3 shadow-sm"><p className="text-[10px] font-bold text-[#008be3]">{item.user?.username || "Peserta"}</p><p className="text-sm text-slate-700">{item.content}</p></div></div>)}</div>
+            <div className="flex items-center justify-between border-b border-slate-100 p-4"><div className="flex min-w-0 items-center gap-3"><button onClick={() => setSelected(null)} className="rounded-xl p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-[#008be3]" aria-label="Kembali ke daftar study room"><ArrowLeft className="h-5 w-5" /></button><div><h2 className="font-extrabold text-[#00172e]">{selected.name}</h2><p className="text-xs text-slate-400">{selected.topic || "Study room"} · {selected.current_capacity}/{selected.max_capacity} peserta</p></div></div><button onClick={leaveRoom} disabled={busy} className="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-2 text-xs font-bold text-red-500"><LogOut className="h-3.5 w-3.5" />Keluar</button></div>
+            <div className="flex min-h-80 flex-col gap-3 bg-slate-50 p-4">{messages.length === 0 ? <p className="m-auto text-sm text-slate-400">Belum ada pesan.</p> : messages.map((item) => <div key={item.id} className="flex items-start gap-2.5"><div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-[#008be3] text-center text-xs font-bold leading-9 text-white">{item.user?.avatar_url ? <img src={item.user.avatar_url} alt={item.user.username || "Peserta"} className="h-full w-full object-cover" /> : (item.user?.username || "P").charAt(0).toUpperCase()}</div><div className="max-w-[85%] rounded-2xl bg-white p-3 shadow-sm"><p className="text-[10px] font-bold text-[#008be3]">{item.user?.username || "Peserta"}</p><p className="text-sm text-slate-700">{item.content}</p><p className="mt-1 text-[10px] text-slate-400">{formatMessageTime(item.sent_at)}</p></div></div>)}</div>
             <form onSubmit={sendMessage} className="flex gap-2 border-t border-slate-100 p-4"><input value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Tulis pesan..." maxLength={2000} className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#008be3]" /><button className="rounded-xl bg-[#008be3] px-4 text-white"><Send className="h-4 w-4" /></button></form>
           </section>
         ) : (
