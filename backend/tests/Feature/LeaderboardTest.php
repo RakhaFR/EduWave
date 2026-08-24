@@ -88,6 +88,20 @@ class LeaderboardTest extends TestCase
         $this->assertEquals('75', Redis::zscore($weekKey, $user->id));
     }
 
+    public function test_weekly_score_cannot_exceed_global_score(): void
+    {
+        $user = User::factory()->create(['xp' => 11000]);
+        $weekKey = 'leaderboard:weekly:'.now()->format('o-\\WW');
+
+        Redis::zadd('leaderboard:global', 11000, $user->id);
+        Redis::zadd($weekKey, 22000, $user->id);
+
+        $rankings = app(LeaderboardService::class)->getTopN('weekly');
+
+        $this->assertEquals(11000.0, $rankings[0]['score']);
+        $this->assertEquals('11000', Redis::zscore($weekKey, $user->id));
+    }
+
     public function test_leaderboard_service_returns_correct_rank_using_zrevrank(): void
     {
         $service = app(LeaderboardService::class);

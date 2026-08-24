@@ -49,6 +49,8 @@ class LeaderboardService
                 Redis::zincrby($weeklyKey, $weeklyXp, $userId);
             }
 
+            $this->capWeeklyScoreAtGlobalScore($weeklyKey, $userId, $score);
+
             // Ensure brand new users get their initial rank recorded as prev_rank (rank_change = 0)
             $this->ensurePrevRankExists(self::GLOBAL_KEY, self::PREV_RANKS_GLOBAL_KEY, $userId);
             if ($weeklyXp !== null && $weeklyXp > 0) {
@@ -76,6 +78,7 @@ class LeaderboardService
      */
     public function getRank(User $user, string $scope = 'global'): ?int
     {
+        $this->normalizeWeeklyScores($scope);
         $key = $this->getKeyForScope($scope);
         $rank = Redis::zrevrank($key, $user->id);
 
@@ -89,6 +92,7 @@ class LeaderboardService
      */
     public function getTopN(string $scope = 'global', int $limit = 50, int $offset = 0): array
     {
+        $this->normalizeWeeklyScores($scope);
         $key = $this->getKeyForScope($scope);
         $end = $offset + $limit - 1;
 
@@ -109,6 +113,7 @@ class LeaderboardService
         int $neighborsAbove = 3,
         int $neighborsBelow = 3
     ): array {
+        $this->normalizeWeeklyScores($scope);
         $key = $this->getKeyForScope($scope);
         $rank = Redis::zrevrank($key, $user->id);
 
@@ -244,6 +249,47 @@ class LeaderboardService
             if ($currentRank !== null) {
                 Redis::hset($prevRanksKey, $userId, (int) $currentRank + 1);
             }
+        }
+    }
+
+    /**
+     * Weekly XP is a subset of all-time XP and must never exceed it.
+     */
+    private function capWeeklyScoreAtGlobalScore(string $weeklyKey, string $userId, float $globalScore): void
+    {
+        $weeklyScore = Redis::zscore($weeklyKey, $userId);
+
+        if ($weeklyScore !== null && (float) $weeklyScore > $globalScore) {
+            Redis::zadd($weeklyKey, $globalScore, $userId);
+        }
+    }
+
+    /**
+     * Repair stale weekly Redis entries created before weekly XP used deltas.
+     */
+    private function normalizeWeeklyScores(string $scope): void
+    {
+        if ($scope !== 'weekly') {
+            return;
+        }
+
+        try {
+            $weeklyKey = $this->getKeyForScope('weekly');
+            $entries = Redis::zrange($weeklyKey, 0, -1, ['WITHSCORES' => true]);
+
+            foreach ($entries as $userId => $weeklyScore) {
+                $globalScore = Redis::zscore(self::GLOBAL_KEY, $userId);
+
+                if ($globalScore === null) {
+                    Redis::zrem($weeklyKey, $userId);
+
+                    continue;
+                }
+
+                $this->capWeeklyScoreAtGlobalScore($weeklyKey, $userId, (float) $globalScore);
+            }
+        } catch (Throwable $e) {
+            // Keep leaderboard reads available if Redis becomes unavailable.
         }
     }
 

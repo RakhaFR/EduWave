@@ -1816,6 +1816,10 @@ Get authenticated user's rank and neighboring users (context leaderboard). Retur
 
 > **Implementation Note**: Leaderboard rankings are calculated using **Redis Sorted Sets** (`ZREVRANK`, `ZREVRANGE`) for O(log N) performance. XP awards automatically update both global and weekly leaderboards via the `XpAwarded` event and `UpdateLeaderboardOnXpAwarded` listener.
 
+> **Weekly XP Consistency**: Weekly XP represents a subset of all-time XP and
+> is capped at the user's global XP. Weekly leaderboard reads automatically
+> repair stale Redis entries that exceed the corresponding global score.
+
 ---
 
 ### 9. Study Room Endpoints (`/api/v1/study-rooms`)
