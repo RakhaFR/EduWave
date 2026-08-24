@@ -8,7 +8,7 @@ import { getEcho } from "@/lib/echo";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 type Room = { id: string; name: string; topic?: string; max_capacity: number; current_capacity: number; is_public: boolean; status: string; host?: { username?: string; avatar_url?: string | null } };
-type Message = { id: string; content: string; sent_at: string; type?: string; user_id?: string; sender_id?: string; user?: { id?: string; username?: string; avatar_url?: string | null } };
+type Message = { id: string; content: string; sent_at: string; type?: string; user_id?: string; sender_id?: string; user?: { id?: string; user_id?: string; username?: string; avatar_url?: string | null } };
 
 function formatMessageTime(value?: string) {
   if (!value) return "";
@@ -188,14 +188,11 @@ export default function StudyRoomComponent() {
 
   const isOwnMessage = (item: Message) => {
     if (!currentUser) return false;
-    const currentId = String(currentUser.id);
-    const messageUserId = item.user?.id ?? item.user_id ?? item.sender_id;
-    if (messageUserId !== undefined && String(messageUserId) === currentId) return true;
-    return Boolean(
-      item.user?.username &&
-      currentUser.username &&
-      item.user.username.toLowerCase() === currentUser.username.toLowerCase(),
-    );
+    const normalize = (value: unknown) => String(value ?? "").trim().toLowerCase();
+    const currentId = normalize(currentUser.id);
+    const messageUserId = item.user?.id ?? item.user?.user_id ?? item.user_id ?? item.sender_id;
+    if (messageUserId !== undefined && normalize(messageUserId) === currentId) return true;
+    return normalize(item.user?.username) !== "" && normalize(item.user?.username) === normalize(currentUser.username);
   };
 
   const canEditMessage = (item: Message) => {
