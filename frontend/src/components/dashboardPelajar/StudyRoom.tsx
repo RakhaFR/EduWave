@@ -85,7 +85,7 @@ export default function StudyRoomComponent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const shouldScrollMessagesRef = useRef(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [showJoinRooms, setShowJoinRooms] = useState(false);
+  const [showJoinByCode, setShowJoinByCode] = useState(false);
   const [form, setForm] = useState({
     name: "",
     topic: "",
@@ -272,7 +272,7 @@ export default function StudyRoomComponent() {
     };
   }, [selected, currentUser?.id]);
 
-  const openRoom = async (room: Room, privateCode = "") => {
+  const openRoom = async (room: Room, privateCode = "", alreadyJoined = false) => {
     const storedCode =
       typeof window !== "undefined"
         ? localStorage.getItem(`study_room_code_${room.id}`) || ""
@@ -281,10 +281,12 @@ export default function StudyRoomComponent() {
     setError("");
     try {
       try {
-        const code = privateCode || room.join_code || storedCode || undefined;
-        await courseService.joinStudyRoom(room.id, code);
-        if (!room.is_public && code)
-          localStorage.setItem(`study_room_code_${room.id}`, code);
+        if (!alreadyJoined) {
+          const code = privateCode || room.join_code || storedCode || undefined;
+          await courseService.joinStudyRoom(room.id, code);
+          if (!room.is_public && code)
+            localStorage.setItem(`study_room_code_${room.id}`, code);
+        }
       } catch (joinError: any) {
         const code = joinError?.response?.data?.error?.code;
         if (code === "ALREADY_JOINED") {
@@ -585,6 +587,57 @@ export default function StudyRoomComponent() {
     if (code) await navigator.clipboard.writeText(code);
   };
 
+  const joinRoomByCode = async (event: FormEvent) => {
+    event.preventDefault();
+    const code = joinCode.trim();
+    if (!code) return;
+    setBusy(true);
+    setError("");
+    try {
+      const response = await courseService.joinStudyRoomByCode(code);
+      const roomId = response.data?.room_id ?? response.room_id;
+      setShowJoinByCode(false);
+      setJoinCode("");
+      if (roomId) {
+        const room = rooms.find((item) => String(item.id) === String(roomId));
+        if (room) {
+          await openRoom(room, "", true);
+        } else {
+          await loadRooms();
+          const detail = await courseService.getStudyRoom(String(roomId));
+          const refreshedRoom = detail.data?.room ?? detail.room;
+          if (refreshedRoom) await openRoom(refreshedRoom, "", true);
+        }
+      }
+    } catch (err: any) {
+      const errorCode = err?.response?.data?.error?.code;
+      const roomId = err?.response?.data?.data?.room_id ?? err?.response?.data?.room_id;
+      if (errorCode === "ALREADY_JOINED" && roomId) {
+        try {
+          const detail = await courseService.getStudyRoom(String(roomId));
+          const room = detail.data?.room ?? detail.room;
+          if (room) {
+            setShowJoinByCode(false);
+            setJoinCode("");
+            await openRoom(room, "", true);
+            return;
+          }
+        } catch {
+          // Fall through to the standard error message when the room cannot be opened.
+        }
+      }
+      setError(
+        errorCode === "INVALID_JOIN_CODE"
+          ? "Kode join tidak valid."
+          : errorCode === "ALREADY_JOINED"
+            ? "Kamu sudah tergabung di room tersebut."
+            : err?.response?.data?.error?.message || "Gagal bergabung ke room private.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <DashboardLayout searchPlaceholder="Cari study room...">
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-5 px-4 py-4 md:px-8 md:py-6">
@@ -599,7 +652,7 @@ export default function StudyRoomComponent() {
           </div>
           <div className="flex flex-wrap justify-end gap-2">
             <button
-              onClick={() => setShowJoinRooms(true)}
+              onClick={() => setShowJoinByCode(true)}
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/70 bg-white/15 px-4 py-2.5 text-xs font-bold text-white hover:bg-white/25"
             >
               <Users className="h-4 w-4" />
@@ -935,62 +988,23 @@ export default function StudyRoomComponent() {
             )}
           </section>
         )}
-        {showJoinRooms && (
+        {showJoinByCode && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+            <form onSubmit={joinRoomByCode} className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
               <div className="mb-5 flex items-center justify-between">
                 <div>
                   <h2 className="font-extrabold text-[#00172e]">Join Room</h2>
                   <p className="mt-1 text-xs text-slate-400">
-                    Pilih study room yang ingin kamu ikuti.
+                    Masukkan kode untuk bergabung ke room private.
                   </p>
                 </div>
-                <button type="button" onClick={() => setShowJoinRooms(false)}>
+                <button type="button" onClick={() => { setShowJoinByCode(false); setJoinCode(""); }}>
                   <X className="h-5 w-5 text-slate-400" />
                 </button>
               </div>
-              <div className="max-h-80 space-y-2 overflow-y-auto">
-                {loading ? (
-                  <p className="py-6 text-center text-sm text-slate-400">
-                    Memuat room...
-                  </p>
-                ) : rooms.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-slate-400">
-                    Belum ada study room aktif.
-                  </p>
-                ) : (
-                  rooms.map((room) => (
-                    <button
-                      type="button"
-                      key={room.id}
-                      disabled={busy}
-                      onClick={() => {
-                        setShowJoinRooms(false);
-                        if (!room.is_public && !room.join_code && !getStoredRoomCode(room)) {
-                          setJoinRoomTarget(room);
-                          setJoinCode("");
-                          return;
-                        }
-                        openRoom(room);
-                      }}
-                      className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-100 p-3 text-left transition hover:border-blue-100 hover:bg-blue-50 disabled:opacity-50"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-extrabold text-[#00172e]">
-                          {room.name}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-400">
-                          {room.is_public ? "Publik" : "Privat"} · {room.current_capacity}/{room.max_capacity} peserta
-                        </p>
-                      </div>
-                      <span className="shrink-0 rounded-lg bg-[#008be3] px-3 py-2 text-xs font-bold text-white">
-                        Join
-                      </span>
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
+              <input required autoFocus value={joinCode} onChange={(event) => setJoinCode(event.target.value)} placeholder="Masukkan kode join" className="w-full rounded-xl border border-slate-200 px-3 py-3 text-center font-mono text-sm uppercase tracking-widest text-slate-900 outline-none focus:border-[#008be3]" />
+              <button disabled={busy} className="mt-5 w-full rounded-xl bg-[#008be3] py-2.5 text-sm font-bold text-white disabled:opacity-50">Join Room</button>
+            </form>
           </div>
         )}
         {showCreate && (

@@ -229,8 +229,13 @@ export const courseService = {
     return response.data;
   },
 
+  async joinStudyRoomByCode(code: string) {
+    const response = await api.post("/study-rooms/join-by-code", { code });
+    return response.data;
+  },
+
   async searchStudyRoomUsers(username: string) {
-    const response = await api.get("/admin/users", { params: { search: username, per_page: 10 } });
+    const response = await api.get("/users/invite-candidates", { params: { search: username, per_page: 10, page: 1 } });
     return response.data;
   },
 
