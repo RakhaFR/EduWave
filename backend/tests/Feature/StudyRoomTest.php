@@ -7,6 +7,7 @@ use App\Events\StudyRoomMessageDeleted;
 use App\Events\StudyRoomMessageSent;
 use App\Events\StudyRoomMessageUpdated;
 use App\Events\StudyRoomUserJoined;
+use App\Events\StudyRoomUserKicked;
 use App\Events\StudyRoomUserLeft;
 use App\Models\RoomMessage;
 use App\Models\StudyRoom;
@@ -120,6 +121,102 @@ class StudyRoomTest extends TestCase
             'room_id' => $room->id,
             'user_id' => $joiner->id,
         ]);
+    }
+
+    public function test_private_room_generates_join_code_and_requires_it(): void
+    {
+        $host = $this->student();
+        $joiner = $this->instructor();
+
+        $response = $this->actingAs($host)->postJson('/api/v1/study-rooms', [
+            'name' => 'Private Room',
+            'is_public' => false,
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.room.is_public', false);
+        $code = $response->json('data.room.join_code');
+        $this->assertNotEmpty($code);
+
+        $this->actingAs($joiner)
+            ->postJson('/api/v1/study-rooms/'.$response->json('data.room.id').'/join')
+            ->assertForbidden()
+            ->assertJsonPath('error.code', 'INVALID_JOIN_CODE');
+
+        $this->actingAs($joiner)
+            ->postJson('/api/v1/study-rooms/'.$response->json('data.room.id').'/join', ['code' => $code])
+            ->assertOk();
+    }
+
+    public function test_host_can_invite_user_to_room(): void
+    {
+        $host = $this->student();
+        $invitee = $this->instructor();
+        $room = StudyRoom::factory()->create([
+            'host_user_id' => $host->id,
+            'status' => 'active',
+            'is_public' => false,
+        ]);
+        $room->participants()->attach($host->id);
+
+        $response = $this->actingAs($host)->postJson("/api/v1/study-rooms/{$room->id}/invite", [
+            'user_id' => $invitee->id,
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.user.id', $invitee->id);
+        $this->assertDatabaseHas('study_room_participants', [
+            'room_id' => $room->id,
+            'user_id' => $invitee->id,
+        ]);
+    }
+
+    public function test_non_host_cannot_invite_user(): void
+    {
+        $host = $this->student();
+        $participant = $this->instructor();
+        $invitee = $this->student();
+        $room = StudyRoom::factory()->create(['host_user_id' => $host->id]);
+        $room->participants()->attach([$host->id, $participant->id]);
+
+        $this->actingAs($participant)
+            ->postJson("/api/v1/study-rooms/{$room->id}/invite", ['user_id' => $invitee->id])
+            ->assertForbidden()
+            ->assertJsonPath('error.code', 'FORBIDDEN');
+    }
+
+    public function test_host_can_kick_participant(): void
+    {
+        $host = $this->student();
+        $participant = $this->instructor();
+        $room = StudyRoom::factory()->create(['host_user_id' => $host->id]);
+        $room->participants()->attach([$host->id, $participant->id]);
+
+        $response = $this->actingAs($host)->deleteJson("/api/v1/study-rooms/{$room->id}/participants/{$participant->id}");
+
+        $response->assertOk()->assertJsonPath('data.user_id', $participant->id);
+        $this->assertDatabaseMissing('study_room_participants', [
+            'room_id' => $room->id,
+            'user_id' => $participant->id,
+        ]);
+    }
+
+    public function test_non_host_cannot_kick_and_host_cannot_kick_self(): void
+    {
+        $host = $this->student();
+        $participant = $this->instructor();
+        $room = StudyRoom::factory()->create(['host_user_id' => $host->id]);
+        $room->participants()->attach([$host->id, $participant->id]);
+
+        $this->actingAs($participant)
+            ->deleteJson("/api/v1/study-rooms/{$room->id}/participants/{$host->id}")
+            ->assertForbidden()
+            ->assertJsonPath('error.code', 'FORBIDDEN');
+
+        $this->actingAs($host)
+            ->deleteJson("/api/v1/study-rooms/{$room->id}/participants/{$host->id}")
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'CANNOT_KICK_HOST');
     }
 
     public function test_joining_same_room_twice_returns_409(): void
@@ -468,6 +565,7 @@ class StudyRoomTest extends TestCase
             StudyRoomMessageSent::class,
             StudyRoomUserJoined::class,
             StudyRoomUserLeft::class,
+            StudyRoomUserKicked::class,
         ]);
 
         $this->actingAs($participant)->postJson("/api/v1/study-rooms/{$room->id}/join")->assertOk();

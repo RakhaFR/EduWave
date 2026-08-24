@@ -117,6 +117,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::post('study-rooms', [StudyRoomController::class, 'store'])->name('study-rooms.store');
         Route::get('study-rooms/{room}', [StudyRoomController::class, 'show'])->name('study-rooms.show');
         Route::post('study-rooms/{room}/join', [StudyRoomController::class, 'join'])->name('study-rooms.join');
+        Route::post('study-rooms/{room}/invite', [StudyRoomController::class, 'invite'])->name('study-rooms.invite');
+        Route::delete('study-rooms/{room}/participants/{user}', [StudyRoomController::class, 'kick'])->name('study-rooms.participants.kick');
         Route::delete('study-rooms/{room}/leave', [StudyRoomController::class, 'leave'])->name('study-rooms.leave');
         Route::delete('study-rooms/{room}', [StudyRoomController::class, 'destroy'])->name('study-rooms.destroy');
         Route::get('study-rooms/{room}/messages', [RoomMessageController::class, 'index'])->name('study-rooms.messages.index');

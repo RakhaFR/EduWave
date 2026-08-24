@@ -22,7 +22,7 @@ class StudyRoomFactory extends Factory
             'topic' => fake()->optional()->sentence(),
             'host_user_id' => User::factory(),
             'max_capacity' => fake()->numberBetween(5, 50),
-            'is_public' => fake()->boolean(),
+            'is_public' => true,
             'status' => 'active',
         ];
     }

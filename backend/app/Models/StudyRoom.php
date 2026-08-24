@@ -23,6 +23,7 @@ class StudyRoom extends Model
         'host_user_id',
         'max_capacity',
         'is_public',
+        'join_code',
         'status',
     ];
 
@@ -31,6 +32,7 @@ class StudyRoom extends Model
         'host_user_id' => 'string',
         'max_capacity' => 'integer',
         'is_public' => 'boolean',
+        'join_code' => 'string',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

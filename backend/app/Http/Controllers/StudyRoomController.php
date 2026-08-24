@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Events\StudyRoomClosed;
 use App\Events\StudyRoomUserJoined;
+use App\Events\StudyRoomUserKicked;
 use App\Events\StudyRoomUserLeft;
 use App\Http\Requests\StudyRoom\StoreStudyRoomRequest;
 use App\Models\StudyRoom;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class StudyRoomController extends ApiController
 {
@@ -18,6 +21,7 @@ class StudyRoomController extends ApiController
      */
     public function index(Request $request): JsonResponse
     {
+        $user = $request->user();
         $query = StudyRoom::with(['host:id,username,avatar_url'])
             ->withCount('participants');
 
@@ -29,7 +33,20 @@ class StudyRoomController extends ApiController
 
         // Filter by is_public
         if ($request->has('is_public')) {
-            $query->where('is_public', (bool) $request->query('is_public'));
+            $isPublic = filter_var($request->query('is_public'), FILTER_VALIDATE_BOOLEAN);
+            $query->where('is_public', $isPublic);
+            if (! $isPublic) {
+                $query->where(function ($query) use ($user) {
+                    $query->where('host_user_id', $user->id)
+                        ->orWhereHas('participants', fn ($participants) => $participants->where('users.id', $user->id));
+                });
+            }
+        } else {
+            $query->where(function ($query) use ($user) {
+                $query->where('is_public', true)
+                    ->orWhere('host_user_id', $user->id)
+                    ->orWhereHas('participants', fn ($participants) => $participants->where('users.id', $user->id));
+            });
         }
 
         $rooms = $query->orderBy('created_at', 'desc')->get();
@@ -47,6 +64,7 @@ class StudyRoomController extends ApiController
                 'max_capacity' => $room->max_capacity,
                 'current_capacity' => $room->participants_count,
                 'is_public' => $room->is_public,
+                'join_code' => $room->host_user_id === $user->id ? $room->join_code : null,
                 'status' => $room->status,
                 'created_at' => $room->created_at,
             ]),
@@ -68,6 +86,7 @@ class StudyRoomController extends ApiController
             'host_user_id' => $user->id,
             'max_capacity' => $validated['max_capacity'] ?? 20,
             'is_public' => $validated['is_public'] ?? true,
+            'join_code' => ($validated['is_public'] ?? true) ? null : $this->generateJoinCode(),
             'status' => 'active',
         ]);
 
@@ -89,6 +108,7 @@ class StudyRoomController extends ApiController
                 'max_capacity' => $room->max_capacity,
                 'current_capacity' => 1,
                 'is_public' => $room->is_public,
+                'join_code' => $room->host_user_id === $user->id ? $room->join_code : null,
                 'status' => $room->status,
                 'created_at' => $room->created_at,
             ],
@@ -99,8 +119,13 @@ class StudyRoomController extends ApiController
      * Show a specific study room.
      * GET /api/v1/study-rooms/{room}
      */
-    public function show(StudyRoom $room): JsonResponse
+    public function show(Request $request, StudyRoom $room): JsonResponse
     {
+        $user = $request->user();
+        if (! $room->is_public && $room->host_user_id !== $user->id && ! $room->participants()->where('user_id', $user->id)->exists()) {
+            return $this->error('PRIVATE_ROOM_ACCESS_REQUIRED', 'Anda harus menjadi peserta atau mendapatkan undangan untuk melihat ruang privat ini.', 403);
+        }
+
         $room->load(['host:id,username,full_name,avatar_url', 'participants:id,username,avatar_url']);
 
         return $this->success([
@@ -117,6 +142,7 @@ class StudyRoomController extends ApiController
                 'max_capacity' => $room->max_capacity,
                 'current_capacity' => $room->participants->count(),
                 'is_public' => $room->is_public,
+                'join_code' => $room->host_user_id === $user->id ? $room->join_code : null,
                 'status' => $room->status,
                 'participants' => $room->participants->map(fn ($user) => [
                     'id' => $user->id,
@@ -142,6 +168,10 @@ class StudyRoomController extends ApiController
             return $this->error('ALREADY_JOINED', 'Anda sudah bergabung di ruang belajar ini.', 409);
         }
 
+        if (! $room->is_public && ! hash_equals((string) $room->join_code, (string) $request->input('code'))) {
+            return $this->error('INVALID_JOIN_CODE', 'Kode join ruang privat tidak valid.', 403);
+        }
+
         // Authorization check via policy (status + capacity)
         if (! $user->can('join', $room)) {
             if ($room->status !== 'active') {
@@ -164,6 +194,73 @@ class StudyRoomController extends ApiController
                 'avatar_url' => $user->avatar_url,
             ],
         ], 'Berhasil bergabung ke ruang belajar.');
+    }
+
+    /**
+     * Invite a user to a study room. Host only.
+     * POST /api/v1/study-rooms/{room}/invite
+     */
+    public function invite(Request $request, StudyRoom $room): JsonResponse
+    {
+        $user = $request->user();
+        if ($room->host_user_id !== $user->id) {
+            return $this->error('FORBIDDEN', 'Hanya host yang dapat mengundang peserta.', 403);
+        }
+
+        if ($room->status !== 'active') {
+            return $this->error('ROOM_CLOSED', 'Ruang belajar ini sudah ditutup.', 403);
+        }
+
+        $validated = $request->validate(['user_id' => ['required', 'uuid', 'exists:users,id']]);
+        $invitee = User::findOrFail($validated['user_id']);
+
+        if ($room->participants()->where('user_id', $invitee->id)->exists()) {
+            return $this->error('ALREADY_JOINED', 'User sudah bergabung di ruang belajar ini.', 409);
+        }
+
+        if ($room->participants()->count() >= $room->max_capacity) {
+            return $this->error('ROOM_FULL', 'Ruang belajar sudah penuh.', 403);
+        }
+
+        $room->participants()->attach($invitee->id);
+        broadcast(new StudyRoomUserJoined($room, $invitee))->toOthers();
+
+        return $this->success([
+            'room_id' => $room->id,
+            'user' => [
+                'id' => $invitee->id,
+                'username' => $invitee->username,
+                'avatar_url' => $invitee->avatar_url,
+            ],
+        ], 'User berhasil diundang ke ruang belajar.');
+    }
+
+    /**
+     * Kick a participant from a study room. Host only.
+     * DELETE /api/v1/study-rooms/{room}/participants/{user}
+     */
+    public function kick(Request $request, StudyRoom $room, User $user): JsonResponse
+    {
+        $host = $request->user();
+        if ($room->host_user_id !== $host->id) {
+            return $this->error('FORBIDDEN', 'Hanya host yang dapat mengeluarkan peserta.', 403);
+        }
+
+        if ($user->id === $room->host_user_id) {
+            return $this->error('CANNOT_KICK_HOST', 'Host tidak dapat mengeluarkan dirinya sendiri.', 422);
+        }
+
+        if (! $room->participants()->where('user_id', $user->id)->exists()) {
+            return $this->error('NOT_A_PARTICIPANT', 'User bukan peserta ruang belajar ini.', 404);
+        }
+
+        $room->participants()->detach($user->id);
+        broadcast(new StudyRoomUserKicked($room, $user))->toOthers();
+
+        return $this->success([
+            'room_id' => $room->id,
+            'user_id' => $user->id,
+        ], 'Peserta berhasil dikeluarkan dari ruang belajar.');
     }
 
     /**
@@ -213,5 +310,14 @@ class StudyRoomController extends ApiController
         broadcast(new StudyRoomClosed($room));
 
         return $this->success(null, 'Ruang belajar berhasil ditutup.');
+    }
+
+    private function generateJoinCode(): string
+    {
+        do {
+            $code = Str::upper(Str::random(8));
+        } while (StudyRoom::where('join_code', $code)->exists());
+
+        return $code;
     }
 }

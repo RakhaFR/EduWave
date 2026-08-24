@@ -142,7 +142,9 @@ The table below reflects confirmed implementation status and auth boundaries:
 | **Study Room** | `POST` | `/api/v1/study-rooms` | Bearer | Create a new study room | Yes |
 | **Study Room** | `GET` | `/api/v1/study-rooms/{room}` | Bearer | Get study room details with participants | Yes |
 | **Study Room** | `POST` | `/api/v1/study-rooms/{room}/join` | Bearer | Join an active study room | Yes |
+| **Study Room** | `POST` | `/api/v1/study-rooms/{room}/invite` | Bearer | Host invites a user directly into a room | Yes |
 | **Study Room** | `DELETE` | `/api/v1/study-rooms/{room}/leave` | Bearer | Leave a study room | Yes |
+| **Study Room** | `DELETE` | `/api/v1/study-rooms/{room}/participants/{user}` | Bearer | Host kicks a participant | Yes |
 | **Study Room** | `DELETE` | `/api/v1/study-rooms/{room}` | Bearer | Close a study room (host/admin only) | Yes |
 | **Study Room** | `GET` | `/api/v1/study-rooms/{room}/messages` | Bearer | Get message history for a study room | Yes |
 | **Study Room** | `POST` | `/api/v1/study-rooms/{room}/messages` | Bearer | Send a message to a study room | Yes |
@@ -1768,7 +1770,8 @@ List all active study rooms with filtering options.
         },
         "max_capacity": 10,
         "current_capacity": 3,
-        "is_public": true,
+         "is_public": true,
+         "join_code": null,
         "status": "active",
         "created_at": "2026-08-18T05:00:00.000000Z"
       }
@@ -1794,6 +1797,11 @@ Create a new study room. The authenticated user becomes the host and is automati
 }
 ```
 
+Set `is_public` to `false` to create a private room. Private rooms receive an
+automatically generated `join_code`, which is returned to the host only. The
+host can either share this code or invite specific users with the invite
+endpoint below.
+
 * **Validation:**
   - `name`: Required, string, max 100 characters
   - `topic`: Optional, string
@@ -1816,7 +1824,8 @@ Create a new study room. The authenticated user becomes the host and is automati
       },
       "max_capacity": 10,
       "current_capacity": 1,
-      "is_public": true,
+       "is_public": true,
+       "join_code": null,
       "status": "active",
       "created_at": "2026-08-18T05:00:00.000000Z"
     }
@@ -1881,6 +1890,27 @@ Get detailed information about a study room, including full participant list.
 #### `POST /api/v1/study-rooms/{room}/join`
 Join a study room. Enforces capacity limits and room status via `StudyRoomPolicy`.
 
+Public rooms can be joined without a request body. Private rooms require the
+`code` returned to the host when the room was created.
+
+* **Frontend Usage (`fetch`):**
+```javascript
+const response = await fetch(
+  `${API_BASE_URL}/study-rooms/${roomId}/join`,
+  {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ code: privateRoomJoinCode }),
+  },
+);
+
+const result = await response.json();
+```
+
 * **Response (`200 OK`):**
 ```json
 {
@@ -1900,12 +1930,136 @@ Join a study room. Enforces capacity limits and room status via `StudyRoomPolicy
 
 * **Error Responses:**
   - `409 Conflict` - Already joined: `ALREADY_JOINED`
+  - `403 Forbidden` - Invalid or missing private-room code: `INVALID_JOIN_CODE`
   - `403 Forbidden` - Room full: `ROOM_FULL`
   - `403 Forbidden` - Room closed: `ROOM_CLOSED`
 
 * **WebSocket Event Broadcast:**
   - Event: `user_joined` on channel `private-study-room.{room_id}`
   - Sent to all participants except the joining user
+
+---
+
+#### `POST /api/v1/study-rooms/{room}/invite`
+Invite a specific user directly into a study room. The host chooses the user
+by UUID; no separate approval request is required. The invited user becomes a
+participant immediately and can access the room and its private channel.
+
+* **Authorization:** Host only
+
+* **Request Body:**
+```json
+{
+  "user_id": "user-uuid"
+}
+```
+
+* **Frontend Usage (`fetch`):**
+```javascript
+const response = await fetch(
+  `${API_BASE_URL}/study-rooms/${roomId}/invite`,
+  {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${hostToken}`,
+    },
+    body: JSON.stringify({ user_id: userIdToInvite }),
+  },
+);
+
+const result = await response.json();
+if (!response.ok) {
+  throw new Error(result.error?.message ?? 'Invite failed');
+}
+```
+
+* **Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "room_id": "room-uuid",
+    "user": {
+      "id": "user-uuid",
+      "username": "jane_smith",
+      "avatar_url": null
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+* **Error Responses:**
+  - `403 Forbidden` - Only host can invite: `FORBIDDEN`
+  - `403 Forbidden` - Room closed: `ROOM_CLOSED`
+  - `403 Forbidden` - Capacity reached: `ROOM_FULL`
+  - `409 Conflict` - User already joined: `ALREADY_JOINED`
+  - `422 Unprocessable Entity` - Missing or invalid `user_id`
+
+* **WebSocket Event Broadcast:**
+  - Event: `user_joined` on `private-study-room.{room_id}`
+  - Sent to current room participants except the host request sender
+
+---
+
+#### `DELETE /api/v1/study-rooms/{room}/participants/{user}`
+Kick a participant from a study room. Only the host can perform this action.
+The host cannot kick themselves.
+
+* **Frontend Usage (`fetch`):**
+```javascript
+const response = await fetch(
+  `${API_BASE_URL}/study-rooms/${roomId}/participants/${userId}`,
+  {
+    method: 'DELETE',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${hostToken}`,
+    },
+  },
+);
+
+const result = await response.json();
+if (!response.ok) {
+  throw new Error(result.error?.message ?? 'Kick failed');
+}
+```
+
+* **Response (`200 OK`):**
+```json
+{
+  "success": true,
+  "data": {
+    "room_id": "room-uuid",
+    "user_id": "user-uuid"
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+* **Error Responses:**
+  - `403 Forbidden` - Only host can kick: `FORBIDDEN`
+  - `404 Not Found` - User is not a participant: `NOT_A_PARTICIPANT`
+  - `422 Unprocessable Entity` - Host cannot kick themselves: `CANNOT_KICK_HOST`
+
+* **WebSocket Event Broadcast:**
+  - Event: `user_kicked` on `private-study-room.{room_id}`
+  - Payload:
+```json
+{
+  "room_id": "room-uuid",
+  "user": {
+    "id": "user-uuid",
+    "username": "jane_smith",
+    "avatar_url": null
+  }
+}
+```
+  - The kicked client should clear its room state and leave the private channel.
 
 ---
 
@@ -2216,6 +2370,7 @@ Broadcast::channel('study-room.{roomId}', function ($user, $roomId) {
 - `message_updated` - Message edited (`StudyRoomMessageUpdated`)
 - `message_deleted` - Message deleted (`StudyRoomMessageDeleted`)
 - `user_joined` - User joined room (`StudyRoomUserJoined`)
+- `user_kicked` - Host removed a participant (`StudyRoomUserKicked`)
 - `user_left` - User left room (`StudyRoomUserLeft`)
 - `room_closed` - Room closed (`StudyRoomClosed`)
 
@@ -2224,6 +2379,13 @@ Broadcast::channel('study-room.{roomId}', function ($user, $roomId) {
 Echo.private(`study-room.${roomId}`)
     .listen('.message', (e) => console.log('New message:', e))
     .listen('.user_joined', (e) => console.log('User joined:', e.user))
+    .listen('.user_kicked', (e) => {
+      if (e.user.id === currentUserId) {
+        // Clear the current room and leave the channel for the kicked user.
+        Echo.leave(`study-room.${roomId}`);
+        clearSelectedRoom();
+      }
+    })
     .listen('.user_left', (e) => console.log('User left:', e.user))
     .listen('.room_closed', (e) => console.log('Room closed'));
 ```
