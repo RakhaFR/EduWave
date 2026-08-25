@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import WelcomeBanner from "@/components/dashboardAdmin/WelcomeBanner";
+import StatsGrid from "@/components/dashboardAdmin/StatsGrid";
 import ExamTable from "@/components/dashboardPembimbing/ExamTable";
 import Modals from "@/components/dashboardPembimbing/Modals";
 import { useAdmin } from "@/components/dashboardAdmin/AdminContext";
@@ -161,6 +162,8 @@ export default function AdminExamPage() {
     <>
       <WelcomeBanner />
 
+      <StatsGrid totalCourses={courses.length} />
+
       <div className="flex-1 min-h-0">
         <ExamTable
           exams={exams}
@@ -168,6 +171,7 @@ export default function AdminExamPage() {
           onEditClick={handleOpenExamEdit}
           onDeleteClick={handleDeleteExamClick}
           searchGlobal={searchGlobal}
+          basePath="/admin"
         />
       </div>
 

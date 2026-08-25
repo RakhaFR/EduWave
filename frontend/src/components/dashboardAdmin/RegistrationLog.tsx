@@ -100,33 +100,33 @@ export default function RegistrationLog({
     <div className="flex flex-col gap-5">
       {/* --- Mini Stats Row --- */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-100 rounded-2xl p-4 flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-[#0073e6] text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-md shadow-blue-200">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex items-center gap-3.5 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0073e6] border border-blue-100 flex items-center justify-center shrink-0">
             <Activity className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xl font-black text-[#00172e] leading-tight">{stats.total}</p>
-            <p className="text-[10px] font-semibold text-slate-400 mt-0.5">Total Aktivitas Terdeteksi</p>
+            <p className="text-xl font-bold text-[#00172e] leading-tight">{stats.total}</p>
+            <p className="text-xs font-medium text-slate-500 mt-0.5">Total Aktivitas Terdeteksi</p>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-50 to-teal-50/50 border border-emerald-100 rounded-2xl p-4 flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-md shadow-emerald-200">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex items-center gap-3.5 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0073e6] border border-blue-100 flex items-center justify-center shrink-0">
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xl font-black text-[#00172e] leading-tight">{stats.normal}</p>
-            <p className="text-[10px] font-semibold text-slate-400 mt-0.5">Aktivitas Wajar / Normal</p>
+            <p className="text-xl font-bold text-[#00172e] leading-tight">{stats.normal}</p>
+            <p className="text-xs font-medium text-slate-500 mt-0.5">Aktivitas Wajar / Normal</p>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-rose-50 to-red-50/50 border border-rose-100 rounded-2xl p-4 flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-rose-500 text-[#fff] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-md shadow-rose-200">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex items-center gap-3.5 shadow-sm">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${stats.suspicious > 0 ? "bg-rose-50 text-rose-600 border-rose-100" : "bg-blue-50 text-[#0073e6] border-blue-100"}`}>
             <ShieldAlert className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xl font-black text-rose-600 leading-tight">{stats.suspicious}</p>
-            <p className="text-[10px] font-semibold text-rose-400 mt-0.5">Aktivitas Mencurigakan</p>
+            <p className={`text-xl font-bold leading-tight ${stats.suspicious > 0 ? "text-rose-600" : "text-[#00172e]"}`}>{stats.suspicious}</p>
+            <p className="text-xs font-medium text-slate-500 mt-0.5">Aktivitas Mencurigakan</p>
           </div>
         </div>
       </div>

@@ -11,6 +11,7 @@ interface ExamTableProps {
   onEditClick: (exam: Exam) => void;
   onDeleteClick: (id: string) => void;
   searchGlobal: string;
+  basePath?: string;
 }
 
 const ITEMS_PER_PAGE = 5;
@@ -21,6 +22,7 @@ export default function ExamTable({
   onEditClick,
   onDeleteClick,
   searchGlobal,
+  basePath = "/pembimbing",
 }: ExamTableProps) {
   const [searchLocal, setSearchLocal] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -117,7 +119,7 @@ export default function ExamTable({
                   <td className="py-3.5 px-5 text-center font-semibold text-[#00172e]">{e.max_attempts}x</td>
                   <td className="py-3.5 px-5 text-center">
                     <Link
-                      href={`/pembimbing/exam/${e.id}/questions`}
+                      href={`${basePath}/exam/${e.id}/questions`}
                       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-[#0073e6] hover:bg-blue-100 transition-all border border-blue-200"
                     >
                       <HelpCircle className="w-3.5 h-3.5" />
