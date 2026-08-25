@@ -19,6 +19,7 @@ use App\Http\Controllers\PublicDataController;
 use App\Http\Controllers\RoomMessageController;
 use App\Http\Controllers\StudyRoomController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ViolationController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function () {
@@ -96,6 +97,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('exams/{exam}', [ExamController::class, 'show'])->name('exams.show');
         Route::post('exams/{exam}/attempts', [AttemptController::class, 'start'])->name('exams.attempts.store');
         Route::post('exams/{exam}/attempts/{attempt}/submit', [AttemptController::class, 'submit'])->name('exams.attempts.submit');
+        Route::post('exams/{exam}/attempts/{attempt}/violations', [ViolationController::class, 'store'])->name('exams.attempts.violations.store');
         Route::get('exams/{exam}/attempts', [AttemptController::class, 'index'])->name('exams.attempts.index');
         Route::get('exams/{exam}/attempts/{attempt}', [AttemptController::class, 'show'])->name('exams.attempts.show');
 

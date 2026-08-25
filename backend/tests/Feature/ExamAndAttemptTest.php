@@ -151,6 +151,60 @@ class ExamAndAttemptTest extends TestCase
             ->assertJsonPath('data.exam.requires_fullscreen', false);
     }
 
+    public function test_exam_submission_accepts_unanswered_questions(): void
+    {
+        $student = $this->student();
+        $exam = $this->createExam();
+        $this->enroll($student, $exam);
+        ExamQuestion::factory()->count(2)->create(['exam_id' => $exam->id]);
+
+        $attemptId = $this->actingAs($student)
+            ->postJson("/api/v1/exams/{$exam->id}/attempts")
+            ->json('data.attempt_id');
+
+        $this->actingAs($student)
+            ->postJson("/api/v1/exams/{$exam->id}/attempts/{$attemptId}/submit", ['answers' => []])
+            ->assertOk()
+            ->assertJsonPath('data.score', 0)
+            ->assertJsonPath('data.correct_count', 0)
+            ->assertJsonPath('data.total_count', 2);
+    }
+
+    public function test_third_focus_violation_auto_submits_attempt(): void
+    {
+        $student = $this->student();
+        $exam = $this->createExam();
+        $this->enroll($student, $exam);
+        ExamQuestion::factory()->create(['exam_id' => $exam->id]);
+
+        $attemptId = $this->actingAs($student)
+            ->postJson("/api/v1/exams/{$exam->id}/attempts")
+            ->json('data.attempt_id');
+
+        $url = "/api/v1/exams/{$exam->id}/attempts/{$attemptId}/violations";
+        $payload = ['event' => 'visibility_hidden', 'answers' => []];
+
+        $this->actingAs($student)->postJson($url, $payload)
+            ->assertCreated()
+            ->assertJsonPath('data.violation_count', 1)
+            ->assertJsonPath('data.auto_submitted', false);
+        $this->actingAs($student)->postJson($url, $payload)
+            ->assertCreated()
+            ->assertJsonPath('data.violation_count', 2)
+            ->assertJsonPath('data.auto_submitted', false);
+        $this->actingAs($student)->postJson($url, $payload)
+            ->assertOk()
+            ->assertJsonPath('data.violation_count', 3)
+            ->assertJsonPath('data.auto_submitted', true)
+            ->assertJsonPath('data.result.score', 0);
+
+        $this->assertDatabaseHas('exam_attempts', [
+            'id' => $attemptId,
+            'violation_count' => 3,
+        ]);
+        $this->assertNotNull(ExamAttempt::find($attemptId)->submitted_at);
+    }
+
     // ──────────────────────────────────────────────────────────────────────────
     // 2. Start Exam Attempt & Resume (Idempotency)
     // ──────────────────────────────────────────────────────────────────────────

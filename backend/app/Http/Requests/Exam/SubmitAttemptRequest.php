@@ -14,7 +14,7 @@ class SubmitAttemptRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'answers' => ['required', 'array'],
+            'answers' => ['present', 'array'],
             'answers.*.question_id' => ['required', 'uuid'],
             'answers.*.selected_key' => ['required', 'string', 'max:10'],
         ];

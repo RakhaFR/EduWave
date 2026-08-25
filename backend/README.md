@@ -134,6 +134,7 @@ The table below reflects confirmed implementation status and auth boundaries:
 | **Exam** | `DELETE` | `/api/v1/exams/{exam}` | Admin/Instructor | Delete an exam | Yes |
 | **Attempt** | `POST` | `/api/v1/exams/{exam}/attempts` | Bearer | Start a new attempt or resume active attempt | Yes |
 | **Attempt** | `POST` | `/api/v1/exams/{exam}/attempts/{attempt}/submit` | Bearer | Submit attempt for auto-grading & reward calculation | Yes |
+| **Attempt** | `POST` | `/api/v1/exams/{exam}/attempts/{attempt}/violations` | Bearer | Record focus/tab/fullscreen violation and auto-submit on the third violation | Yes |
 | **Attempt** | `GET` | `/api/v1/exams/{exam}/attempts` | Bearer | List authenticated user's attempt history for an exam | Yes |
 | **Attempt** | `GET` | `/api/v1/exams/{exam}/attempts/{attempt}` | Bearer | View attempt details | Yes |
 | **Leaderboard** | `GET` | `/api/v1/leaderboard` | Public | Get global all-time leaderboard rankings | Yes |
@@ -1212,7 +1213,7 @@ Start a new exam attempt or resume an active `in_progress` attempt. Enforces `ma
 ---
 
 #### `POST /api/v1/exams/{exam}/attempts/{attempt}/submit`
-Submit answers for auto-grading. Calculates percentage score, determines pass/fail status, and idempotently awards `pearls_reward` on pass.
+Submit answers for auto-grading. Calculates percentage score, determines pass/fail status, and idempotently awards `pearls_reward` on pass. `answers` may be an empty array, and omitted questions are graded as unanswered with `your_answer: null`.
 
 * **Headers:** `Authorization: Bearer <token>`
 * **Request Body:**
@@ -1251,6 +1252,39 @@ Submit answers for auto-grading. Calculates percentage score, determines pass/fa
   "meta": null
 }
 ```
+
+---
+
+#### `POST /api/v1/exams/{exam}/attempts/{attempt}/violations`
+Record a client-reported anti-cheat event. The backend cannot independently detect browser focus or tab changes; the frontend must call this endpoint when the browser reports an event. The third violation immediately submits the attempt using the latest answers supplied in the request. The violation counter is server-side and cannot be reset by the client.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Request Body:**
+```json
+{
+  "event": "visibility_hidden",
+  "answers": [
+    { "question_id": "q1f2e3d4-5678-90ab-cdef-1234567890ab", "selected_key": "B" }
+  ]
+}
+```
+* **Allowed `event` values:** `blur`, `visibility_hidden`, `fullscreen_exit`, `tab_switch`.
+* **Response before the limit (`201 Created`):**
+```json
+{
+  "success": true,
+  "data": {
+    "attempt_id": "a1f2e3d4-5678-90ab-cdef-1234567890ab",
+    "violation_count": 1,
+    "max_violations": 3,
+    "auto_submitted": false,
+    "event": "visibility_hidden"
+  },
+  "error": null,
+  "meta": null
+}
+```
+* **Response at the limit (`200 OK`):** `auto_submitted` is `true` and `result` contains the same grading payload returned by the submit endpoint. This mechanism is browser-reported and is not a tamper-proof anti-cheat system.
 
 ---
 
