@@ -60,7 +60,8 @@ export default function PelajarLeaderboardPage() {
 
   const [page, setPage] = useState(1);
   const perPage = 10;
-  const maxPages = 5; // Max 50 users (5 pages * 10)
+  const [weeklyLastPage, setWeeklyLastPage] = useState(1);
+  const maxPages = period === "minggu" ? weeklyLastPage : 5;
 
   useEffect(() => {
     async function loadTop3() {
@@ -131,8 +132,10 @@ export default function PelajarLeaderboardPage() {
 
          setLeaderboard(withServerRankChanges(formattedList));
          if (period === "minggu") {
-           const total = Number(lbRes?.meta?.total ?? lbRes?.data?.total ?? lbRes?.data?.pagination?.total ?? formattedList.length);
-           setWeeklyTotal(Number.isFinite(total) ? total : formattedList.length);
+            const total = Number(lbRes?.meta?.total ?? 0);
+            const lastPage = Number(lbRes?.meta?.last_page ?? 1);
+            setWeeklyTotal(Number.isFinite(total) ? total : 0);
+            setWeeklyLastPage(Number.isFinite(lastPage) ? Math.max(1, lastPage) : 1);
          }
 
         if (meRes?.data) {

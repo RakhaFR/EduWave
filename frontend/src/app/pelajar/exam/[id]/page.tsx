@@ -20,7 +20,6 @@ export default function PelajarExamPage() {
   const { id } = useParams<{ id: string }>();
 
   const [exam, setExam] = useState<Exam | null>(null);
-  const [examMode, setExamMode] = useState<"locked" | "quiz">("locked");
   const [history, setHistory] = useState<ExamAttemptHistory[]>([]);
   const [phase, setPhase] = useState<Phase>("info");
   const [loading, setLoading] = useState(true);
@@ -46,13 +45,6 @@ export default function PelajarExamPage() {
         ]);
          const examData = examRes.data?.exam ?? examRes.data ?? null;
          setExam(examData);
-         if (examData?.lesson_id) {
-           const lessonResponse = await courseService.getLessonById(examData.lesson_id).catch(() => null);
-           const lesson = lessonResponse?.data?.lesson ?? lessonResponse?.data ?? lessonResponse;
-           setExamMode(lesson?.type === "quiz" ? "quiz" : "locked");
-         } else {
-           setExamMode("locked");
-         }
 
          const raw = histRes.data ?? histRes ?? [];
         const list: ExamAttemptHistory[] = Array.isArray(raw) ? raw : [];
@@ -93,7 +85,7 @@ export default function PelajarExamPage() {
       setAnswers({});
        setTimeLeft(Math.max(0, Math.floor((new Date(data.expires_at).getTime() - Date.now()) / 1000)) || data.exam.time_limit_sec);
        setPhase("doing");
-       if (examMode === "locked") {
+       if (exam?.requires_fullscreen) {
          try { await document.documentElement.requestFullscreen?.(); } catch { setError("Mode ujian terkunci membutuhkan fullscreen."); }
        }
      } catch (e: unknown) {
@@ -128,7 +120,7 @@ export default function PelajarExamPage() {
       }));
       const res = await courseService.submitExamAttempt(id, attempt.attempt_id, formatted);
        setResult(res.data);
-       if (examMode === "locked" && document.fullscreenElement) {
+       if (exam?.requires_fullscreen && document.fullscreenElement) {
          await document.exitFullscreen().catch(() => undefined);
        }
 
@@ -221,8 +213,8 @@ export default function PelajarExamPage() {
               </p>
             </div>
 
-             <div className={`rounded-2xl p-4 text-sm ${examMode === "locked" ? "bg-amber-50 text-amber-800" : "bg-blue-50 text-blue-800"}`}>
-               {examMode === "locked" ? "Mode ujian terkunci: layar akan dikunci selama pengerjaan." : "Mode quiz: kamu dapat mengerjakan tanpa fullscreen."}
+             <div className={`rounded-2xl p-4 text-sm ${exam.mode === "locked" ? "bg-amber-50 text-amber-800" : "bg-blue-50 text-blue-800"}`}>
+               {exam.mode === "locked" ? "Mode ujian terkunci: layar akan dikunci selama pengerjaan." : "Mode quiz: kamu dapat mengerjakan tanpa fullscreen."}
              </div>
 
              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

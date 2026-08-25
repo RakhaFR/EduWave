@@ -121,6 +121,8 @@ export default function AdminExamPage() {
             passing_score: res.data.passing_score,
             max_attempts: res.data.max_attempts,
             pearls_reward: res.data.pearls_reward,
+            mode: res.data.mode ?? "locked",
+            requires_fullscreen: res.data.requires_fullscreen ?? true,
           };
           setExams([...exams, newExam]);
           showToast("Ujian baru berhasil ditambahkan!");

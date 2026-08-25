@@ -77,6 +77,8 @@ export interface Exam {
   passing_score: number;
   max_attempts: number;
   pearls_reward: number;
+  mode: "locked" | "quiz";
+  requires_fullscreen: boolean;
   questions?: ExamQuestion[];
 }
 

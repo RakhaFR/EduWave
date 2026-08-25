@@ -223,6 +223,20 @@ export default function Modals({
                 </div>
               )}
 
+              <div className="flex flex-col gap-1.5">
+                <label className="font-bold text-slate-500">Mode Ujian</label>
+                <div className="flex gap-3">
+                  <label className={`flex flex-1 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2.5 font-semibold ${examForm.mode === "locked" ? "border-[#008be3] bg-blue-50 text-[#008be3]" : "border-slate-200 text-slate-500"}`}>
+                    <input type="radio" name="exam-mode" checked={examForm.mode === "locked"} onChange={() => setExamForm({ ...examForm, mode: "locked", requires_fullscreen: true })} />
+                    Terkunci
+                  </label>
+                  <label className={`flex flex-1 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2.5 font-semibold ${examForm.mode === "quiz" ? "border-[#008be3] bg-blue-50 text-[#008be3]" : "border-slate-200 text-slate-500"}`}>
+                    <input type="radio" name="exam-mode" checked={examForm.mode === "quiz"} onChange={() => setExamForm({ ...examForm, mode: "quiz", requires_fullscreen: false })} />
+                    Quiz
+                  </label>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
                   <label className="font-bold text-slate-500">Durasi (detik)</label>

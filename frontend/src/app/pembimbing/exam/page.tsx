@@ -27,6 +27,8 @@ const DEFAULT_EXAM_FORM: PembimbingExamForm = {
   max_attempts: 3,
   pearls_reward: 0,
   lesson_id: "",
+  mode: "locked",
+  requires_fullscreen: true,
 };
 
 export default function PembimbingExamPage() {
@@ -58,6 +60,8 @@ export default function PembimbingExamPage() {
       max_attempts: exam.max_attempts,
       pearls_reward: exam.pearls_reward,
       lesson_id: (exam as any).lesson_id || "",
+      mode: exam.mode,
+      requires_fullscreen: exam.requires_fullscreen,
     });
     setIsExamModalOpen(true);
   };
@@ -97,6 +101,8 @@ export default function PembimbingExamPage() {
             passing_score: res.data.passing_score,
             max_attempts: res.data.max_attempts,
             pearls_reward: res.data.pearls_reward,
+            mode: res.data.mode,
+            requires_fullscreen: res.data.requires_fullscreen,
           };
           setExams([...exams, newExam]);
           showToast("Ujian baru berhasil ditambahkan!");

@@ -41,6 +41,8 @@ export interface PembimbingExamForm {
   max_attempts: number;
   pearls_reward: number;
   lesson_id?: string;
+  mode?: "locked" | "quiz";
+  requires_fullscreen?: boolean;
 }
 
 export interface ExamQuestion {
@@ -101,6 +103,8 @@ export const pembimbingService = {
     const response = await api.post("/exams", {
       ...form,
       lesson_id: form.lesson_id || undefined,
+      mode: form.mode ?? "locked",
+      requires_fullscreen: form.requires_fullscreen ?? form.mode !== "quiz",
     });
     return response.data;
   },
@@ -109,6 +113,8 @@ export const pembimbingService = {
     const response = await api.put(`/exams/${id}`, {
       ...form,
       lesson_id: form.lesson_id || undefined,
+      ...(form.mode ? { mode: form.mode } : {}),
+      ...(form.requires_fullscreen !== undefined ? { requires_fullscreen: form.requires_fullscreen } : {}),
     });
     return response.data;
   },
