@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { Search, Plus, Edit, Trash, X } from "lucide-react";
 import { UserType } from "./types";
 import SmartPagination from "@/components/common/SmartPagination";
+import { Badge } from "@/components/ui/badge";
 
 interface UserTableProps {
   users: UserType[];
@@ -72,7 +73,7 @@ export default function UserTable({
             placeholder="Cari pengguna, email, atau peran..."
             value={searchLocal}
             onChange={(e) => setSearchLocal(e.target.value)}
-            className="w-full max-w-md pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 placeholder-slate-400 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all"
+            className="w-full max-w-md pl-10 pr-4 py-2.5 bg-background border border-border rounded-xl text-xs sm:text-sm text-foreground placeholder-muted-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring transition-all"
           />
           {searchLocal && (
             <button
@@ -86,7 +87,7 @@ export default function UserTable({
 
         <button
           onClick={onAddClick}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0073e6] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-200 transition-all shrink-0 active:scale-95 cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs sm:text-sm font-bold shadow-md transition-all shrink-0 active:scale-95 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Tambah Pengguna Baru</span>
@@ -110,38 +111,24 @@ export default function UserTable({
             {paginatedUsers.length > 0 ? (
               paginatedUsers.map((u) => (
                 <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="py-3.5 px-5 font-mono text-slate-400">{u.id}</td>
-                  <td className="py-3.5 px-5 font-bold text-[#00172e]">{u.name}</td>
-                  <td className="py-3.5 px-5 text-slate-600">{u.email}</td>
+                  <td className="py-3.5 px-5 font-mono text-muted-foreground">{u.id}</td>
+                  <td className="py-3.5 px-5 font-bold text-foreground">{u.name}</td>
+                  <td className="py-3.5 px-5 text-muted-foreground">{u.email}</td>
                   <td className="py-3.5 px-5">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        u.role === "Admin"
-                          ? "bg-rose-50 text-rose-600"
-                          : u.role === "Pengajar"
-                          ? "bg-purple-50 text-purple-600"
-                          : "bg-blue-50 text-blue-600"
-                      }`}
-                    >
+                    <Badge variant={u.role === "Admin" ? "destructive" : "outline"} className="text-[10px]">
                       {u.role}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="py-3.5 px-5 text-center">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        u.status === "Aktif"
-                          ? "bg-green-50 text-green-600"
-                          : "bg-red-50 text-red-500"
-                      }`}
-                    >
+                    <Badge variant={u.status === "Aktif" ? "default" : "secondary"} className="text-[10px]">
                       {u.status}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="py-3.5 px-5">
                     <div className="flex items-center justify-center gap-1.5">
                       <button
                         onClick={() => onEditClick(u)}
-                        className="px-2.5 py-1 rounded-lg text-xs font-bold text-[#0073e6] hover:bg-blue-50 transition-all flex items-center gap-1 border border-transparent hover:border-blue-100 cursor-pointer"
+                        className="px-2.5 py-1 rounded-lg text-xs font-bold text-primary hover:bg-accent transition-all flex items-center gap-1 border border-transparent hover:border-border cursor-pointer"
                       >
                         <Edit className="w-3.5 h-3.5" />
                         <span>Edit</span>

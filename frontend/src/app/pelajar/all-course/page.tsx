@@ -9,6 +9,7 @@ import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { courseService, Course } from "@/services/courseService";
 import { GridSkeleton } from "@/components/ui/PageSkeleton";
 import SmartPagination from "@/components/common/SmartPagination";
+import { Badge } from "@/components/ui/badge";
 
 const ITEMS_PER_PAGE = 9;
 
@@ -166,13 +167,17 @@ function AllCoursesContent() {
                           (e.target as HTMLImageElement).src = "/ocean-bg.jpg";
                         }}
                       />
-                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1">
-                        <span className="text-[10px] font-semibold text-[#008be3]">{course.category || "Umum"}</span>
+                      <div className="absolute top-3 left-3">
+                        <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm text-[#008be3] text-[10px]">
+                          {course.category || "Umum"}
+                        </Badge>
                       </div>
                       {course.pearls_reward > 0 && (
-                        <div className="absolute top-3 right-3 bg-amber-400/90 backdrop-blur-sm rounded-full px-2 py-0.5 flex items-center gap-1">
-                          <Sparkles className="w-3 h-3 text-white fill-white" />
-                          <span className="text-[10px] font-bold text-white">+{course.pearls_reward} Mutiara</span>
+                        <div className="absolute top-3 right-3">
+                          <Badge variant="default" className="bg-amber-400 text-white border-none gap-1 text-[10px]">
+                            <Sparkles className="size-3 fill-white" />
+                            <span>+{course.pearls_reward} Mutiara</span>
+                          </Badge>
                         </div>
                       )}
                     </div>
@@ -204,9 +209,9 @@ function AllCoursesContent() {
                   </Link>
 
                   <div className="px-4 pb-4 mt-auto pt-2 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-xs font-bold capitalize text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
+                    <Badge variant="outline" className="text-xs font-bold capitalize text-emerald-700 bg-emerald-50 border-emerald-200">
                       {course.difficulty || "Semua Tingkat"}
-                    </span>
+                    </Badge>
                     <button
                       onClick={(e) => handleEnrollToggle(e, course.id)}
                       className={`cursor-pointer flex items-center gap-1 rounded-full px-4 py-1.5 text-[11px] font-bold transition-colors ${

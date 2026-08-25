@@ -114,10 +114,26 @@ export default function CourseDetailPage() {
     setMessage("");
     try {
       const response = await courseService.completeLesson(lesson.id);
-      setLessons((current) => current.map((item) => item.id === lesson.id ? { ...item, is_completed: true } : item));
-      if (response.data?.enrollment?.progress_pct !== undefined) {
-        setProgress(Number(response.data.enrollment.progress_pct));
+      let currentUserId = "";
+      try {
+        const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+        currentUserId = userObj?.id || "";
+      } catch {
+        currentUserId = "";
       }
+      const userCompletedKey = currentUserId ? `completed_lesson_ids_${currentUserId}` : "completed_lesson_ids";
+      const localCompleted = typeof window !== "undefined" ? JSON.parse(localStorage.getItem(userCompletedKey) || "[]") : [];
+      if (!localCompleted.includes(lesson.id)) {
+        localCompleted.push(lesson.id);
+        localStorage.setItem(userCompletedKey, JSON.stringify(localCompleted));
+      }
+
+      const updatedLessons = lessons.map((item) => item.id === lesson.id ? { ...item, is_completed: true } : item);
+      setLessons(updatedLessons);
+      
+      const finishedCount = updatedLessons.filter((l) => l.is_completed).length;
+      const actualProgress = updatedLessons.length > 0 ? Math.round((finishedCount / updatedLessons.length) * 100) : 0;
+      setProgress(actualProgress);
     } catch {
       setMessage("Lesson hanya dapat diselesaikan setelah terdaftar di kursus.");
     } finally {

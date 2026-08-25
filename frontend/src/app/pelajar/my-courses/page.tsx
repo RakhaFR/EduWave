@@ -48,20 +48,38 @@ export default function PelajarMyCoursesPage() {
         const enr = enrollments.find((e: any) => e.course_id === course.id);
         if (enr) {
           let courseLessons = course.lessons;
-          if (!courseLessons) {
-            try {
-              const detailRes = await courseService.getCourseById(course.id);
-              if (detailRes?.success && detailRes.data?.lessons) {
+          let detailCompletedList: any[] = [];
+          
+          try {
+            const detailRes = await courseService.getCourseById(course.id);
+            if (detailRes?.success && detailRes.data) {
+              if (detailRes.data.lessons) {
                 courseLessons = detailRes.data.lessons;
               }
-            } catch {
-              // ignore
             }
+            const progRes = await courseService.getCourseProgress(course.id).catch(() => null);
+            if (progRes?.success && progRes.data) {
+              if (progRes.data.completed_lessons) {
+                detailCompletedList = progRes.data.completed_lessons.map((cl: any) => cl.lesson_id || cl.id || cl);
+              }
+              if (progRes.data.lessons_progress) {
+                progRes.data.lessons_progress.forEach((lp: any) => {
+                  if (lp.is_completed) detailCompletedList.push(lp.id);
+                });
+              }
+            }
+          } catch {
+            // ignore
           }
+
+          const combinedCompletedIds = new Set([
+            ...completedLessonIds,
+            ...detailCompletedList,
+          ]);
 
           const totalLessons = courseLessons?.length || course.lesson_count || 1;
           const finishedCount = courseLessons
-            ? courseLessons.filter((l: any) => completedLessonIds.has(l.id) || l.is_completed).length
+            ? courseLessons.filter((l: any) => combinedCompletedIds.has(l.id) || l.is_completed).length
             : Math.min(totalLessons, (enr.completed_lessons_count ?? Math.round(((enr.progress_pct || 0) / 100) * totalLessons)));
 
           const dynamicPct = totalLessons > 0 ? Math.round((finishedCount / totalLessons) * 100) : (enr.progress_pct || 0);
