@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, CheckCircle, Clock, Trophy, XCircle } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
+import { PageToast, usePageToast } from "@/components/ui/PageToast";
 import {
   courseService,
   Exam,
@@ -34,6 +35,10 @@ export default function PelajarExamPage() {
 
   const [timeLeft, setTimeLeft] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const tabExitCountRef = useRef(0);
+  const submitRef = useRef<(forced?: boolean) => Promise<void>>(async () => undefined);
+  const [fullscreenLost, setFullscreenLost] = useState(false);
+  const { toast, showToast, hideToast } = usePageToast();
 
   useEffect(() => {
     if (!id) return;
@@ -97,6 +102,26 @@ export default function PelajarExamPage() {
     };
   }, [exam?.mode, phase]);
 
+  useEffect(() => {
+    const locked = phase === "doing" && exam?.mode === "locked";
+    if (!locked) {
+      setFullscreenLost(false);
+      return;
+    }
+
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setFullscreenLost(true);
+        showToast("Fullscreen keluar. Kembali ke fullscreen untuk melanjutkan ujian.", "error");
+      } else {
+        setFullscreenLost(false);
+      }
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, [exam?.mode, phase, showToast]);
+
   const startExam = async () => {
     setStarting(true);
     setError("");
@@ -107,7 +132,7 @@ export default function PelajarExamPage() {
       setAnswers({});
        setTimeLeft(Math.max(0, Math.floor((new Date(data.expires_at).getTime() - Date.now()) / 1000)) || data.exam.time_limit_sec);
        setPhase("doing");
-        if (exam?.mode === "locked" && exam.requires_fullscreen) {
+        if (exam?.mode === "locked") {
          try { await document.documentElement.requestFullscreen?.(); } catch { setError("Mode ujian terkunci membutuhkan fullscreen."); }
        }
      } catch (e: unknown) {
@@ -142,7 +167,7 @@ export default function PelajarExamPage() {
       }));
       const res = await courseService.submitExamAttempt(id, attempt.attempt_id, formatted);
        setResult(res.data);
-       if (exam?.requires_fullscreen && document.fullscreenElement) {
+        if (exam?.mode === "locked" && document.fullscreenElement) {
          await document.exitFullscreen().catch(() => undefined);
        }
 
@@ -177,6 +202,42 @@ export default function PelajarExamPage() {
       setError(message || "Gagal mengirim jawaban. Coba lagi.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  submitRef.current = handleSubmit;
+
+  useEffect(() => {
+    const locked = phase === "doing" && exam?.mode === "locked";
+    if (!locked) {
+      tabExitCountRef.current = 0;
+      return;
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden || submitting) return;
+
+      tabExitCountRef.current += 1;
+      const count = tabExitCountRef.current;
+      if (count >= 3) {
+        showToast("Kamu sudah 3 kali keluar dari tab. Jawaban sedang dikirim otomatis.", "error");
+        void submitRef.current(true);
+        return;
+      }
+      showToast(`Peringatan ${count}/3: jangan keluar dari tab selama ujian.`, "error");
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [exam?.mode, phase, showToast, submitting]);
+
+  const reenterFullscreen = async () => {
+    try {
+      await document.documentElement.requestFullscreen?.();
+      setFullscreenLost(false);
+      hideToast();
+    } catch {
+      showToast("Klik tombol ini dari halaman ujian untuk mengaktifkan fullscreen.", "error");
     }
   };
 
@@ -217,6 +278,23 @@ export default function PelajarExamPage() {
       navigationLocked={phase === "doing" && exam.mode === "locked"}
     >
       <main className="mx-auto max-w-3xl px-4 py-4 md:px-8 md:py-6 space-y-4">
+        {phase === "doing" && exam.mode === "locked" && fullscreenLost && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#00172e]/95 p-6 text-center">
+            <div className="max-w-md rounded-3xl bg-white p-8 shadow-2xl">
+              <h2 className="text-xl font-extrabold text-[#00172e]">Ujian Terkunci</h2>
+              <p className="mt-3 text-sm leading-relaxed text-slate-500">
+                Kamu keluar dari fullscreen. Soal tidak dapat dilanjutkan sebelum fullscreen diaktifkan kembali.
+              </p>
+              <button
+                type="button"
+                onClick={reenterFullscreen}
+                className="mt-6 rounded-full bg-[#008be3] px-6 py-3 text-sm font-bold text-white hover:bg-[#0078c8]"
+              >
+                Kembali ke Fullscreen
+              </button>
+            </div>
+          </div>
+        )}
         <Link
           href="/pelajar/my-courses"
           onClick={(event) => {
@@ -444,6 +522,7 @@ export default function PelajarExamPage() {
           </section>
         )}
       </main>
+      <PageToast toast={toast} onClose={hideToast} />
     </DashboardLayout>
   );
 }
