@@ -67,6 +67,9 @@ export default function EditProfileForm() {
         if (passwordForm.password !== passwordForm.password_confirmation) {
           throw new Error("Konfirmasi password baru tidak cocok.");
         }
+        if (passwordForm.password.length < 8) {
+          throw new Error("Password baru minimal 8 karakter.");
+        }
 
         const passRes = await authService.updatePassword({
           current_password: passwordForm.current_password,
@@ -103,7 +106,7 @@ export default function EditProfileForm() {
 
   return (
     <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-3">
-      <p className="text-sm font-bold text-slate-700">Edit Profil & Keamanan</p>
+      <p className="text-sm font-bold text-slate-700">Profil & Keamanan</p>
 
       {/* Full Name */}
       <div>
@@ -125,6 +128,16 @@ export default function EditProfileForm() {
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-cyan-400"
           placeholder="nama@example.com"
+        />
+      </div>
+
+      <div>
+        <label className="text-[11px] font-semibold text-slate-500 block mb-1">Username</label>
+        <input
+          value={values.username}
+          onChange={(e) => setForm({ ...form, username: e.target.value })}
+          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-cyan-400"
+          placeholder="username"
         />
       </div>
 
