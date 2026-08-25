@@ -72,7 +72,7 @@ export default function PelajarLessonDetailPage() {
 
   // Timer counter + persist to localStorage
   useEffect(() => {
-    if (isCompleted || !params.id) return;
+    if (lesson?.type === "quiz" || isCompleted || !params.id) return;
     const interval = setInterval(() => {
       setSecondsSpent((prev) => {
         const nextVal = prev >= REQUIRED_TIME_SEC ? REQUIRED_TIME_SEC : prev + 1;
@@ -89,7 +89,7 @@ export default function PelajarLessonDetailPage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isCompleted, params.id]);
+  }, [isCompleted, params.id, lesson?.type]);
 
   // Check if content fits in view without scrollbar or check scroll position
   const checkScrollEligibility = () => {
@@ -127,7 +127,9 @@ export default function PelajarLessonDetailPage() {
     checkScrollEligibility();
   };
 
-  const isEligibleToComplete = isCompleted || (secondsSpent >= REQUIRED_TIME_SEC && (hasScrolledToBottom || !lesson?.content));
+  const isEligibleToComplete = lesson?.type === "quiz"
+    ? true
+    : isCompleted || (secondsSpent >= REQUIRED_TIME_SEC && (hasScrolledToBottom || !lesson?.content));
 
   useEffect(() => {
     async function loadLesson() {
@@ -501,7 +503,8 @@ export default function PelajarLessonDetailPage() {
               </div>
             )}
 
-            {/* Complete bar */}
+            {/* Reading completion is not required for quiz lessons. */}
+            {lesson.type !== "quiz" && (
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 md:p-5 flex flex-col gap-4 mb-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -569,6 +572,7 @@ export default function PelajarLessonDetailPage() {
                 </div>
               )}
             </div>
+            )}
 
             {/* Prev / Next navigation */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 overflow-hidden">
