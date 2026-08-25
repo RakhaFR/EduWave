@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -217,33 +217,41 @@ export default function DashboardLayout({
   );
   const displayName = user?.full_name || user?.username || "Pelajar";
   const initial = displayName.charAt(0).toUpperCase();
-  const notifications = pathname.startsWith("/pelajar/report")
-    ? [
-        {
-          text: "Progress, XP, dan achievement kamu tersedia di Report.",
-          href: "/pelajar/report",
-        },
-      ]
-    : pathname.startsWith("/pelajar/my-courses")
-      ? [
-          {
-            text: "Lanjutkan lesson untuk mendapatkan XP.",
-            href: "/pelajar/my-courses",
-          },
-        ]
-      : pathname.startsWith("/pelajar/mascot-customize")
-        ? [
-            {
-              text: `Saldo kamu saat ini ${user?.pearls ?? 0} Pearls.`,
-              href: "/pelajar/mascot-customize",
-            },
-          ]
-        : [
-            {
-              text: "Jelajahi All Course dan mulai perjalanan belajarmu.",
-              href: "/pelajar/all-course",
-            },
-          ];
+
+  const notifications = useMemo(() => {
+    const list: { title: string; text: string; href: string; time: string; unread?: boolean }[] = [];
+
+    // Notifikasi Mutiara & Level
+    if ((user?.pearls ?? 0) > 0) {
+      list.push({
+        title: "Saldo Mutiara",
+        text: `Kamu memiliki ${user?.pearls} Mutiara. Gunakan untuk kustomisasi maskot Quli!`,
+        href: "/pelajar/mascot-customize",
+        time: "Tersedia",
+        unread: true,
+      });
+    }
+
+    // Notifikasi XP & Leaderboard
+    if ((user?.xp ?? 0) > 0) {
+      list.push({
+        title: "Pencapaian XP",
+        text: `Total ${user?.xp} XP terkumpul. Cek posisi peringkatmu di Leaderboard!`,
+        href: "/pelajar/leaderboard",
+        time: "Aktif",
+      });
+    }
+
+    // Notifikasi Belajar / Kursus
+    list.push({
+      title: "Materi Belajar",
+      text: "Lanjutkan progres kursus terdaftar atau cari materi baru di All Course.",
+      href: "/pelajar/my-courses",
+      time: "Hari ini",
+    });
+
+    return list;
+  }, [user]);
 
   const handleLogout = () => {
     clearUserCache();
@@ -405,22 +413,30 @@ export default function DashboardLayout({
                 <Bell className="w-4 h-4 text-white" />
               </button>
               {notificationsOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white p-4 shadow-xl z-50 text-slate-700">
-                  <p className="text-sm font-bold">Notifikasi</p>
-                  {notifications.map((notification) => (
-                    <div key={notification.text}>
-                      <p className="mt-2 text-xs text-slate-500">
-                        {notification.text}
-                      </p>
-                      <Link
-                        href={notification.href}
-                        onClick={() => setNotificationsOpen(false)}
-                        className="mt-3 block text-xs font-bold text-[#008be3]"
-                      >
-                        Lihat detail
-                      </Link>
-                    </div>
-                  ))}
+                <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-2xl bg-white p-4 shadow-xl z-50 text-slate-700 border border-slate-100 divide-y divide-slate-100">
+                  <div className="flex items-center justify-between pb-2">
+                    <p className="text-sm font-bold text-[#00172e]">Notifikasi Siswa</p>
+                    <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{notifications.length} info</span>
+                  </div>
+                  <div className="flex flex-col gap-2 pt-2 max-h-72 overflow-y-auto">
+                    {notifications.map((notification, idx) => (
+                      <div key={idx} className="p-2 rounded-xl hover:bg-slate-50 transition-all flex flex-col gap-1">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-bold text-slate-800">{notification.title}</p>
+                          <span className="text-[10px] font-medium text-slate-400">{notification.time}</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 leading-snug">{notification.text}</p>
+                        <Link
+                          href={notification.href}
+                          onClick={() => setNotificationsOpen(false)}
+                          className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-[#008be3] hover:underline"
+                        >
+                          <span>Buka halaman</span>
+                          <ChevronRight className="w-3 h-3" />
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
