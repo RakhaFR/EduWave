@@ -75,6 +75,28 @@ export default function PelajarExamPage() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [phase]);
 
+  useEffect(() => {
+    const locked = phase === "doing" && exam?.mode === "locked";
+    if (!locked) return;
+
+    // Keep the student on the active exam route while the attempt is open.
+    window.history.pushState(null, "", window.location.href);
+    const handlePopState = () => {
+      window.history.pushState(null, "", window.location.href);
+    };
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [exam?.mode, phase]);
+
   const startExam = async () => {
     setStarting(true);
     setError("");
@@ -85,7 +107,7 @@ export default function PelajarExamPage() {
       setAnswers({});
        setTimeLeft(Math.max(0, Math.floor((new Date(data.expires_at).getTime() - Date.now()) / 1000)) || data.exam.time_limit_sec);
        setPhase("doing");
-       if (exam?.requires_fullscreen) {
+        if (exam?.mode === "locked" && exam.requires_fullscreen) {
          try { await document.documentElement.requestFullscreen?.(); } catch { setError("Mode ujian terkunci membutuhkan fullscreen."); }
        }
      } catch (e: unknown) {
@@ -190,10 +212,20 @@ export default function PelajarExamPage() {
   }
 
   return (
-    <DashboardLayout searchPlaceholder="Cari ujian...">
+    <DashboardLayout
+      searchPlaceholder="Cari ujian..."
+      navigationLocked={phase === "doing" && exam.mode === "locked"}
+    >
       <main className="mx-auto max-w-3xl px-4 py-4 md:px-8 md:py-6 space-y-4">
         <Link
           href="/pelajar/my-courses"
+          onClick={(event) => {
+            if (phase === "doing" && exam.mode === "locked") {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+          }}
+          aria-disabled={phase === "doing" && exam.mode === "locked"}
           className="inline-flex items-center gap-1 text-sm font-bold text-white/90 hover:text-white"
         >
           <ArrowLeft className="w-4 h-4" />

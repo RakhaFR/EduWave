@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import type { MouseEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -101,11 +102,13 @@ const BOTTOM_NAV = [
 interface DashboardLayoutProps {
   children: React.ReactNode;
   searchPlaceholder?: string;
+  navigationLocked?: boolean;
 }
 
 export default function DashboardLayout({
   children,
   searchPlaceholder = "Search...",
+  navigationLocked = false,
 }: DashboardLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -218,6 +221,12 @@ export default function DashboardLayout({
   const displayName = user?.full_name || user?.username || "Pelajar";
   const initial = displayName.charAt(0).toUpperCase();
 
+  const blockNavigation = (event: MouseEvent<HTMLElement>) => {
+    if (!navigationLocked) return;
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
   const notifications = useMemo(() => {
     const list: { title: string; text: string; href: string; time: string; unread?: boolean }[] = [];
 
@@ -295,7 +304,12 @@ export default function DashboardLayout({
       >
         <aside className="relative h-full rounded-3xl bg-white flex flex-col px-5 py-6 shadow-xl">
           {/* Logo */}
-          <Link href="/pelajar" className="flex items-center gap-2 mb-2">
+          <Link
+            href="/pelajar"
+            onClick={blockNavigation}
+            aria-disabled={navigationLocked}
+            className={`flex items-center gap-2 mb-2 ${navigationLocked ? "cursor-not-allowed opacity-60" : ""}`}
+          >
             <Image
               src="/logo-eduwave.webp"
               alt="EduWave"
@@ -324,6 +338,8 @@ export default function DashboardLayout({
                 <Link
                   key={item.label}
                   href={item.href}
+                  onClick={blockNavigation}
+                  aria-disabled={navigationLocked}
                   data-tour={
                     item.href === "/pelajar"
                       ? "home"
@@ -346,7 +362,8 @@ export default function DashboardLayout({
                                       : undefined
                   }
                   title={item.label}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
+                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
+                     ${navigationLocked ? "cursor-not-allowed opacity-50" : ""}
                     ${
                       active
                         ? "bg-[#008be3]/10 text-[#008be3] border-l-4 border-[#008be3]"
@@ -380,7 +397,11 @@ export default function DashboardLayout({
           {/* Mobile & Tablet (< 1024px): hamburger */}
           <button
             className="lg:hidden w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white cursor-pointer"
-            onClick={() => setMobileMenuOpen(true)}
+             onClick={() => {
+               if (!navigationLocked) setMobileMenuOpen(true);
+             }}
+             disabled={navigationLocked}
+             aria-label={navigationLocked ? "Navigasi terkunci selama ujian" : "Buka menu"}
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -394,7 +415,7 @@ export default function DashboardLayout({
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === "Enter" && search.trim())
+                 if (!navigationLocked && event.key === "Enter" && search.trim())
                   router.push(
                     `/pelajar/all-course?search=${encodeURIComponent(search.trim())}`,
                   );
@@ -407,7 +428,10 @@ export default function DashboardLayout({
           <div className="flex items-center gap-2 md:gap-4 ml-auto">
             <div className="relative">
               <button
-                onClick={() => setNotificationsOpen((open) => !open)}
+                 onClick={() => {
+                   if (!navigationLocked) setNotificationsOpen((open) => !open);
+                 }}
+                 disabled={navigationLocked}
                 className="relative w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20 hover:bg-white/30 transition-colors"
               >
                 <Bell className="w-4 h-4 text-white" />
@@ -426,9 +450,12 @@ export default function DashboardLayout({
                           <span className="text-[10px] font-medium text-slate-400">{notification.time}</span>
                         </div>
                         <p className="text-[11px] text-slate-500 leading-snug">{notification.text}</p>
-                        <Link
+                  <Link
                           href={notification.href}
-                          onClick={() => setNotificationsOpen(false)}
+                          onClick={(event) => {
+                            blockNavigation(event);
+                            if (!navigationLocked) setNotificationsOpen(false);
+                          }}
                           className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-[#008be3] hover:underline"
                         >
                           <span>Buka halaman</span>
@@ -444,7 +471,10 @@ export default function DashboardLayout({
             {/* Avatar dropdown */}
             <div className="relative">
               <button
-                onClick={() => setAvatarOpen(!avatarOpen)}
+                 onClick={() => {
+                   if (!navigationLocked) setAvatarOpen(!avatarOpen);
+                 }}
+                 disabled={navigationLocked}
                 className="flex items-center gap-1.5 md:gap-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 pl-1 pr-2 md:pr-3 py-1 hover:bg-white/30 transition-colors"
               >
                 <div className="w-7 h-7 rounded-full bg-[#008be3] flex items-center justify-center text-white text-xs font-bold shrink-0 overflow-hidden">
@@ -474,7 +504,10 @@ export default function DashboardLayout({
                 <div className="absolute right-0 top-full mt-2 w-44 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50">
                   <Link
                     href="/pelajar/profile"
-                    onClick={() => setAvatarOpen(false)}
+                    onClick={(event) => {
+                      blockNavigation(event);
+                      if (!navigationLocked) setAvatarOpen(false);
+                    }}
                     className="flex items-center gap-2 px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
                   >
                     <Users className="w-4 h-4" />
@@ -482,7 +515,10 @@ export default function DashboardLayout({
                   </Link>
                   <Link
                     href="/pelajar/friends"
-                    onClick={() => setAvatarOpen(false)}
+                    onClick={(event) => {
+                      blockNavigation(event);
+                      if (!navigationLocked) setAvatarOpen(false);
+                    }}
                     className="flex items-center gap-2 px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
                   >
                     <Users2 className="w-4 h-4" />
@@ -494,7 +530,10 @@ export default function DashboardLayout({
                   <div className="border-t border-slate-100" />
                   <Link
                     href="/auth/login"
-                    onClick={handleLogout}
+                    onClick={(event) => {
+                      blockNavigation(event);
+                      if (!navigationLocked) handleLogout();
+                    }}
                     className="flex items-center gap-2 px-4 py-3 text-sm text-red-400 hover:bg-red-50 transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
@@ -525,7 +564,10 @@ export default function DashboardLayout({
               <Link
                 href="/pelajar"
                 className="flex items-center gap-2"
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={(event) => {
+                  blockNavigation(event);
+                  if (!navigationLocked) setMobileMenuOpen(false);
+                }}
               >
                 <Image
                   src="/logo-eduwave.webp"
@@ -538,8 +580,8 @@ export default function DashboardLayout({
                   Edu<span className="text-[#008be3]">Wave</span>
                 </span>
               </Link>
-              <button
-                onClick={() => setMobileMenuOpen(false)}
+               <button
+                 onClick={() => setMobileMenuOpen(false)}
                 className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200"
               >
                 <X className="w-4 h-4" />
@@ -555,8 +597,13 @@ export default function DashboardLayout({
                   <Link
                     key={item.label}
                     href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
+                    onClick={(event) => {
+                      blockNavigation(event);
+                      if (!navigationLocked) setMobileMenuOpen(false);
+                    }}
+                    aria-disabled={navigationLocked}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all
+                      ${navigationLocked ? "cursor-not-allowed opacity-50" : ""}
                       ${
                         active
                           ? "bg-[#008be3]/10 text-[#008be3] border-l-4 border-[#008be3]"
@@ -591,9 +638,12 @@ export default function DashboardLayout({
             <div className="border-t border-slate-100 pt-4">
               <Link
                 href="/auth/login"
-                onClick={() => {
-                  handleLogout();
-                  setMobileMenuOpen(false);
+                onClick={(event) => {
+                  blockNavigation(event);
+                  if (!navigationLocked) {
+                    handleLogout();
+                    setMobileMenuOpen(false);
+                  }
                 }}
                 className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-red-400 hover:bg-red-50 transition-colors"
               >
@@ -614,6 +664,8 @@ export default function DashboardLayout({
               <Link
                 key={item.label}
                 href={item.href}
+                onClick={blockNavigation}
+                aria-disabled={navigationLocked}
                 data-tour={
                   item.href === "/pelajar"
                     ? "home, mobile-home"
@@ -626,6 +678,7 @@ export default function DashboardLayout({
                           : undefined
                 }
                 className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all
+                  ${navigationLocked ? "cursor-not-allowed opacity-50" : ""}
                   ${active ? "text-[#008be3]" : "text-slate-400 hover:text-[#008be3]"}`}
               >
                 {item.icon}
