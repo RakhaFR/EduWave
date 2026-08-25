@@ -60,8 +60,8 @@ export default function PembimbingExamPage() {
       max_attempts: exam.max_attempts,
       pearls_reward: exam.pearls_reward,
       lesson_id: (exam as any).lesson_id || "",
-      mode: exam.mode,
-      requires_fullscreen: exam.requires_fullscreen,
+       mode: exam.mode === "quiz" ? "quiz" : "locked",
+       requires_fullscreen: exam.requires_fullscreen ?? exam.mode !== "quiz",
     });
     setIsExamModalOpen(true);
   };
@@ -101,8 +101,8 @@ export default function PembimbingExamPage() {
             passing_score: res.data.passing_score,
             max_attempts: res.data.max_attempts,
             pearls_reward: res.data.pearls_reward,
-            mode: res.data.mode,
-            requires_fullscreen: res.data.requires_fullscreen,
+             mode: res.data.mode === "quiz" ? "quiz" : "locked",
+             requires_fullscreen: res.data.requires_fullscreen ?? res.data.mode !== "quiz",
           };
           setExams([...exams, newExam]);
           showToast("Ujian baru berhasil ditambahkan!");
