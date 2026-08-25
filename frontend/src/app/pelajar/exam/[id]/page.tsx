@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, CheckCircle, Clock, Trophy, XCircle } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { PageToast, usePageToast } from "@/components/ui/PageToast";
@@ -20,6 +20,7 @@ type Phase = "info" | "doing" | "result" | "maxed";
 
 export default function PelajarExamPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = searchParams.get("returnTo");
 
@@ -54,8 +55,19 @@ export default function PelajarExamPage() {
           courseService.getExamById(id),
           courseService.getExamAttempts(id).catch(() => ({ data: [] })),
         ]);
-         const examData = examRes.data?.exam ?? examRes.data ?? null;
-         setExam(examData);
+          const examData = examRes.data?.exam ?? examRes.data ?? null;
+          setExam(examData);
+
+          const enteredFromLesson = examData?.lesson_id
+            ? sessionStorage.getItem(`exam_journey_${examData.id}`) === examData.lesson_id
+            : false;
+          if (enteredFromLesson) {
+            sessionStorage.removeItem(`exam_journey_${examData.id}`);
+          }
+          if (examData?.mode === "quiz" && examData.lesson_id && (!returnTo || !enteredFromLesson)) {
+            router.replace(`/pelajar/lesson/${examData.lesson_id}`);
+            return;
+          }
 
          const raw = histRes.data ?? histRes ?? [];
         const list: ExamAttemptHistory[] = Array.isArray(raw) ? raw : [];
@@ -68,7 +80,7 @@ export default function PelajarExamPage() {
       }
     }
     load();
-  }, [id]);
+  }, [id, returnTo, router]);
 
   useEffect(() => {
     if (phase === "doing" && timeLeft > 0) {

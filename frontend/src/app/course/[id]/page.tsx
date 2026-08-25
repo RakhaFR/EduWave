@@ -236,7 +236,7 @@ export default function CourseDetailPage() {
                           </button>
                         ) : lesson.type === "quiz" ? (
                           <Link
-                            href={lesson.exam_id ? `/pelajar/exam/${lesson.exam_id}` : `/pelajar/lesson/${lesson.id}`}
+                             href={`/pelajar/lesson/${lesson.id}`}
                             className="rounded-full bg-amber-500 hover:bg-amber-600 px-4 py-1.5 text-[11px] font-bold text-white shadow-sm transition-all active:scale-95 flex items-center gap-1.5"
                           >
                             <Trophy className="w-3 h-3" />

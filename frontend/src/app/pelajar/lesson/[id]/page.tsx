@@ -298,7 +298,8 @@ export default function PelajarLessonDetailPage() {
         <div className="flex items-center gap-2 shrink-0">
           {lesson.exam_id && (
             <Link
-               href={`/pelajar/exam/${lesson.exam_id}?returnTo=${encodeURIComponent(`/pelajar/lesson/${lesson.id}`)}`}
+                href={`/pelajar/exam/${lesson.exam_id}?returnTo=${encodeURIComponent(`/pelajar/lesson/${lesson.id}`)}`}
+                onClick={() => sessionStorage.setItem(`exam_journey_${lesson.exam_id}`, lesson.id)}
               className="hidden sm:flex items-center gap-1.5 rounded-full bg-amber-500 px-4 py-2 text-xs font-bold text-white hover:bg-amber-600 shadow-md shadow-amber-500/20 transition-colors"
             >
               <Trophy className="w-3.5 h-3.5" />
@@ -494,7 +495,8 @@ export default function PelajarLessonDetailPage() {
                   </div>
                 </div>
                 <Link
-                   href={`/pelajar/exam/${lesson.exam_id}?returnTo=${encodeURIComponent(`/pelajar/lesson/${lesson.id}`)}`}
+                    href={`/pelajar/exam/${lesson.exam_id}?returnTo=${encodeURIComponent(`/pelajar/lesson/${lesson.id}`)}`}
+                    onClick={() => sessionStorage.setItem(`exam_journey_${lesson.exam_id}`, lesson.id)}
                   className="shrink-0 flex items-center gap-1.5 rounded-full bg-amber-500 hover:bg-amber-600 px-4 py-2 text-xs font-bold text-white transition-colors shadow-sm"
                 >
                   Kerjakan
