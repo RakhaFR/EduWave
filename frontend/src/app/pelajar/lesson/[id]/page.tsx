@@ -167,13 +167,16 @@ export default function PelajarLessonDetailPage() {
           setCourseTitle(courseData?.title ?? "");
 
         // Mark completed status on course lessons list
-        const rawLessons: Lesson[] = courseData?.lessons ?? [];
-        setCourseLessons(
-          rawLessons.map((l) => {
+          const rawLessons: Lesson[] = courseData?.lessons ?? [];
+          const mappedLessons = rawLessons.map((l) => {
             const isFinished = Boolean(l.is_completed) || completedIds.has(l.id) || (l.id === params.id && completed);
             return { ...l, is_completed: isFinished };
-          })
-        );
+          });
+          setCourseLessons(mappedLessons);
+          const courseLesson = mappedLessons.find((item) => item.id === params.id);
+          if (!lessonData.exam_id && courseLesson?.exam_id) {
+            setLesson({ ...lessonData, exam_id: courseLesson.exam_id });
+          }
         }
       } catch (err: any) {
         if (err?.response?.status === 403 || err?.response?.data?.error?.code === "LESSON_LOCKED") {
@@ -268,7 +271,7 @@ export default function PelajarLessonDetailPage() {
             <Menu className="w-5 h-5 text-slate-600" />
           </button>
           <button
-            onClick={() => courseId ? router.push(`/pelajar/course`) : router.back()}
+             onClick={() => courseId ? router.push(`/course/${courseId}`) : router.back()}
             className="rounded-xl p-2 hover:bg-slate-100 transition-colors shrink-0"
           >
             <ArrowLeft className="w-5 h-5 text-slate-600" />
@@ -283,7 +286,7 @@ export default function PelajarLessonDetailPage() {
         <div className="flex items-center gap-2 shrink-0">
           {lesson.exam_id && (
             <Link
-              href={`/pelajar/exam/${lesson.exam_id}`}
+               href={`/pelajar/exam/${lesson.exam_id}?returnTo=${encodeURIComponent(`/pelajar/lesson/${lesson.id}`)}`}
               className="hidden sm:flex items-center gap-1.5 rounded-full bg-amber-500 px-4 py-2 text-xs font-bold text-white hover:bg-amber-600 shadow-md shadow-amber-500/20 transition-colors"
             >
               <Trophy className="w-3.5 h-3.5" />
@@ -479,7 +482,7 @@ export default function PelajarLessonDetailPage() {
                   </div>
                 </div>
                 <Link
-                  href={`/pelajar/exam/${lesson.exam_id}`}
+                   href={`/pelajar/exam/${lesson.exam_id}?returnTo=${encodeURIComponent(`/pelajar/lesson/${lesson.id}`)}`}
                   className="shrink-0 flex items-center gap-1.5 rounded-full bg-amber-500 hover:bg-amber-600 px-4 py-2 text-xs font-bold text-white transition-colors shadow-sm"
                 >
                   Kerjakan

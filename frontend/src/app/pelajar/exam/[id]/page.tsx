@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { ArrowLeft, CheckCircle, Clock, Trophy, XCircle } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { PageToast, usePageToast } from "@/components/ui/PageToast";
@@ -20,6 +20,8 @@ type Phase = "info" | "doing" | "result" | "maxed";
 
 export default function PelajarExamPage() {
   const { id } = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo");
 
   const [exam, setExam] = useState<Exam | null>(null);
   const [history, setHistory] = useState<ExamAttemptHistory[]>([]);
@@ -42,6 +44,7 @@ export default function PelajarExamPage() {
   const { toast, showToast, hideToast } = usePageToast();
 
   answersRef.current = answers;
+  const resultReturnHref = returnTo || "/pelajar/my-courses";
 
   useEffect(() => {
     if (!id) return;
@@ -322,7 +325,7 @@ export default function PelajarExamPage() {
           </div>
         )}
         <Link
-          href="/pelajar/my-courses"
+          href={returnTo || "/pelajar/my-courses"}
           onClick={(event) => {
             if (phase === "doing" && exam.mode === "locked") {
               event.preventDefault();
@@ -539,10 +542,10 @@ export default function PelajarExamPage() {
                 </button>
               )}
               <Link
-                href="/pelajar/my-courses"
+                href={resultReturnHref}
                 className="rounded-full bg-[#008be3] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#0078c8]"
               >
-                Kembali ke My Courses
+                Kembali ke Lesson
               </Link>
             </div>
           </section>
