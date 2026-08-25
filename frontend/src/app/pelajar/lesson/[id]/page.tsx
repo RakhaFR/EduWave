@@ -134,15 +134,23 @@ export default function PelajarLessonDetailPage() {
       if (!params.id) return;
       setLoading(true);
       try {
-        const [response, progressRes] = await Promise.all([
+        const [response, progressRes, courseProgressRes] = await Promise.all([
           courseService.getLessonById(params.id),
           courseService.getUserCourseProgress().catch(() => null),
+          (async () => {
+            const lRes = await courseService.getLessonById(params.id).catch(() => null);
+            const cId = lRes?.data?.lesson?.course_id || lRes?.lesson?.course_id || lRes?.course_id;
+            if (cId) {
+              return courseService.getCourseProgress(cId).catch(() => null);
+            }
+            return null;
+          })(),
         ]);
 
         const lessonData = response.data?.lesson ?? response.lesson ?? response.data ?? response;
         setLesson(lessonData);
 
-        // Check completion status from DB / progressRes + lessonData (isolated per current user)
+        // Check completion status from DB / progressRes + courseProgressRes + lessonData (isolated per current user)
         let currentUserId = "";
         try {
           const userObj = JSON.parse(localStorage.getItem("user") || "{}");
@@ -155,6 +163,8 @@ export default function PelajarLessonDetailPage() {
         const completedIds = new Set([
           ...localCompleted,
           ...(progressRes?.success && progressRes.data?.completed_lessons ? progressRes.data.completed_lessons.map((l: any) => l.lesson_id || l.id || l) : []),
+          ...(courseProgressRes?.success && courseProgressRes.data?.completed_lessons ? courseProgressRes.data.completed_lessons.map((l: any) => l.lesson_id || l.id || l) : []),
+          ...(courseProgressRes?.success && courseProgressRes.data?.lessons_progress ? courseProgressRes.data.lessons_progress.filter((lp: any) => lp.is_completed).map((lp: any) => lp.id || lp.lesson_id) : []),
         ]);
 
         const completed = Boolean(lessonData.is_completed) || completedIds.has(params.id);
