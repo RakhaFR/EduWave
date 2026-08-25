@@ -118,6 +118,39 @@ class ExamAndAttemptTest extends TestCase
         $this->assertStringNotContainsString('explanation', $jsonString);
     }
 
+    public function test_exam_mode_and_fullscreen_configuration_are_exposed(): void
+    {
+        $student = $this->student();
+        $exam = $this->createExam([
+            'mode' => 'quiz',
+            'requires_fullscreen' => false,
+        ]);
+        $this->enroll($student, $exam);
+
+        $this->actingAs($student)
+            ->getJson("/api/v1/exams/{$exam->id}")
+            ->assertOk()
+            ->assertJsonPath('data.mode', 'quiz')
+            ->assertJsonPath('data.requires_fullscreen', false);
+    }
+
+    public function test_started_attempt_includes_exam_mode_configuration(): void
+    {
+        $student = $this->student();
+        $exam = $this->createExam([
+            'mode' => 'quiz',
+            'requires_fullscreen' => false,
+        ]);
+        $this->enroll($student, $exam);
+        ExamQuestion::factory()->create(['exam_id' => $exam->id]);
+
+        $this->actingAs($student)
+            ->postJson("/api/v1/exams/{$exam->id}/attempts")
+            ->assertCreated()
+            ->assertJsonPath('data.exam.mode', 'quiz')
+            ->assertJsonPath('data.exam.requires_fullscreen', false);
+    }
+
     // ──────────────────────────────────────────────────────────────────────────
     // 2. Start Exam Attempt & Resume (Idempotency)
     // ──────────────────────────────────────────────────────────────────────────

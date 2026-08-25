@@ -22,6 +22,8 @@ class ExamFactory extends Factory
             'course_id' => Course::factory(),
             'lesson_id' => Lesson::factory(),
             'title' => fake()->sentence(4),
+            'mode' => 'locked',
+            'requires_fullscreen' => true,
             'time_limit_sec' => fake()->randomElement([300, 600, 900, 1800, 3600]),
             'passing_score' => fake()->numberBetween(50, 90),
             'max_attempts' => fake()->numberBetween(1, 5),

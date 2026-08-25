@@ -177,6 +177,8 @@ class ExamService
             'exam' => [
                 'id' => $exam->id,
                 'title' => $exam->title,
+                'mode' => $exam->mode,
+                'requires_fullscreen' => $exam->requires_fullscreen,
                 'time_limit_sec' => $exam->time_limit_sec,
                 'question_count' => $questions->count(),
                 'passing_score' => $exam->passing_score,

@@ -103,6 +103,16 @@ class LeaderboardService
     }
 
     /**
+     * Get the number of users in a leaderboard.
+     */
+    public function getTotal(string $scope = 'global'): int
+    {
+        $this->normalizeWeeklyScores($scope);
+
+        return (int) Redis::zcard($this->getKeyForScope($scope));
+    }
+
+    /**
      * Get user's rank and neighboring users (context leaderboard).
      *
      * @return array ['user_rank' => int, 'neighbors' => [...]]

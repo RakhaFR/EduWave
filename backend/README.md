@@ -1128,7 +1128,9 @@ Retrieve exam metadata and question outline.
     "course_id": "c1f2e3d4-5678-90ab-cdef-1234567890ab",
     "lesson_id": null,
     "title": "Ujian Akhir: Oceanografi Dasar",
-    "time_limit_sec": 3600,
+     "mode": "locked",
+     "requires_fullscreen": true,
+     "time_limit_sec": 3600,
     "passing_score": 70,
     "max_attempts": 3,
     "pearls_reward": 30,
@@ -1167,6 +1169,8 @@ Start a new exam attempt or resume an active `in_progress` attempt. Enforces `ma
     "exam": {
       "id": "x1f2e3d4-5678-90ab-cdef-1234567890ab",
       "title": "Ujian Akhir: Oceanografi Dasar",
+      "mode": "locked",
+      "requires_fullscreen": true,
       "time_limit_sec": 3600,
       "question_count": 10,
       "passing_score": 70
@@ -1379,6 +1383,7 @@ List exams for management screens.
 
 * **Headers:** `Authorization: Bearer <token>`
 * **Authorization:** Admin or instructor. Instructors receive only exams belonging to their own courses.
+* **Response fields:** Each exam includes the explicit `mode` (`locked` or `quiz`) and `requires_fullscreen` boolean. These fields replace frontend inference from `lesson.type`.
 * **Success Response (`200 OK`):**
 ```json
 {
@@ -1388,9 +1393,11 @@ List exams for management screens.
       "id": "x1f2e3d4-5678-90ab-cdef-1234567890ab",
       "title": "Ujian Akhir: Oceanografi Dasar",
       "course_id": "c1f2e3d4-5678-90ab-cdef-1234567890ab",
-      "course_title": "Dasar Oceanografi",
-      "lesson_id": null,
-      "time_limit_sec": 3600,
+       "course_title": "Dasar Oceanografi",
+       "lesson_id": null,
+       "mode": "locked",
+       "requires_fullscreen": true,
+       "time_limit_sec": 3600,
       "passing_score": 70,
       "max_attempts": 3,
       "pearls_reward": 30
@@ -1400,6 +1407,17 @@ List exams for management screens.
   "meta": null
 }
 ```
+
+For `POST /api/v1/exams` and `PUT /api/v1/exams/{exam}`, send these optional fields to configure the exam explicitly:
+
+```json
+{
+  "mode": "quiz",
+  "requires_fullscreen": false
+}
+```
+
+`mode` accepts `locked` or `quiz`. If omitted during creation, the backend defaults to `locked` and `requires_fullscreen: true`. If `mode` is changed during an update without sending `requires_fullscreen`, fullscreen follows the selected mode (`true` for `locked`, `false` for `quiz`).
 
 ---
 
@@ -1692,10 +1710,14 @@ Get current week leaderboard rankings (week format: ISO 8601 year-week, e.g., `2
     "scope": "weekly",
     "week": "2026-W33",
     "current_page": 1,
-    "per_page": 50
+    "per_page": 50,
+    "total": 15,
+    "last_page": 1
   }
 }
 ```
+
+`total` is the total number of participants in the current week's leaderboard. `last_page` is calculated from `total` and `per_page`; frontend pagination should use these fields instead of inferring totals from the returned ranking count.
 
 ---
 
