@@ -13,6 +13,7 @@ import {
   ExamAttemptHistory,
   ExamAttemptResult,
   ExamQuestion,
+  ExamViolationEvent,
 } from "@/services/courseService";
 
 type Phase = "info" | "doing" | "result" | "maxed";
@@ -35,10 +36,12 @@ export default function PelajarExamPage() {
 
   const [timeLeft, setTimeLeft] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const tabExitCountRef = useRef(0);
-  const submitRef = useRef<(forced?: boolean) => Promise<void>>(async () => undefined);
+  const answersRef = useRef<Record<string, string>>({});
+  const violationInFlightRef = useRef(false);
   const [fullscreenLost, setFullscreenLost] = useState(false);
   const { toast, showToast, hideToast } = usePageToast();
+
+  answersRef.current = answers;
 
   useEffect(() => {
     if (!id) return;
@@ -113,6 +116,7 @@ export default function PelajarExamPage() {
       if (!document.fullscreenElement) {
         setFullscreenLost(true);
         showToast("Fullscreen keluar. Kembali ke fullscreen untuk melanjutkan ujian.", "error");
+        void reportViolation("fullscreen_exit");
       } else {
         setFullscreenLost(false);
       }
@@ -166,37 +170,7 @@ export default function PelajarExamPage() {
         selected_key,
       }));
       const res = await courseService.submitExamAttempt(id, attempt.attempt_id, formatted);
-       setResult(res.data);
-        if (exam?.mode === "locked" && document.fullscreenElement) {
-         await document.exitFullscreen().catch(() => undefined);
-       }
-
-      // Auto-complete lesson jika ujian terhubung dengan lesson atau kuis lulus
-      if (exam?.lesson_id && res.data?.passed) {
-        await courseService.completeLesson(exam.lesson_id).catch(() => null);
-
-        // Backup completed ID ke localStorage
-        if (typeof window !== "undefined") {
-          let currentUserId = "";
-          try {
-            const userObj = JSON.parse(localStorage.getItem("user") || "{}");
-            currentUserId = userObj?.id || "";
-          } catch {
-            currentUserId = "";
-          }
-          const userCompletedKey = currentUserId ? `completed_lesson_ids_${currentUserId}` : "completed_lesson_ids";
-          const localCompleted = JSON.parse(localStorage.getItem(userCompletedKey) || "[]");
-          if (!localCompleted.includes(exam.lesson_id)) {
-            localCompleted.push(exam.lesson_id);
-            localStorage.setItem(userCompletedKey, JSON.stringify(localCompleted));
-          }
-        }
-      }
-
-      const histRes = await courseService.getExamAttempts(id).catch(() => ({ data: [] }));
-      const raw = histRes.data ?? histRes ?? [];
-      setHistory(Array.isArray(raw) ? raw : []);
-      setPhase("result");
+       await finishSubmission(res.data);
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
       setError(message || "Gagal mengirim jawaban. Coba lagi.");
@@ -205,31 +179,83 @@ export default function PelajarExamPage() {
     }
   };
 
-  submitRef.current = handleSubmit;
+  const finishSubmission = async (submissionResult: ExamAttemptResult) => {
+    setResult(submissionResult);
+    if (exam?.mode === "locked" && document.fullscreenElement) {
+      await document.exitFullscreen().catch(() => undefined);
+    }
+
+    if (exam?.lesson_id && submissionResult.passed) {
+      await courseService.completeLesson(exam.lesson_id).catch(() => null);
+      if (typeof window !== "undefined") {
+        let currentUserId = "";
+        try {
+          currentUserId = JSON.parse(localStorage.getItem("user") || "{}").id || "";
+        } catch {
+          currentUserId = "";
+        }
+        const key = currentUserId ? `completed_lesson_ids_${currentUserId}` : "completed_lesson_ids";
+        const completed = JSON.parse(localStorage.getItem(key) || "[]");
+        if (!completed.includes(exam.lesson_id)) {
+          completed.push(exam.lesson_id);
+          localStorage.setItem(key, JSON.stringify(completed));
+        }
+      }
+    }
+
+    const histRes = await courseService.getExamAttempts(id).catch(() => ({ data: [] }));
+    const raw = histRes.data ?? histRes ?? [];
+    setHistory(Array.isArray(raw) ? raw : []);
+    setPhase("result");
+  };
+
+  const reportViolation = async (event: ExamViolationEvent) => {
+    if (!attempt || submitting || violationInFlightRef.current) return;
+    violationInFlightRef.current = true;
+    const latestAnswers = Object.entries(answersRef.current).map(([question_id, selected_key]) => ({ question_id, selected_key }));
+    try {
+      const response = await courseService.reportExamViolation(id, attempt.attempt_id, event, latestAnswers);
+      const violation = response.data ?? response;
+      if (violation.auto_submitted && violation.result) {
+        setSubmitting(true);
+        await finishSubmission(violation.result);
+        setSubmitting(false);
+      } else if (typeof violation.violation_count === "number") {
+        showToast(`Peringatan ${violation.violation_count}/${violation.max_violations}: jangan meninggalkan ujian.`, "error");
+      }
+    } catch {
+      showToast("Pelanggaran ujian gagal dicatat ke server. Periksa koneksi internet.", "error");
+    } finally {
+      violationInFlightRef.current = false;
+    }
+  };
+
+  useEffect(() => {
+    const locked = phase === "doing" && exam?.mode === "locked";
+    if (!locked) return;
+
+    const handleWindowBlur = () => {
+      void reportViolation("blur");
+    };
+
+    window.addEventListener("blur", handleWindowBlur);
+    return () => window.removeEventListener("blur", handleWindowBlur);
+  }, [exam?.mode, phase]);
 
   useEffect(() => {
     const locked = phase === "doing" && exam?.mode === "locked";
     if (!locked) {
-      tabExitCountRef.current = 0;
       return;
     }
 
     const handleVisibilityChange = () => {
       if (!document.hidden || submitting) return;
-
-      tabExitCountRef.current += 1;
-      const count = tabExitCountRef.current;
-      if (count >= 3) {
-        showToast("Kamu sudah 3 kali keluar dari tab. Jawaban sedang dikirim otomatis.", "error");
-        void submitRef.current(true);
-        return;
-      }
-      showToast(`Peringatan ${count}/3: jangan keluar dari tab selama ujian.`, "error");
+      void reportViolation("visibility_hidden");
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [exam?.mode, phase, showToast, submitting]);
+  }, [exam?.mode, phase, submitting]);
 
   const reenterFullscreen = async () => {
     try {

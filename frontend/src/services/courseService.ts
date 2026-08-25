@@ -109,10 +109,21 @@ export interface ExamAttemptResult {
   results: {
     question_id: string;
     is_correct: boolean;
-    your_answer: string;
-    correct_answer: string;
-    explanation: string;
+    your_answer: string | null;
+    correct_answer: string | null;
+    explanation: string | null;
   }[];
+}
+
+export type ExamViolationEvent = "blur" | "visibility_hidden" | "fullscreen_exit" | "tab_switch";
+
+export interface ExamViolationResponse {
+  attempt_id: string;
+  violation_count: number;
+  max_violations: number;
+  auto_submitted: boolean;
+  event: ExamViolationEvent;
+  result?: ExamAttemptResult;
 }
 
 export interface ExamAttemptHistory {
@@ -196,6 +207,16 @@ export const courseService = {
 
   async submitExamAttempt(examId: string, attemptId: string, answers: { question_id: string; selected_key: string }[]) {
     const response = await api.post(`/exams/${examId}/attempts/${attemptId}/submit`, { answers });
+    return response.data;
+  },
+
+  async reportExamViolation(
+    examId: string,
+    attemptId: string,
+    event: ExamViolationEvent,
+    answers: { question_id: string; selected_key: string }[],
+  ) {
+    const response = await api.post(`/exams/${examId}/attempts/${attemptId}/violations`, { event, answers });
     return response.data;
   },
 
