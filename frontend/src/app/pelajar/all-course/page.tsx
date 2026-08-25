@@ -235,6 +235,7 @@ function AllCoursesContent() {
                   currentPage={currentPage}
                   totalPages={totalPages}
                   onPageChange={(p) => setCurrentPage(p)}
+                  variant="white"
                 />
               </div>
             )}

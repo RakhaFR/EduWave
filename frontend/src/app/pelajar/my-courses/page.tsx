@@ -6,10 +6,14 @@ import { ChevronRight, Clock, BookOpen, Trash2, CheckCircle2, PlayCircle } from 
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { courseService, Course } from "@/services/courseService";
 import { GridSkeleton } from "@/components/ui/PageSkeleton";
+import SmartPagination from "@/components/common/SmartPagination";
+
+const ITEMS_PER_PAGE = 9;
 
 export default function PelajarMyCoursesPage() {
   const [enrolledCourses, setEnrolledCourses] = useState<(Course & { progress_pct: number; hasNewLessons?: boolean })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchMyCourses = async () => {
     setLoading(true);
@@ -95,6 +99,12 @@ export default function PelajarMyCoursesPage() {
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil(enrolledCourses.length / ITEMS_PER_PAGE));
+  const paginatedEnrolledCourses = enrolledCourses.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
     <DashboardLayout searchPlaceholder="Cari di My Courses...">
       <main className="px-4 md:px-8 py-4 md:py-6 pb-8">
@@ -120,89 +130,108 @@ export default function PelajarMyCoursesPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5 mb-8">
-            {enrolledCourses.map((course) => {
-              const isFinished = course.progress_pct >= 100;
-              return (
-                <Link
-                  data-tour={enrolledCourses[0]?.id === course.id ? "my-course-card" : undefined}
-                  key={course.id}
-                  href={`/course/${course.id}`}
-                  className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-black/20 hover:-translate-y-1 transition-all duration-300 flex flex-col"
-                >
-                  <div className="relative h-40 md:h-44 bg-[#c9e8ff] shrink-0">
-                    <img
-                      src={course.thumbnail_url || "/ocean-bg.jpg"}
-                      alt={course.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "/ocean-bg.jpg";
-                      }}
-                    />
-                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1">
-                      <span className="text-[10px] font-semibold text-[#008be3]">{course.category || "Umum"}</span>
-                    </div>
-                    {course.hasNewLessons && (
-                      <div className="absolute bottom-3 left-3 bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md animate-pulse">
-                        🔔 Materi Baru Ditambahkan!
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5 mb-8">
+              {paginatedEnrolledCourses.map((course) => {
+                const isFinished = course.progress_pct >= 100;
+                return (
+                  <Link
+                    data-tour={enrolledCourses[0]?.id === course.id ? "my-course-card" : undefined}
+                    key={course.id}
+                    href={`/course/${course.id}`}
+                    className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-black/20 hover:-translate-y-1 transition-all duration-300 flex flex-col"
+                  >
+                    <div className="relative h-40 md:h-44 bg-[#c9e8ff] shrink-0">
+                      <img
+                        src={course.thumbnail_url || "/ocean-bg.jpg"}
+                        alt={course.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "/ocean-bg.jpg";
+                        }}
+                      />
+                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-1">
+                        <span className="text-[10px] font-semibold text-[#008be3]">{course.category || "Umum"}</span>
                       </div>
-                    )}
-                    <div className={`absolute top-3 right-3 rounded-full px-2.5 py-1 flex items-center gap-1 shadow-sm ${isFinished ? "bg-green-500" : "bg-[#008be3]"}`}>
-                      {isFinished ? (
-                        <CheckCircle2 className="w-3 h-3 text-white" />
-                      ) : (
-                        <PlayCircle className="w-3 h-3 text-white" />
+                      {course.hasNewLessons && (
+                        <div className="absolute bottom-3 left-3 bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md animate-pulse">
+                          🔔 Materi Baru Ditambahkan!
+                        </div>
                       )}
-                      <span className="text-[10px] font-bold text-white">
-                        {isFinished ? "Selesai" : "Sedang Dipelajari"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-4 flex flex-col gap-3 flex-1">
-                    <div>
-                      <h3 className="font-bold text-[#00172e] text-sm leading-snug mb-1 line-clamp-2 min-h-[2.5rem]">
-                        {course.title}
-                      </h3>
-                      <p className="text-xs text-slate-400">
-                        {course.instructor?.full_name || "Instruktur EduWave"}
-                      </p>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[10px] font-semibold text-slate-400">Progress Belajar</span>
-                        <span className="text-[10px] font-extrabold text-[#008be3]">
-                          {Math.round(course.progress_pct)}%
+                      <div className={`absolute top-3 right-3 rounded-full px-2.5 py-1 flex items-center gap-1 shadow-sm ${isFinished ? "bg-green-500" : "bg-[#008be3]"}`}>
+                        {isFinished ? (
+                          <CheckCircle2 className="w-3 h-3 text-white" />
+                        ) : (
+                          <PlayCircle className="w-3 h-3 text-white" />
+                        )}
+                        <span className="text-[10px] font-bold text-white">
+                          {isFinished ? "Selesai" : "Sedang Dipelajari"}
                         </span>
                       </div>
-                      <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                        <div
-                          className="h-2 rounded-full bg-gradient-to-r from-[#008be3] to-cyan-400 transition-all duration-500"
-                          style={{ width: `${course.progress_pct}%` }}
-                        />
+                    </div>
+
+                    <div className="p-4 flex flex-col gap-3 flex-1">
+                      <div>
+                        <h3 className="font-bold text-[#00172e] text-sm leading-snug mb-1 line-clamp-2 min-h-[2.5rem]">
+                          {course.title}
+                        </h3>
+                        <p className="text-xs text-slate-400">
+                          {course.instructor?.full_name || "Instruktur EduWave"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[10px] font-semibold text-slate-400">Progress Belajar</span>
+                          <span className="text-[10px] font-extrabold text-[#008be3]">
+                            {Math.round(course.progress_pct)}%
+                          </span>
+                        </div>
+                        <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                          <div
+                            className="h-2 rounded-full bg-gradient-to-r from-[#008be3] to-cyan-400 transition-all duration-500"
+                            style={{ width: `${course.progress_pct}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between">
+                        <button
+                          onClick={(e) => handleUnenroll(e, course.id)}
+                          className="text-red-400 hover:text-red-500 transition-colors p-1 flex items-center gap-1 text-[11px]"
+                          title="Batalkan Pendaftaran"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Keluar</span>
+                        </button>
+
+                        <span className="flex items-center gap-1 rounded-full bg-[#008be3] px-4 py-1.5 text-[11px] font-bold text-white group-hover:bg-[#0078c8] transition-colors">
+                          Lanjutkan Belajar <ChevronRight className="w-3 h-3" />
+                        </span>
                       </div>
                     </div>
+                  </Link>
+                );
+              })}
+            </div>
 
-                    <div className="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between">
-                      <button
-                        onClick={(e) => handleUnenroll(e, course.id)}
-                        className="text-red-400 hover:text-red-500 transition-colors p-1 flex items-center gap-1 text-[11px]"
-                        title="Batalkan Pendaftaran"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Keluar</span>
-                      </button>
-
-                      <span className="flex items-center gap-1 rounded-full bg-[#008be3] px-4 py-1.5 text-[11px] font-bold text-white group-hover:bg-[#0078c8] transition-colors">
-                        Lanjutkan Belajar <ChevronRight className="w-3 h-3" />
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+                <p className="text-xs text-white/80 font-medium">
+                  Menampilkan <span className="font-bold text-white">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span>-
+                  <span className="font-bold text-white">{Math.min(enrolledCourses.length, currentPage * ITEMS_PER_PAGE)}</span> dari{" "}
+                  <span className="font-bold text-white">{enrolledCourses.length}</span> kursus terdaftar
+                </p>
+                <SmartPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={(p) => setCurrentPage(p)}
+                  variant="white"
+                />
+              </div>
+            )}
+          </>
         )}
       </main>
     </DashboardLayout>
