@@ -152,7 +152,7 @@ export default function CourseDetailPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-[#00172e]">
       <header className="sticky top-0 z-20 flex items-center gap-4 border-b border-slate-100 bg-white px-4 py-3 md:px-8">
-        <button onClick={() => router.back()} className="rounded-full p-2 hover:bg-slate-100"><ArrowLeft className="w-5 h-5" /></button>
+        <button onClick={() => router.push("/pelajar/my-courses")} className="rounded-full p-2 hover:bg-slate-100" aria-label="Kembali ke My Courses"><ArrowLeft className="w-5 h-5" /></button>
         <div className="min-w-0"><h1 className="truncate font-extrabold">{course.title}</h1><p className="text-xs text-slate-400">{course.instructor?.full_name || "Instruktur EduWave"}</p></div>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-6 md:px-8">
