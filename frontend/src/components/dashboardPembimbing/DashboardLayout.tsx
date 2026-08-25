@@ -140,16 +140,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   Pengaturan
                 </p>
                 <nav className="flex flex-col gap-1">
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      showToast("Fitur Pengaturan segera hadir!");
-                    }}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-[#0073e6] transition-all text-left w-full cursor-pointer"
+                  <Link
+                    href="/pembimbing/profile"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all text-left w-full cursor-pointer ${isActive("/pembimbing/profile") ? "bg-[#e6f3ff] text-[#0073e6] font-semibold" : "text-slate-500 hover:bg-slate-50 hover:text-[#0073e6]"}`}
                   >
                     <Settings className="w-5 h-5 shrink-0" />
                     <span>Pengaturan</span>
-                  </button>
+                  </Link>
                 </nav>
               </div>
             </div>
