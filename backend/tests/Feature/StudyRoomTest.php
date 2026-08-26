@@ -12,6 +12,7 @@ use App\Events\StudyRoomUserLeft;
 use App\Models\RoomMessage;
 use App\Models\StudyRoom;
 use App\Models\User;
+use App\Services\ChatAttachmentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
@@ -350,6 +351,26 @@ class StudyRoomTest extends TestCase
         ]);
     }
 
+    public function test_host_leaving_deletes_all_room_messages(): void
+    {
+        $host = $this->student();
+        $room = StudyRoom::factory()->create([
+            'host_user_id' => $host->id,
+            'status' => 'active',
+        ]);
+        $room->participants()->attach($host->id);
+        RoomMessage::factory()->count(2)->create(['room_id' => $room->id]);
+
+        $this->actingAs($host)->deleteJson("/api/v1/study-rooms/{$room->id}/leave")
+            ->assertOk();
+
+        $this->assertDatabaseMissing('room_messages', ['room_id' => $room->id]);
+        $this->assertDatabaseHas('study_rooms', [
+            'id' => $room->id,
+            'status' => 'closed',
+        ]);
+    }
+
     public function test_leaving_room_when_not_participant_returns_404(): void
     {
         $user = $this->student();
@@ -381,6 +402,21 @@ class StudyRoomTest extends TestCase
             'id' => $room->id,
             'status' => 'closed',
         ]);
+    }
+
+    public function test_closing_room_deletes_all_messages(): void
+    {
+        $host = $this->student();
+        $room = StudyRoom::factory()->create([
+            'host_user_id' => $host->id,
+            'status' => 'active',
+        ]);
+        RoomMessage::factory()->count(2)->create(['room_id' => $room->id]);
+
+        $this->actingAs($host)->deleteJson("/api/v1/study-rooms/{$room->id}")
+            ->assertOk();
+
+        $this->assertDatabaseMissing('room_messages', ['room_id' => $room->id]);
     }
 
     public function test_admin_can_close_any_room(): void
@@ -532,6 +568,32 @@ class StudyRoomTest extends TestCase
 
         $response->assertOk()->assertJsonPath('data.message_id', $message->id);
         $this->assertDatabaseMissing('room_messages', ['id' => $message->id]);
+    }
+
+    public function test_deleting_message_cleans_up_its_attachment(): void
+    {
+        $user = $this->student();
+        $room = StudyRoom::factory()->create(['status' => 'active']);
+        $room->participants()->attach($user->id);
+        $message = RoomMessage::factory()->create([
+            'room_id' => $room->id,
+            'user_id' => $user->id,
+            'type' => 'file',
+            'content' => json_encode([
+                'url' => 'https://res.cloudinary.com/example/image/upload/chat/file.jpg',
+                'public_id' => 'chat/study-rooms/example/file',
+                'resource_type' => 'image',
+            ]),
+        ]);
+
+        $this->mock(ChatAttachmentService::class, function ($mock) use ($message): void {
+            $mock->shouldReceive('deleteFromMessage')->once()->withArgs(function ($actual) use ($message): bool {
+                return $actual->is($message);
+            });
+        });
+
+        $this->actingAs($user)->deleteJson("/api/v1/study-rooms/{$room->id}/messages/{$message->id}")
+            ->assertOk();
     }
 
     public function test_user_cannot_update_or_delete_another_users_message(): void

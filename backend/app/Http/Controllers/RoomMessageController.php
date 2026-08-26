@@ -8,6 +8,7 @@ use App\Events\StudyRoomMessageUpdated;
 use App\Http\Requests\StudyRoom\SendMessageRequest;
 use App\Models\RoomMessage;
 use App\Models\StudyRoom;
+use App\Services\ChatAttachmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -132,7 +133,7 @@ class RoomMessageController extends ApiController
      * Delete a message owned by the authenticated participant.
      * DELETE /api/v1/study-rooms/{room}/messages/{message}
      */
-    public function destroy(Request $request, StudyRoom $room, RoomMessage $message): JsonResponse
+    public function destroy(Request $request, StudyRoom $room, RoomMessage $message, ChatAttachmentService $attachments): JsonResponse
     {
         $authorizationError = $this->authorizeMessageAction($request, $room, $message);
         if ($authorizationError) {
@@ -144,6 +145,7 @@ class RoomMessageController extends ApiController
         }
 
         broadcast(new StudyRoomMessageDeleted($room, $message->id))->toOthers();
+        $attachments->deleteFromMessage($message);
         $message->delete();
 
         return $this->success([

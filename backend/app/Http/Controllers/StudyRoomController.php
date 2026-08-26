@@ -9,6 +9,7 @@ use App\Events\StudyRoomUserLeft;
 use App\Http\Requests\StudyRoom\StoreStudyRoomRequest;
 use App\Models\StudyRoom;
 use App\Models\User;
+use App\Services\ChatAttachmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -306,6 +307,7 @@ class StudyRoomController extends ApiController
 
         // If host leaves, close the room
         if ($room->host_user_id === $user->id) {
+            app(ChatAttachmentService::class)->deleteFromRoom($room);
             $room->update(['status' => 'closed']);
             broadcast(new StudyRoomClosed($room));
         }
@@ -317,7 +319,7 @@ class StudyRoomController extends ApiController
      * Delete/close a study room.
      * DELETE /api/v1/study-rooms/{room}
      */
-    public function destroy(Request $request, StudyRoom $room): JsonResponse
+    public function destroy(Request $request, StudyRoom $room, ChatAttachmentService $attachments): JsonResponse
     {
         $user = $request->user();
 
@@ -326,7 +328,8 @@ class StudyRoomController extends ApiController
             return $this->error('FORBIDDEN', 'Anda tidak memiliki izin untuk menutup ruang belajar ini.', 403);
         }
 
-        // Mark as closed instead of hard delete (preserve message history)
+        // Keep the room record for its closed status, but remove its chat data and files.
+        $attachments->deleteFromRoom($room);
         $room->update(['status' => 'closed']);
 
         // Broadcast room closed event
