@@ -14,9 +14,9 @@ class AiChatRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'message' => ['required', 'string'],
-            'course_context_id' => ['nullable', 'uuid'],
-            'lesson_context_id' => ['nullable', 'uuid'],
+            'message' => ['required', 'string', 'max:4000'],
+            'course_context_id' => ['nullable', 'uuid', 'exists:courses,id'],
+            'lesson_context_id' => ['nullable', 'uuid', 'exists:lessons,id'],
             'conversation_id' => ['nullable', 'uuid'],
         ];
     }

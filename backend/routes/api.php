@@ -4,6 +4,7 @@ use App\Http\Controllers\AchievementController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\AiController;
 use App\Http\Controllers\AttemptController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ChatAttachmentController;
@@ -56,6 +57,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('users/me/achievements', [UserController::class, 'achievements'])->name('users.me.achievements');
         Route::get('users/me/courses', [UserController::class, 'courses'])->name('users.me.courses');
         Route::get('users/me/course-progress', [EnrollmentController::class, 'allProgress'])->name('users.me.course-progress.index');
+        Route::post('ai/chat', [AiController::class, 'chat'])->name('ai.chat');
     });
 
     // ──────────────────────────────────────────────────────

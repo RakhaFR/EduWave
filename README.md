@@ -106,6 +106,96 @@ API backend akan berjalan di `http://localhost:8000`.
 
 ---
 
+## 🤖 AI Study Assistant
+
+Backend menyediakan endpoint chat yang meneruskan request ke API OpenAI-compatible Xkiro. API key hanya disimpan di backend, bukan di frontend.
+
+### Konfigurasi Backend
+
+Tambahkan ke `backend/.env`, lalu bersihkan cache konfigurasi:
+
+```env
+XKIRO_BASE_URL=https://api.xkiro.com/v1
+XKIRO_API_KEY=your-xkiro-api-key
+XKIRO_MODEL=qwen/qwen3.7-plus:free
+XKIRO_TIMEOUT=60
+```
+
+Hasil pengujian langsung ke Xkiro pada 26 Agustus 2026 tanpa header `Authorization` adalah **HTTP 401**. Jadi, meskipun model bertanda `:free`, environment ini tetap memerlukan API key Xkiro.
+
+```bash
+cd backend
+php artisan config:clear
+```
+
+### Endpoint Chat
+
+```http
+POST /api/v1/ai/chat
+Authorization: Bearer {eduwave_token}
+Content-Type: application/json
+Accept: application/json
+```
+
+Body minimal:
+
+```json
+{
+  "message": "Jelaskan fotosintesis dengan singkat"
+}
+```
+
+Body dengan konteks pembelajaran:
+
+```json
+{
+  "message": "Buatkan ringkasan materi ini",
+  "course_context_id": "COURSE_UUID",
+  "lesson_context_id": "LESSON_UUID",
+  "conversation_id": "OPTIONAL_CLIENT_CONVERSATION_UUID"
+}
+```
+
+`message` maksimal 4.000 karakter. Student hanya dapat mengirim konteks kursus yang published dan sudah di-enroll; admin/instructor dapat menggunakan konteks kursus apa pun. `conversation_id` saat ini hanya dikembalikan sebagai identifier client dan belum disimpan server.
+
+Contoh penggunaan dari frontend menggunakan `fetch`:
+
+```ts
+const response = await fetch(`${API_URL}/v1/ai/chat`, {
+  method: "POST",
+  headers: {
+    "Authorization": `Bearer ${token}`,
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  },
+  body: JSON.stringify({ message: "Apa inti lesson ini?", lesson_context_id: lessonId }),
+});
+
+const result = await response.json();
+if (!response.ok) throw new Error(result.error?.message ?? "AI tidak tersedia");
+console.log(result.data.message);
+```
+
+Respons berhasil mengikuti envelope API EduWave:
+
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Fotosintesis adalah ...",
+    "conversation_id": null,
+    "model": "qwen/qwen3.7-plus:free",
+    "usage": { "prompt_tokens": 30, "completion_tokens": 20, "total_tokens": 50 }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+Error upstream atau key yang belum dikonfigurasi menghasilkan HTTP `503` dengan `error.code` `AI_SERVICE_UNAVAILABLE`.
+
+---
+
 ## 📎 Chat Attachments (Cloudinary)
 
 Fitur ini menyediakan upload gambar, video, dan dokumen untuk study room chat serta private friend chat. File diunggah oleh backend ke Cloudinary dan endpoint mengembalikan URL HTTPS yang dapat dikirim sebagai isi pesan. Frontend belum diubah oleh implementasi ini.

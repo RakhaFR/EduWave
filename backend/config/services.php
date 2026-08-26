@@ -39,4 +39,11 @@ return [
         'url' => env('CLOUDINARY_URL'),
     ],
 
+    'xkiro' => [
+        'base_url' => env('XKIRO_BASE_URL', 'https://api.xkiro.com/v1'),
+        'key' => env('XKIRO_API_KEY'),
+        'model' => env('XKIRO_MODEL', 'qwen/qwen3.7-plus:free'),
+        'timeout' => (int) env('XKIRO_TIMEOUT', 60),
+    ],
+
 ];
