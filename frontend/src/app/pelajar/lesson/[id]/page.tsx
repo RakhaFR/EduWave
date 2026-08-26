@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { courseService, Lesson } from "@/services/courseService";
 import StudentTutorial from "@/components/ui/StudentTutorial";
+import AiChat from "@/components/ui/AiChat";
 
 function MarkdownRenderer({ content }: { content: string }) {
   return (
@@ -606,6 +607,7 @@ export default function PelajarLessonDetailPage() {
         </main>
       </div>
       <StudentTutorial />
+      <AiChat courseId={courseId} lessonId={lesson.id} />
     </div>
   );
 }

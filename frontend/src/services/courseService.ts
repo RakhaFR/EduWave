@@ -92,6 +92,17 @@ export interface ChatAttachment {
   original_name: string;
 }
 
+export interface AiChatResponse {
+  message: string;
+  conversation_id: string | null;
+  model?: string;
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+  };
+}
+
 export interface ExamAttempt {
   attempt_id: string;
   exam: {
@@ -154,6 +165,21 @@ function accountCacheScope() {
 }
 
 export const courseService = {
+  async sendAiChat(payload: {
+    message: string;
+    course_context_id?: string;
+    lesson_context_id?: string;
+    conversation_id?: string;
+  }) {
+    const response = await api.post("/ai/chat", payload);
+    return response.data as {
+      success: boolean;
+      data: AiChatResponse | null;
+      error: { code?: string; message?: string } | null;
+      meta: unknown;
+    };
+  },
+
   async getAllCourses(params?: { category?: string; difficulty?: string; search?: string; sort?: string }) {
     const cacheKey = `courses:${accountCacheScope()}:${JSON.stringify(params ?? {})}`;
     return cachedRequest(cacheKey, async () => {
