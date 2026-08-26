@@ -106,6 +106,141 @@ API backend akan berjalan di `http://localhost:8000`.
 
 ---
 
+## 📎 Chat Attachments (Cloudinary)
+
+Fitur ini menyediakan upload gambar, video, dan dokumen untuk study room chat serta private friend chat. File diunggah oleh backend ke Cloudinary dan endpoint mengembalikan URL HTTPS yang dapat dikirim sebagai isi pesan. Frontend belum diubah oleh implementasi ini.
+
+### A. Setup Cloudinary
+
+1. Buat akun gratis di [Cloudinary](https://cloudinary.com/) dan buka **Dashboard**.
+2. Salin **API Environment Variable** dengan format berikut.
+3. Tambahkan nilainya ke `backend/.env`:
+
+```env
+CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+```
+
+Jangan menaruh `API_SECRET` di frontend, `frontend/.env.local`, atau repository. Setelah mengubah environment, jalankan:
+
+```bash
+cd backend
+php artisan config:clear
+```
+
+Dependensi PHP sudah didefinisikan sebagai `cloudinary/cloudinary_php` di `backend/composer.json`. Jika checkout dari repository baru, jalankan `composer install`.
+
+### B. Aturan Upload
+
+- Maksimal satu file per request.
+- Ukuran maksimal: **10 MB** (`10240 KB`).
+- Gambar: JPEG, PNG, GIF, WebP.
+- Video: MP4, WebM, MOV/QuickTime.
+- Dokumen: PDF, TXT, DOC/DOCX, XLS/XLSX, PPT/PPTX.
+- Upload harus menggunakan `multipart/form-data` dengan nama field `file`.
+- Semua endpoint memerlukan header `Authorization: Bearer {token}`.
+- File tidak otomatis menjadi pesan. Setelah upload berhasil, frontend mengirim URL hasil upload melalui endpoint message yang sudah ada.
+
+### C. Endpoint Study Room
+
+```http
+POST /api/v1/study-rooms/{room}/attachments
+```
+
+Syarat akses: user harus menjadi peserta room dan room harus berstatus `active`.
+
+Contoh request:
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/study-rooms/ROOM_ID/attachments" \
+  -H "Authorization: Bearer TOKEN" \
+  -H "Accept: application/json" \
+  -F "file=@/path/to/photo.jpg"
+```
+
+### D. Endpoint Private Friend Chat
+
+```http
+POST /api/v1/private-chats/{conversation}/attachments
+```
+
+Syarat akses: user harus merupakan salah satu anggota conversation tersebut.
+
+Contoh request:
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/private-chats/CONVERSATION_ID/attachments" \
+  -H "Authorization: Bearer TOKEN" \
+  -H "Accept: application/json" \
+  -F "file=@/path/to/document.pdf"
+```
+
+### E. Respons Berhasil
+
+Kedua endpoint memakai format respons API EduWave:
+
+```json
+{
+  "success": true,
+  "data": {
+    "attachment": {
+      "url": "https://res.cloudinary.com/.../upload/.../photo.jpg",
+      "public_id": "chat/study-rooms/ROOM_ID/photo_abc123",
+      "resource_type": "image",
+      "format": "jpg",
+      "mime_type": "image/jpeg",
+      "size": 245678,
+      "original_name": "photo.jpg"
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+`resource_type` bernilai `image`, `video`, atau `raw` untuk dokumen. URL yang dipakai untuk pesan adalah `data.attachment.url`.
+
+### F. Panduan Implementasi Frontend
+
+Frontend dapat memakai alur berikut tanpa membocorkan kredensial Cloudinary:
+
+1. Saat user memilih file, tolak file jika `file.size > 10 * 1024 * 1024` dan tampilkan tipe file yang diperbolehkan.
+2. Buat `FormData`, lalu append file dengan key `file`.
+3. POST `FormData` ke endpoint attachment sesuai konteks chat menggunakan Bearer token. Jangan set header `Content-Type` secara manual jika memakai Axios/fetch; browser akan menambahkan boundary multipart.
+4. Ambil `data.attachment` dari respons.
+5. Kirim pesan melalui endpoint yang sudah ada:
+   - Study room: `POST /api/v1/study-rooms/{room}/messages` dengan `{ "content": attachment.url, "type": "file" }`.
+   - Private chat: `POST /api/v1/private-chats/{conversation}/messages` dengan `{ "content": attachment.url }`.
+6. Render berdasarkan MIME/resource type. Untuk gambar gunakan `<img>`, video `<video controls>`, sedangkan dokumen gunakan link download/open pada `attachment.url`.
+7. Simpan metadata attachment dari respons pada state pesan jika UI memerlukan nama file, ukuran, atau preview. Backend saat ini menyimpan URL sebagai `content`, jadi perubahan model/database belum diperlukan untuk endpoint upload tahap pertama.
+
+Contoh fungsi client-side:
+
+```ts
+const form = new FormData();
+form.append("file", file);
+
+const upload = await api.post(
+  `/study-rooms/${roomId}/attachments`,
+  form,
+  { headers: { Authorization: `Bearer ${token}` } }
+);
+
+await api.post(`/study-rooms/${roomId}/messages`, {
+  content: upload.data.data.attachment.url,
+  type: "file",
+});
+```
+
+### G. Error Utama
+
+- `401`: token tidak ada atau tidak valid.
+- `403 NOT_A_PARTICIPANT` / `UNAUTHORIZED_CONVERSATION`: user tidak memiliki akses chat.
+- `422`: field `file` kosong, tipe file tidak diperbolehkan, atau ukuran lebih dari 10 MB.
+- `502 UPLOAD_FAILED`: Cloudinary gagal menerima file.
+- `503 CLOUDINARY_NOT_CONFIGURED`: `CLOUDINARY_URL` belum diisi di backend.
+
+---
+
 ## 🌐 Deployment Configuration (Vercel)
 
 Jika melakukan *deployment* platform frontend ke **Vercel**:

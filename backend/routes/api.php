@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AttemptController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ChatAttachmentController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\ExamController;
@@ -127,6 +128,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::delete('study-rooms/{room}', [StudyRoomController::class, 'destroy'])->name('study-rooms.destroy');
         Route::get('study-rooms/{room}/messages', [RoomMessageController::class, 'index'])->name('study-rooms.messages.index');
         Route::post('study-rooms/{room}/messages', [RoomMessageController::class, 'store'])->name('study-rooms.messages.store');
+        Route::post('study-rooms/{room}/attachments', [ChatAttachmentController::class, 'studyRoom'])->name('study-rooms.attachments.store');
         Route::put('study-rooms/{room}/messages/{message}', [RoomMessageController::class, 'update'])->name('study-rooms.messages.update');
         Route::delete('study-rooms/{room}/messages/{message}', [RoomMessageController::class, 'destroy'])->name('study-rooms.messages.destroy');
 
@@ -141,6 +143,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::post('private-chats/start/{friend}', [PrivateChatController::class, 'start'])->name('private-chats.start');
         Route::get('private-chats/{conversation}/messages', [PrivateChatController::class, 'messages'])->name('private-chats.messages.index');
         Route::post('private-chats/{conversation}/messages', [PrivateChatController::class, 'sendMessage'])->name('private-chats.messages.store');
+        Route::post('private-chats/{conversation}/attachments', [ChatAttachmentController::class, 'privateChat'])->name('private-chats.attachments.store');
 
         // Admin / Instructor only — course management
         Route::middleware('role:admin,instructor')->group(function () {

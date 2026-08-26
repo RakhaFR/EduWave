@@ -4,6 +4,9 @@ set -e
 echo "==> Creating storage symlink..."
 php artisan storage:link --force
 
+echo "==> Clearing config..."
+php artisan config:clear
+
 echo "==> Caching config, routes (with runtime environment)..."
 php artisan config:cache
 php artisan route:cache
