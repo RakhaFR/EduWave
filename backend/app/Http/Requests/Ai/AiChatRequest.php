@@ -15,7 +15,7 @@ class AiChatRequest extends BaseRequest
     {
         return [
             'message' => ['required', 'string', 'max:4000'],
-            'course_context_id' => ['nullable', 'uuid', 'exists:courses,id'],
+            'course_context_id' => ['nullable', 'uuid', 'exists:courses,id', 'required_without:lesson_context_id'],
             'lesson_context_id' => ['nullable', 'uuid', 'exists:lessons,id'],
             'conversation_id' => ['nullable', 'uuid'],
         ];
