@@ -11,6 +11,7 @@ import {
   X,
   Send,
   Smile,
+  Paperclip,
   ArrowDown,
 } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
@@ -49,6 +50,8 @@ type PrivateMessage = {
   sender?: Person;
 };
 
+const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
+
 function avatar(person?: Person) {
   return person?.avatar_url ? (
     <img
@@ -59,6 +62,17 @@ function avatar(person?: Person) {
   ) : (
     (person?.username || person?.full_name || "U").charAt(0).toUpperCase()
   );
+}
+
+function renderAttachment(url: string) {
+  const cleanUrl = url.split("?")[0].toLowerCase();
+  if (/\.(png|jpe?g|gif|webp|bmp|svg)$/.test(cleanUrl)) return <img src={url} alt="Lampiran" className="max-h-64 max-w-full rounded-xl object-contain" />;
+  if (/\.(mp4|webm|mov|ogg)$/.test(cleanUrl)) return <video src={url} controls className="max-h-64 max-w-full rounded-xl" />;
+  return <a href={url} target="_blank" rel="noreferrer" className="break-all underline">Buka lampiran</a>;
+}
+
+function isAttachmentUrl(value: string) {
+  return /^https?:\/\//i.test(value) && /\.(png|jpe?g|gif|webp|bmp|svg|mp4|webm|mov|ogg|pdf|docx?|xlsx?|pptx?|txt)(\?|$)/i.test(value);
 }
 
 export default function FriendsComponent() {
@@ -74,6 +88,8 @@ export default function FriendsComponent() {
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   const [messages, setMessages] = useState<PrivateMessage[]>([]);
   const [draft, setDraft] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -316,12 +332,16 @@ export default function FriendsComponent() {
 
   const sendMessage = async (event: FormEvent) => {
     event.preventDefault();
-    if (!selectedChat || !draft.trim()) return;
+    if (!selectedChat || (!draft.trim() && !attachment)) return;
     try {
-      const response = await courseService.sendPrivateChatMessage(
-        selectedChat.id,
-        draft.trim(),
-      );
+      setUploading(Boolean(attachment));
+      let content = draft.trim();
+      if (attachment) {
+        const upload = await courseService.uploadPrivateChatAttachment(selectedChat.id, attachment);
+        content = upload.data?.attachment?.url ?? upload.attachment?.url ?? "";
+      }
+      if (!content) return;
+      const response = await courseService.sendPrivateChatMessage(selectedChat.id, content);
       const sent = response.data?.message ?? response.message;
       if (sent)
         setMessages((current) =>
@@ -330,9 +350,22 @@ export default function FriendsComponent() {
             : [...current, sent],
         );
       setDraft("");
+      setAttachment(null);
     } catch (err: any) {
       setError(err?.response?.data?.error?.message || "Pesan gagal dikirim.");
+    } finally {
+      setUploading(false);
     }
+  };
+
+  const selectAttachment = (file?: File) => {
+    if (!file) return;
+    if (file.size > MAX_ATTACHMENT_SIZE) {
+      setError("File maksimal 10 MB. Gunakan gambar, video, atau dokumen yang diizinkan.");
+      return;
+    }
+    setError("");
+    setAttachment(file);
   };
 
   return (
@@ -416,7 +449,7 @@ export default function FriendsComponent() {
                               "Teman"}
                         </p>
                         <p className="break-words text-sm [overflow-wrap:anywhere]">
-                          {item.content}
+                           {isAttachmentUrl(item.content) ? renderAttachment(item.content) : item.content}
                         </p>
                         <p
                           className={`mt-1 text-[10px] ${own ? "text-white/70" : "text-slate-400"}`}
@@ -458,11 +491,15 @@ export default function FriendsComponent() {
               onSubmit={sendMessage}
               className="relative flex gap-2 border-t border-slate-100 p-4"
             >
+              <label className="flex shrink-0 cursor-pointer items-center justify-center rounded-xl border border-slate-200 px-3 text-[#008be3] hover:bg-blue-50" title="Lampirkan file">
+                <Paperclip className="h-5 w-5" />
+                <input type="file" className="hidden" onChange={(event) => selectAttachment(event.target.files?.[0])} accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" />
+              </label>
               <input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 maxLength={5000}
-                placeholder="Tulis pesan..."
+                placeholder={attachment ? attachment.name : "Tulis pesan..."}
                 className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#008be3]"
               />
               <div className="relative flex shrink-0 gap-2">
@@ -491,7 +528,7 @@ export default function FriendsComponent() {
                   </div>
                 )}
                 <button
-                  disabled={busy}
+                  disabled={busy || uploading}
                   className="rounded-xl bg-[#008be3] px-4 text-white disabled:opacity-50"
                 >
                   <Send className="h-4 w-4" />

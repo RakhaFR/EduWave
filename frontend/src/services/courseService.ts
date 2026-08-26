@@ -82,6 +82,16 @@ export interface Exam {
   questions?: ExamQuestion[];
 }
 
+export interface ChatAttachment {
+  url: string;
+  public_id: string;
+  resource_type: "image" | "video" | "raw";
+  format: string;
+  mime_type: string;
+  size: number;
+  original_name: string;
+}
+
 export interface ExamAttempt {
   attempt_id: string;
   exam: {
@@ -304,6 +314,20 @@ export const courseService = {
 
   async inviteStudyRoomParticipant(roomId: string, userId: string) {
     const response = await api.post(`/study-rooms/${roomId}/invite`, { user_id: userId });
+    return response.data;
+  },
+
+  async uploadStudyRoomAttachment(roomId: string, file: File) {
+    const form = new FormData();
+    form.append("file", file);
+    const response = await api.post(`/study-rooms/${roomId}/attachments`, form);
+    return response.data;
+  },
+
+  async uploadPrivateChatAttachment(conversationId: string, file: File) {
+    const form = new FormData();
+    form.append("file", file);
+    const response = await api.post(`/private-chats/${conversationId}/attachments`, form);
     return response.data;
   },
 

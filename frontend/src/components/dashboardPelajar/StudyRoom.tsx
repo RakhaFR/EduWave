@@ -17,6 +17,7 @@ import {
   UserMinus,
   Copy,
   KeyRound,
+  Paperclip,
 } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { courseService } from "@/services/courseService";
@@ -57,6 +58,8 @@ type Message = {
   };
 };
 
+const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
+
 function formatMessageTime(value?: string) {
   if (!value) return "";
   const date = new Date(value);
@@ -68,12 +71,25 @@ function formatMessageTime(value?: string) {
   });
 }
 
+function renderAttachment(url: string, className = "") {
+  const cleanUrl = url.split("?")[0].toLowerCase();
+  if (/\.(png|jpe?g|gif|webp|bmp|svg)$/.test(cleanUrl)) {
+    return <img src={url} alt="Lampiran" className={`max-h-64 max-w-full rounded-xl object-contain ${className}`} />;
+  }
+  if (/\.(mp4|webm|mov|ogg)$/.test(cleanUrl)) {
+    return <video src={url} controls className={`max-h-64 max-w-full rounded-xl ${className}`} />;
+  }
+  return <a href={url} target="_blank" rel="noreferrer" className={`break-all underline ${className}`}>Buka lampiran</a>;
+}
+
 export default function StudyRoomComponent() {
   const { user: currentUser } = useCurrentUser();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selected, setSelected] = useState<Room | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -500,12 +516,18 @@ export default function StudyRoomComponent() {
 
   const sendMessage = async (event: FormEvent) => {
     event.preventDefault();
-    if (!selected || !message.trim()) return;
+    if (!selected || (!message.trim() && !attachment)) return;
     try {
-      const response = await courseService.sendStudyRoomMessage(
-        selected.id,
-        message.trim(),
-      );
+      setUploading(Boolean(attachment));
+      let content = message.trim();
+      let type = "text";
+      if (attachment) {
+        const upload = await courseService.uploadStudyRoomAttachment(selected.id, attachment);
+        content = upload.data?.attachment?.url ?? upload.attachment?.url ?? "";
+        type = "file";
+      }
+      if (!content) return;
+      const response = await courseService.sendStudyRoomMessage(selected.id, content, type);
       const sent = response.data?.message ?? response.message;
       if (sent) {
         // The send response may omit the nested user object; enrich it locally so owner actions are available immediately.
@@ -532,9 +554,22 @@ export default function StudyRoomComponent() {
         );
       }
       setMessage("");
+      setAttachment(null);
     } catch (err: any) {
       setError(err?.response?.data?.error?.message || "Pesan gagal dikirim.");
+    } finally {
+      setUploading(false);
     }
+  };
+
+  const selectAttachment = (file?: File) => {
+    if (!file) return;
+    if (file.size > MAX_ATTACHMENT_SIZE) {
+      setError("File maksimal 10 MB. Gunakan gambar, video, atau dokumen yang diizinkan.");
+      return;
+    }
+    setError("");
+    setAttachment(file);
   };
 
   const isOwnMessage = (item: Message) => {
@@ -972,7 +1007,7 @@ export default function StudyRoomComponent() {
                                 className={`max-w-full break-words text-sm ${own ? "text-white" : "text-slate-700"}`}
                                 style={{ overflowWrap: "anywhere", wordBreak: "break-word" }}
                               >
-                              {item.content}
+                               {item.type === "file" ? renderAttachment(item.content, own ? "text-white" : "text-[#008be3]") : item.content}
                             </p>
                              <p className={`mt-1 text-[10px] ${own ? "text-white/70" : "text-slate-400"}`}>
                                {formatMessageTime(item.sent_at)}
@@ -1011,14 +1046,18 @@ export default function StudyRoomComponent() {
               onSubmit={sendMessage}
               className="flex gap-2 border-t border-slate-100 p-4"
             >
+              <label className="flex shrink-0 cursor-pointer items-center justify-center rounded-xl border border-slate-200 px-3 text-[#008be3] hover:bg-blue-50" title="Lampirkan file">
+                <Paperclip className="h-5 w-5" />
+                <input type="file" className="hidden" onChange={(event) => selectAttachment(event.target.files?.[0])} accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" />
+              </label>
               <input
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
-                placeholder="Tulis pesan..."
+                placeholder={attachment ? attachment.name : "Tulis pesan..."}
                 maxLength={2000}
                 className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#008be3]"
               />
-              <button className="rounded-xl bg-[#008be3] px-4 text-white">
+              <button disabled={uploading} className="rounded-xl bg-[#008be3] px-4 text-white disabled:opacity-60">
                 <Send className="h-4 w-4" />
               </button>
             </form>
