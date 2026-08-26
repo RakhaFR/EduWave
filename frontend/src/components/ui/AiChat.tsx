@@ -70,7 +70,22 @@ export default function AiChat({ courseId, lessonId }: { courseId?: string; less
           </div>
           {error && <p className="border-t border-red-100 bg-red-50 px-4 py-2 text-xs text-red-600">{error}</p>}
           <form onSubmit={sendMessage} className="border-t border-slate-100 bg-white p-3">
-            <textarea value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={4000} rows={2} placeholder="Tanyakan sesuatu..." className="w-full resize-none rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#008be3]" />
+            <textarea
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  if (draft.trim() && !loading) {
+                    event.currentTarget.form?.requestSubmit();
+                  }
+                }
+              }}
+              maxLength={4000}
+              rows={2}
+              placeholder="Tanyakan sesuatu..."
+              className="w-full resize-none rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-[#008be3]"
+            />
             <div className="mt-2 flex items-center justify-between"><span className="text-[10px] text-slate-400">{draft.length}/4000</span><button type="submit" disabled={!draft.trim() || loading} className="flex items-center gap-1.5 rounded-xl bg-[#008be3] px-4 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"><Send className="h-3.5 w-3.5" /> Kirim</button></div>
           </form>
         </section>
