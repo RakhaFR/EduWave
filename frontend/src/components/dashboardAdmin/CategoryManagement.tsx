@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { Search, Plus, Edit, Trash, X, ChevronLeft, ChevronRight, FolderOpen, Layers, BookOpen } from "lucide-react";
 import { Category } from "./types";
+import { Badge } from "@/components/ui/badge";
 
 interface CategoryManagementProps {
   categories: Category[];
@@ -80,33 +81,33 @@ export default function CategoryManagement({
     <div className="flex flex-col gap-5">
       {/* Mini Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-100 rounded-2xl p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#0073e6] text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-200">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex items-center gap-3.5 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0073e6] border border-blue-100 flex items-center justify-center shrink-0">
             <FolderOpen className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xl font-black text-[#00172e] leading-tight">{stats.total}</p>
-            <p className="text-[10px] font-semibold text-slate-400 mt-0.5">Total Kategori</p>
+            <p className="text-xl font-bold text-[#00172e] leading-tight">{stats.total}</p>
+            <p className="text-xs font-medium text-slate-500 mt-0.5">Total Kategori</p>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-50 to-indigo-50/50 border border-purple-100 rounded-2xl p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-purple-200">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex items-center gap-3.5 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0073e6] border border-blue-100 flex items-center justify-center shrink-0">
             <Layers className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xl font-black text-[#00172e] leading-tight">{stats.topCategory}</p>
-            <p className="text-[10px] font-semibold text-slate-400 mt-0.5">Kategori Terpopuler</p>
+            <p className="text-xl font-bold text-[#00172e] leading-tight truncate max-w-[150px]">{stats.topCategory}</p>
+            <p className="text-xs font-medium text-slate-500 mt-0.5">Kategori Terpopuler</p>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-50 to-teal-50/50 border border-emerald-100 rounded-2xl p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-200">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex items-center gap-3.5 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0073e6] border border-blue-100 flex items-center justify-center shrink-0">
             <BookOpen className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xl font-black text-[#00172e] leading-tight">{stats.totalCourses}</p>
-            <p className="text-[10px] font-semibold text-slate-400 mt-0.5">Kursus Terkait</p>
+            <p className="text-xl font-bold text-[#00172e] leading-tight">{stats.totalCourses}</p>
+            <p className="text-xs font-medium text-slate-500 mt-0.5">Kursus Terkait</p>
           </div>
         </div>
       </div>
@@ -120,7 +121,7 @@ export default function CategoryManagement({
             placeholder="Cari nama kategori atau deskripsi..."
             value={searchLocal}
             onChange={(e) => setSearchLocal(e.target.value)}
-            className="w-full max-w-md pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-700 placeholder-slate-400 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all"
+            className="w-full max-w-md pl-10 pr-4 py-2.5 bg-background border border-border rounded-xl text-xs sm:text-sm text-foreground placeholder-muted-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring transition-all"
           />
           {searchLocal && (
             <button
@@ -134,7 +135,7 @@ export default function CategoryManagement({
 
         <button
           onClick={onAddClick}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0073e6] hover:bg-[#0052cc] text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-200 transition-all shrink-0 active:scale-95 cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs sm:text-sm font-bold shadow-md transition-all shrink-0 active:scale-95 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Buat Kategori Baru</span>
@@ -157,20 +158,20 @@ export default function CategoryManagement({
             {paginatedCategories.length > 0 ? (
               paginatedCategories.map((c) => (
                 <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="py-3.5 px-5 font-mono text-slate-400">{c.id}</td>
+                  <td className="py-3.5 px-5 font-mono text-muted-foreground">{c.id}</td>
                   <td className="py-3.5 px-5">
                     <div className="flex items-center gap-2.5">
-                      <span className="w-7 h-7 rounded-lg bg-blue-50 text-[#0073e6] font-bold text-xs flex items-center justify-center border border-blue-100">
+                      <span className="size-7 rounded-lg bg-accent text-accent-foreground font-bold text-xs flex items-center justify-center border border-border">
                         {c.icon || "📁"}
                       </span>
-                      <span className="font-bold text-[#00172e]">{c.name}</span>
+                      <span className="font-bold text-foreground">{c.name}</span>
                     </div>
                   </td>
-                  <td className="py-3.5 px-5 text-slate-500 max-w-xs truncate">{c.description}</td>
+                  <td className="py-3.5 px-5 text-muted-foreground max-w-xs truncate">{c.description}</td>
                   <td className="py-3.5 px-5 text-center">
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600">
+                    <Badge variant="secondary" className="font-bold text-[10px]">
                       {c.courseCount} Kursus
-                    </span>
+                    </Badge>
                   </td>
                   <td className="py-3.5 px-5">
                     <div className="flex items-center justify-center gap-1.5">

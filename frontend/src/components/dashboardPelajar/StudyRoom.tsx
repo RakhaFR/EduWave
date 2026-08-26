@@ -890,20 +890,21 @@ export default function StudyRoomComponent() {
                 </p>
               ) : (
                  <div className="flex min-w-0 w-full flex-col gap-3">
-                   {messages.map((item) => (
-                     <div key={item.id} className="flex min-w-0 w-full items-start gap-2.5">
-                      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-[#008be3] text-center text-xs font-bold leading-9 text-white">
-                        {item.user?.avatar_url ? (
-                          <img
-                            src={item.user.avatar_url}
-                            alt={item.user.username || "Peserta"}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          (item.user?.username || "P").charAt(0).toUpperCase()
-                        )}
-                      </div>
-                       <div className="min-w-0 w-fit max-w-[calc(100%-3rem)] overflow-hidden rounded-2xl bg-white p-3 shadow-sm">
+                    {messages.map((item) => {
+                      const own = isOwnMessage(item);
+                      const messageUser = own
+                        ? { id: currentUser?.id, username: currentUser?.username, avatar_url: currentUser?.avatar_url }
+                        : item.user;
+                      return (
+                      <div key={item.id} className={`flex min-w-0 w-full items-end gap-2.5 ${own ? "justify-end" : "justify-start"}`}>
+                        {!own && <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-[#008be3] text-center text-xs font-bold leading-9 text-white">
+                          {messageUser?.avatar_url ? (
+                            <img src={messageUser.avatar_url} alt={messageUser.username || "Peserta"} className="h-full w-full object-cover" />
+                          ) : (
+                            (messageUser?.username || "P").charAt(0).toUpperCase()
+                          )}
+                        </div>}
+                        <div className={`min-w-0 w-fit max-w-[calc(100%-3rem)] overflow-hidden rounded-2xl p-3 shadow-sm ${own ? "bg-[#008be3]" : "bg-white"}`}>
                         {editingMessageId === item.id ? (
                           <form
                             onSubmit={(event) => updateMessage(event, item.id)}
@@ -939,9 +940,9 @@ export default function StudyRoomComponent() {
                         ) : (
                           <>
                             <div className="flex items-start justify-between gap-3">
-                              <p className="text-[10px] font-bold text-[#008be3]">
-                                {item.user?.username || "Peserta"}
-                              </p>
+                               <p className={`text-[10px] font-bold ${own ? "text-white/80" : "text-[#008be3]"}`}>
+                                 {own ? "Kamu" : item.user?.username || "Peserta"}
+                               </p>
                               {isOwnMessage(item) && (
                                 <div className="flex gap-1">
                                   {canEditMessage(item) && (
@@ -967,20 +968,28 @@ export default function StudyRoomComponent() {
                                 </div>
                               )}
                             </div>
-                             <p
-                               className="max-w-full break-words text-sm text-slate-700"
-                               style={{ overflowWrap: "anywhere", wordBreak: "break-word" }}
-                             >
+                              <p
+                                className={`max-w-full break-words text-sm ${own ? "text-white" : "text-slate-700"}`}
+                                style={{ overflowWrap: "anywhere", wordBreak: "break-word" }}
+                              >
                               {item.content}
                             </p>
-                            <p className="mt-1 text-[10px] text-slate-400">
-                              {formatMessageTime(item.sent_at)}
-                            </p>
-                          </>
+                             <p className={`mt-1 text-[10px] ${own ? "text-white/70" : "text-slate-400"}`}>
+                               {formatMessageTime(item.sent_at)}
+                             </p>
+                           </>
                         )}
-                      </div>
-                    </div>
-                  ))}
+                       </div>
+                       {own && <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-[#008be3] text-center text-xs font-bold leading-9 text-white">
+                         {messageUser?.avatar_url ? (
+                           <img src={messageUser.avatar_url} alt={messageUser.username || "Kamu"} className="h-full w-full object-cover" />
+                         ) : (
+                           (messageUser?.username || "K").charAt(0).toUpperCase()
+                         )}
+                       </div>}
+                     </div>
+                      );
+                   })}
                   <div ref={messagesEndRef} aria-hidden="true" />
                 </div>
               )}

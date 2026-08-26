@@ -28,6 +28,8 @@ class ExamController extends ApiController
             'course_id' => $exam->course_id,
             'course_title' => $exam->course?->title ?? '',
             'lesson_id' => $exam->lesson_id,
+            'mode' => $exam->mode,
+            'requires_fullscreen' => $exam->requires_fullscreen,
             'time_limit_sec' => $exam->time_limit_sec,
             'passing_score' => $exam->passing_score,
             'max_attempts' => $exam->max_attempts,
@@ -58,6 +60,8 @@ class ExamController extends ApiController
             'course_id' => $exam->course_id,
             'lesson_id' => $exam->lesson_id,
             'title' => $exam->title,
+            'mode' => $exam->mode,
+            'requires_fullscreen' => $exam->requires_fullscreen,
             'time_limit_sec' => $exam->time_limit_sec,
             'passing_score' => $exam->passing_score,
             'max_attempts' => $exam->max_attempts,
@@ -81,6 +85,8 @@ class ExamController extends ApiController
             return $this->error('EXAM_FORBIDDEN', 'Anda tidak memiliki izin untuk menambah ujian ke kursus ini.', 403);
         }
 
+        $validated['mode'] ??= 'locked';
+        $validated['requires_fullscreen'] ??= $validated['mode'] === 'locked';
         $exam = Exam::create(Arr::except($validated, ['questions']));
 
         if (! empty($validated['questions'])) {
@@ -98,6 +104,8 @@ class ExamController extends ApiController
             'course_id' => $exam->course_id,
             'lesson_id' => $exam->lesson_id,
             'title' => $exam->title,
+            'mode' => $exam->mode,
+            'requires_fullscreen' => $exam->requires_fullscreen,
             'time_limit_sec' => $exam->time_limit_sec,
             'passing_score' => $exam->passing_score,
             'max_attempts' => $exam->max_attempts,
@@ -113,6 +121,10 @@ class ExamController extends ApiController
         $this->authorize('update', $exam);
 
         $validated = $request->validated();
+
+        if (array_key_exists('mode', $validated) && ! array_key_exists('requires_fullscreen', $validated)) {
+            $validated['requires_fullscreen'] = $validated['mode'] === 'locked';
+        }
 
         if (isset($validated['course_id']) && $request->user()->role === 'instructor') {
             $targetCourse = Course::findOrFail($validated['course_id']);
@@ -143,6 +155,8 @@ class ExamController extends ApiController
             'course_id' => $exam->course_id,
             'lesson_id' => $exam->lesson_id,
             'title' => $exam->title,
+            'mode' => $exam->mode,
+            'requires_fullscreen' => $exam->requires_fullscreen,
             'time_limit_sec' => $exam->time_limit_sec,
             'passing_score' => $exam->passing_score,
             'max_attempts' => $exam->max_attempts,

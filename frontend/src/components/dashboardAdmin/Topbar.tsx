@@ -49,11 +49,26 @@ export default function Topbar({
   };
 
   const initial = (user?.full_name || user?.username || "A").charAt(0).toUpperCase();
-  const notification = pathname.startsWith("/admin/pengguna")
-    ? { text: "Kelola data pengguna dan peran akun dari halaman Pengguna.", href: "/admin/pengguna" }
-    : pathname.startsWith("/admin/course")
-    ? { text: "Periksa dan kelola kursus yang tersedia di EduWave.", href: "/admin/course" }
-    : { text: "Pantau ringkasan kursus, pengguna, dan aktivitas platform dari dashboard.", href: "/admin" };
+  const notifications = [
+    {
+      title: "Manajemen Pengguna",
+      text: "Tinjau pendaftaran siswa & pengajar baru atau verifikasi status akun.",
+      href: "/admin/pengguna",
+      time: "Hari ini",
+    },
+    {
+      title: "Katalog Kursus & Ujian",
+      text: "Pantau status penerbitan modul serta kelengkapan butir soal ujian.",
+      href: "/admin/course",
+      time: "Tersedia",
+    },
+    {
+      title: "Audit Log & Keamanan",
+      text: "Periksa rekaman pendaftaran dan deteksi anomali pada aktivitas sistem.",
+      href: "/admin/pendaftaran",
+      time: "Sistem",
+    },
+  ];
 
   return (
     <header className="flex items-center justify-between gap-4 mb-4 px-2">
@@ -90,11 +105,39 @@ export default function Topbar({
       <div className="flex items-center gap-3">
         {/* Notification bell */}
         <div className="relative">
-          <button onClick={() => setNotificationsOpen((open) => !open)} className="relative w-10 h-10 rounded-full bg-white/15 border border-white/25 flex items-center justify-center text-white hover:bg-white/25 transition-all shadow-md cursor-pointer">
+          <button
+            onClick={() => setNotificationsOpen((open) => !open)}
+            className="relative w-10 h-10 rounded-full bg-white/15 border border-white/25 flex items-center justify-center text-white hover:bg-white/25 transition-all shadow-md cursor-pointer"
+          >
             <Bell className="w-5 h-5" />
-            
+            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-amber-400 border border-white"></span>
           </button>
-          {notificationsOpen && <div className="absolute right-0 top-full mt-2 z-50 w-64 rounded-2xl bg-white p-4 shadow-xl text-slate-700"><p className="text-sm font-bold">Notifikasi Admin</p><p className="mt-2 text-xs text-slate-500">{notification.text}</p><Link href={notification.href} onClick={() => setNotificationsOpen(false)} className="mt-3 block text-xs font-bold text-[#0073e6]">Lihat detail</Link></div>}
+          {notificationsOpen && (
+            <div className="absolute right-0 top-full mt-2 z-50 w-72 sm:w-80 rounded-2xl bg-white p-4 shadow-xl text-slate-700 border border-slate-100 divide-y divide-slate-100">
+              <div className="flex items-center justify-between pb-2">
+                <p className="text-sm font-bold text-[#00172e]">Notifikasi Admin</p>
+                <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{notifications.length} info</span>
+              </div>
+              <div className="flex flex-col gap-2 pt-2 max-h-72 overflow-y-auto">
+                {notifications.map((n, idx) => (
+                  <div key={idx} className="p-2 rounded-xl hover:bg-slate-50 transition-all flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-slate-800">{n.title}</p>
+                      <span className="text-[10px] font-medium text-slate-400">{n.time}</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 leading-snug">{n.text}</p>
+                    <Link
+                      href={n.href}
+                      onClick={() => setNotificationsOpen(false)}
+                      className="mt-1 text-[11px] font-bold text-[#0073e6] hover:underline"
+                    >
+                      Buka panel →
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Profile widget */}

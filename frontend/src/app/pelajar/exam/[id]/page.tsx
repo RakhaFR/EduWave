@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, CheckCircle, Clock, Trophy, XCircle } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
+import { PageToast, usePageToast } from "@/components/ui/PageToast";
 import {
   courseService,
   Exam,
@@ -12,12 +13,16 @@ import {
   ExamAttemptHistory,
   ExamAttemptResult,
   ExamQuestion,
+  ExamViolationEvent,
 } from "@/services/courseService";
 
 type Phase = "info" | "doing" | "result" | "maxed";
 
 export default function PelajarExamPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo");
 
   const [exam, setExam] = useState<Exam | null>(null);
   const [history, setHistory] = useState<ExamAttemptHistory[]>([]);
@@ -34,6 +39,13 @@ export default function PelajarExamPage() {
 
   const [timeLeft, setTimeLeft] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const answersRef = useRef<Record<string, string>>({});
+  const violationInFlightRef = useRef(false);
+  const [fullscreenLost, setFullscreenLost] = useState(false);
+  const { toast, showToast, hideToast } = usePageToast();
+
+  answersRef.current = answers;
+  const resultReturnHref = returnTo || "/pelajar/my-courses";
 
   useEffect(() => {
     if (!id) return;
@@ -43,10 +55,21 @@ export default function PelajarExamPage() {
           courseService.getExamById(id),
           courseService.getExamAttempts(id).catch(() => ({ data: [] })),
         ]);
-        const examData = examRes.data?.exam ?? examRes.data ?? null;
-        setExam(examData);
+          const examData = examRes.data?.exam ?? examRes.data ?? null;
+          setExam(examData);
 
-        const raw = histRes.data ?? histRes ?? [];
+          const enteredFromLesson = examData?.lesson_id
+            ? sessionStorage.getItem(`exam_journey_${examData.id}`) === examData.lesson_id
+            : false;
+          if (enteredFromLesson) {
+            sessionStorage.removeItem(`exam_journey_${examData.id}`);
+          }
+          if (examData?.mode === "quiz" && examData.lesson_id && (!returnTo || !enteredFromLesson)) {
+            router.replace(`/pelajar/lesson/${examData.lesson_id}`);
+            return;
+          }
+
+         const raw = histRes.data ?? histRes ?? [];
         const list: ExamAttemptHistory[] = Array.isArray(raw) ? raw : [];
         setHistory(list);
       } catch (err: unknown) {
@@ -57,7 +80,7 @@ export default function PelajarExamPage() {
       }
     }
     load();
-  }, [id]);
+  }, [id, returnTo, router]);
 
   useEffect(() => {
     if (phase === "doing" && timeLeft > 0) {
@@ -75,6 +98,49 @@ export default function PelajarExamPage() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [phase]);
 
+  useEffect(() => {
+    const locked = phase === "doing" && exam?.mode === "locked";
+    if (!locked) return;
+
+    // Keep the student on the active exam route while the attempt is open.
+    window.history.pushState(null, "", window.location.href);
+    const handlePopState = () => {
+      window.history.pushState(null, "", window.location.href);
+    };
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [exam?.mode, phase]);
+
+  useEffect(() => {
+    const locked = phase === "doing" && exam?.mode === "locked";
+    if (!locked) {
+      setFullscreenLost(false);
+      return;
+    }
+
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setFullscreenLost(true);
+        showToast("Fullscreen keluar. Kembali ke fullscreen untuk melanjutkan ujian.", "error");
+        void reportViolation("fullscreen_exit");
+      } else {
+        setFullscreenLost(false);
+      }
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, [exam?.mode, phase, showToast]);
+
   const startExam = async () => {
     setStarting(true);
     setError("");
@@ -85,7 +151,10 @@ export default function PelajarExamPage() {
       setAnswers({});
        setTimeLeft(Math.max(0, Math.floor((new Date(data.expires_at).getTime() - Date.now()) / 1000)) || data.exam.time_limit_sec);
        setPhase("doing");
-    } catch (e: unknown) {
+        if (exam?.mode === "locked") {
+         try { await document.documentElement.requestFullscreen?.(); } catch { setError("Mode ujian terkunci membutuhkan fullscreen."); }
+       }
+     } catch (e: unknown) {
       const err = e as { response?: { data?: { error?: { code?: string } } } };
       if (err?.response?.data?.error?.code === "MAX_ATTEMPTS_EXCEEDED") {
         setPhase("maxed");
@@ -116,39 +185,100 @@ export default function PelajarExamPage() {
         selected_key,
       }));
       const res = await courseService.submitExamAttempt(id, attempt.attempt_id, formatted);
-      setResult(res.data);
-
-      // Auto-complete lesson jika ujian terhubung dengan lesson atau kuis lulus
-      if (exam?.lesson_id && res.data?.passed) {
-        await courseService.completeLesson(exam.lesson_id).catch(() => null);
-
-        // Backup completed ID ke localStorage
-        if (typeof window !== "undefined") {
-          let currentUserId = "";
-          try {
-            const userObj = JSON.parse(localStorage.getItem("user") || "{}");
-            currentUserId = userObj?.id || "";
-          } catch {
-            currentUserId = "";
-          }
-          const userCompletedKey = currentUserId ? `completed_lesson_ids_${currentUserId}` : "completed_lesson_ids";
-          const localCompleted = JSON.parse(localStorage.getItem(userCompletedKey) || "[]");
-          if (!localCompleted.includes(exam.lesson_id)) {
-            localCompleted.push(exam.lesson_id);
-            localStorage.setItem(userCompletedKey, JSON.stringify(localCompleted));
-          }
-        }
-      }
-
-      const histRes = await courseService.getExamAttempts(id).catch(() => ({ data: [] }));
-      const raw = histRes.data ?? histRes ?? [];
-      setHistory(Array.isArray(raw) ? raw : []);
-      setPhase("result");
+       await finishSubmission(res.data);
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
       setError(message || "Gagal mengirim jawaban. Coba lagi.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const finishSubmission = async (submissionResult: ExamAttemptResult) => {
+    setResult(submissionResult);
+    if (exam?.mode === "locked" && document.fullscreenElement) {
+      await document.exitFullscreen().catch(() => undefined);
+    }
+
+    if (exam?.lesson_id && submissionResult.passed) {
+      await courseService.completeLesson(exam.lesson_id).catch(() => null);
+      if (typeof window !== "undefined") {
+        let currentUserId = "";
+        try {
+          currentUserId = JSON.parse(localStorage.getItem("user") || "{}").id || "";
+        } catch {
+          currentUserId = "";
+        }
+        const key = currentUserId ? `completed_lesson_ids_${currentUserId}` : "completed_lesson_ids";
+        const completed = JSON.parse(localStorage.getItem(key) || "[]");
+        if (!completed.includes(exam.lesson_id)) {
+          completed.push(exam.lesson_id);
+          localStorage.setItem(key, JSON.stringify(completed));
+        }
+      }
+    }
+
+    const histRes = await courseService.getExamAttempts(id).catch(() => ({ data: [] }));
+    const raw = histRes.data ?? histRes ?? [];
+    setHistory(Array.isArray(raw) ? raw : []);
+    setPhase("result");
+  };
+
+  const reportViolation = async (event: ExamViolationEvent) => {
+    if (!attempt || submitting || violationInFlightRef.current) return;
+    violationInFlightRef.current = true;
+    const latestAnswers = Object.entries(answersRef.current).map(([question_id, selected_key]) => ({ question_id, selected_key }));
+    try {
+      const response = await courseService.reportExamViolation(id, attempt.attempt_id, event, latestAnswers);
+      const violation = response.data ?? response;
+      if (violation.auto_submitted && violation.result) {
+        setSubmitting(true);
+        await finishSubmission(violation.result);
+        setSubmitting(false);
+      } else if (typeof violation.violation_count === "number") {
+        showToast(`Peringatan ${violation.violation_count}/${violation.max_violations}: jangan meninggalkan ujian.`, "error");
+      }
+    } catch {
+      showToast("Pelanggaran ujian gagal dicatat ke server. Periksa koneksi internet.", "error");
+    } finally {
+      violationInFlightRef.current = false;
+    }
+  };
+
+  useEffect(() => {
+    const locked = phase === "doing" && exam?.mode === "locked";
+    if (!locked) return;
+
+    const handleWindowBlur = () => {
+      void reportViolation("blur");
+    };
+
+    window.addEventListener("blur", handleWindowBlur);
+    return () => window.removeEventListener("blur", handleWindowBlur);
+  }, [exam?.mode, phase]);
+
+  useEffect(() => {
+    const locked = phase === "doing" && exam?.mode === "locked";
+    if (!locked) {
+      return;
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden || submitting) return;
+      void reportViolation("visibility_hidden");
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [exam?.mode, phase, submitting]);
+
+  const reenterFullscreen = async () => {
+    try {
+      await document.documentElement.requestFullscreen?.();
+      setFullscreenLost(false);
+      hideToast();
+    } catch {
+      showToast("Klik tombol ini dari halaman ujian untuk mengaktifkan fullscreen.", "error");
     }
   };
 
@@ -184,10 +314,37 @@ export default function PelajarExamPage() {
   }
 
   return (
-    <DashboardLayout searchPlaceholder="Cari ujian...">
+    <DashboardLayout
+      searchPlaceholder="Cari ujian..."
+      navigationLocked={phase === "doing" && exam.mode === "locked"}
+    >
       <main className="mx-auto max-w-3xl px-4 py-4 md:px-8 md:py-6 space-y-4">
+        {phase === "doing" && exam.mode === "locked" && fullscreenLost && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#00172e]/95 p-6 text-center">
+            <div className="max-w-md rounded-3xl bg-white p-8 shadow-2xl">
+              <h2 className="text-xl font-extrabold text-[#00172e]">Ujian Terkunci</h2>
+              <p className="mt-3 text-sm leading-relaxed text-slate-500">
+                Kamu keluar dari fullscreen. Soal tidak dapat dilanjutkan sebelum fullscreen diaktifkan kembali.
+              </p>
+              <button
+                type="button"
+                onClick={reenterFullscreen}
+                className="mt-6 rounded-full bg-[#008be3] px-6 py-3 text-sm font-bold text-white hover:bg-[#0078c8]"
+              >
+                Kembali ke Fullscreen
+              </button>
+            </div>
+          </div>
+        )}
         <Link
-          href="/pelajar/my-courses"
+          href={returnTo || "/pelajar/my-courses"}
+          onClick={(event) => {
+            if (phase === "doing" && exam.mode === "locked") {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+          }}
+          aria-disabled={phase === "doing" && exam.mode === "locked"}
           className="inline-flex items-center gap-1 text-sm font-bold text-white/90 hover:text-white"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -207,7 +364,11 @@ export default function PelajarExamPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+             <div className={`rounded-2xl p-4 text-sm ${exam.mode === "locked" ? "bg-amber-50 text-amber-800" : "bg-blue-50 text-blue-800"}`}>
+               {exam.mode === "locked" ? "Mode ujian terkunci: layar akan dikunci selama pengerjaan." : "Mode quiz: kamu dapat mengerjakan tanpa fullscreen."}
+             </div>
+
+             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
                 { label: "Batas Waktu", value: `${Math.ceil(exam.time_limit_sec / 60)} menit`, icon: <Clock className="h-4 w-4 text-[#008be3]" /> },
                 { label: "Nilai Lulus", value: `${exam.passing_score}%`, icon: <Trophy className="h-4 w-4 text-amber-500" /> },
@@ -393,15 +554,16 @@ export default function PelajarExamPage() {
                 </button>
               )}
               <Link
-                href="/pelajar/my-courses"
+                href={resultReturnHref}
                 className="rounded-full bg-[#008be3] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#0078c8]"
               >
-                Kembali ke My Courses
+                Kembali ke Lesson
               </Link>
             </div>
           </section>
         )}
       </main>
+      <PageToast toast={toast} onClose={hideToast} />
     </DashboardLayout>
   );
 }

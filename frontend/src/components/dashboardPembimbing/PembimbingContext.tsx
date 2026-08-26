@@ -56,7 +56,11 @@ export function PembimbingProvider({ children }: { children: React.ReactNode }) 
     try {
       const res = await pembimbingService.getMyExams();
       if (res.success && Array.isArray(res.data)) {
-        setExams(res.data);
+        setExams(res.data.map((exam: Exam) => ({
+          ...exam,
+          mode: exam.mode === "quiz" ? "quiz" : "locked",
+          requires_fullscreen: exam.requires_fullscreen ?? exam.mode !== "quiz",
+        })));
       }
     } catch {
       showToast("Gagal memuat data ujian dari server.", "error");

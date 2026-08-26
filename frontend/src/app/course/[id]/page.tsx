@@ -114,10 +114,26 @@ export default function CourseDetailPage() {
     setMessage("");
     try {
       const response = await courseService.completeLesson(lesson.id);
-      setLessons((current) => current.map((item) => item.id === lesson.id ? { ...item, is_completed: true } : item));
-      if (response.data?.enrollment?.progress_pct !== undefined) {
-        setProgress(Number(response.data.enrollment.progress_pct));
+      let currentUserId = "";
+      try {
+        const userObj = JSON.parse(localStorage.getItem("user") || "{}");
+        currentUserId = userObj?.id || "";
+      } catch {
+        currentUserId = "";
       }
+      const userCompletedKey = currentUserId ? `completed_lesson_ids_${currentUserId}` : "completed_lesson_ids";
+      const localCompleted = typeof window !== "undefined" ? JSON.parse(localStorage.getItem(userCompletedKey) || "[]") : [];
+      if (!localCompleted.includes(lesson.id)) {
+        localCompleted.push(lesson.id);
+        localStorage.setItem(userCompletedKey, JSON.stringify(localCompleted));
+      }
+
+      const updatedLessons = lessons.map((item) => item.id === lesson.id ? { ...item, is_completed: true } : item);
+      setLessons(updatedLessons);
+      
+      const finishedCount = updatedLessons.filter((l) => l.is_completed).length;
+      const actualProgress = updatedLessons.length > 0 ? Math.round((finishedCount / updatedLessons.length) * 100) : 0;
+      setProgress(actualProgress);
     } catch {
       setMessage("Lesson hanya dapat diselesaikan setelah terdaftar di kursus.");
     } finally {
@@ -136,7 +152,7 @@ export default function CourseDetailPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-[#00172e]">
       <header className="sticky top-0 z-20 flex items-center gap-4 border-b border-slate-100 bg-white px-4 py-3 md:px-8">
-        <button onClick={() => router.back()} className="rounded-full p-2 hover:bg-slate-100"><ArrowLeft className="w-5 h-5" /></button>
+        <button onClick={() => router.push("/pelajar/my-courses")} className="rounded-full p-2 hover:bg-slate-100" aria-label="Kembali ke My Courses"><ArrowLeft className="w-5 h-5" /></button>
         <div className="min-w-0"><h1 className="truncate font-extrabold">{course.title}</h1><p className="text-xs text-slate-400">{course.instructor?.full_name || "Instruktur EduWave"}</p></div>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-6 md:px-8">
@@ -220,7 +236,7 @@ export default function CourseDetailPage() {
                           </button>
                         ) : lesson.type === "quiz" ? (
                           <Link
-                            href={lesson.exam_id ? `/pelajar/exam/${lesson.exam_id}` : `/pelajar/lesson/${lesson.id}`}
+                             href={`/pelajar/lesson/${lesson.id}`}
                             className="rounded-full bg-amber-500 hover:bg-amber-600 px-4 py-1.5 text-[11px] font-bold text-white shadow-sm transition-all active:scale-95 flex items-center gap-1.5"
                           >
                             <Trophy className="w-3 h-3" />

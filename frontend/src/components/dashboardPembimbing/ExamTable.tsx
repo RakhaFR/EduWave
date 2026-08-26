@@ -11,6 +11,7 @@ interface ExamTableProps {
   onEditClick: (exam: Exam) => void;
   onDeleteClick: (id: string) => void;
   searchGlobal: string;
+  basePath?: string;
 }
 
 const ITEMS_PER_PAGE = 5;
@@ -21,6 +22,7 @@ export default function ExamTable({
   onEditClick,
   onDeleteClick,
   searchGlobal,
+  basePath = "/pembimbing",
 }: ExamTableProps) {
   const [searchLocal, setSearchLocal] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -94,6 +96,7 @@ export default function ExamTable({
             <tr className="bg-slate-50 border-b border-slate-100 font-semibold text-slate-500">
               <th className="py-4 px-5">Judul Ujian</th>
               <th className="py-4 px-5">Kursus</th>
+              <th className="py-4 px-5 w-28 text-center">Mode</th>
               <th className="py-4 px-5 w-28 text-center">Durasi</th>
               <th className="py-4 px-5 w-24 text-center">Nilai Lulus</th>
               <th className="py-4 px-5 w-24 text-center">Maks. Coba</th>
@@ -110,6 +113,11 @@ export default function ExamTable({
                     <p className="text-[11px] text-slate-400 mt-0.5 font-mono">{e.pearls_reward} mutiara</p>
                   </td>
                   <td className="py-3.5 px-5 text-slate-600 font-medium">{e.course_title}</td>
+                  <td className="py-3.5 px-5 text-center">
+                    <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${e.mode === "quiz" ? "bg-blue-50 text-blue-600" : "bg-amber-50 text-amber-600"}`}>
+                      {e.mode === "quiz" ? "Quiz" : "Terkunci"}
+                    </span>
+                  </td>
                   <td className="py-3.5 px-5 text-center font-semibold text-[#00172e]">
                     {Math.round(e.time_limit_sec / 60)} mnt
                   </td>
@@ -117,7 +125,7 @@ export default function ExamTable({
                   <td className="py-3.5 px-5 text-center font-semibold text-[#00172e]">{e.max_attempts}x</td>
                   <td className="py-3.5 px-5 text-center">
                     <Link
-                      href={`/pembimbing/exam/${e.id}/questions`}
+                      href={`${basePath}/exam/${e.id}/questions`}
                       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-[#0073e6] hover:bg-blue-100 transition-all border border-blue-200"
                     >
                       <HelpCircle className="w-3.5 h-3.5" />
@@ -146,7 +154,7 @@ export default function ExamTable({
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-slate-400 font-medium">
+                <td colSpan={8} className="py-8 text-center text-slate-400 font-medium">
                   Tidak ada data ujian. Buat ujian baru di atas.
                 </td>
               </tr>

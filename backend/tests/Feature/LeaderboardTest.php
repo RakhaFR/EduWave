@@ -338,6 +338,8 @@ class LeaderboardTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonPath('meta.scope', 'weekly');
         $response->assertJsonPath('meta.week', now()->format('o-\WW'));
+        $response->assertJsonPath('meta.total', 3);
+        $response->assertJsonPath('meta.last_page', 1);
 
         $rankings = $response->json('data.rankings');
         $this->assertEquals(300, $rankings[0]['xp']);

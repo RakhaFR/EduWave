@@ -17,6 +17,8 @@ class UpdateExamRequest extends BaseRequest
             'course_id' => ['sometimes', 'uuid'],
             'lesson_id' => ['sometimes', 'nullable', 'uuid'],
             'title' => ['sometimes', 'string', 'max:255'],
+            'mode' => ['sometimes', 'string', 'in:locked,quiz'],
+            'requires_fullscreen' => ['sometimes', 'boolean'],
             'time_limit_sec' => ['sometimes', 'integer', 'min:1', 'max:86400'],
             'passing_score' => ['sometimes', 'integer', 'min:0', 'max:100'],
             'max_attempts' => ['sometimes', 'integer', 'min:1', 'max:100'],

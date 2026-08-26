@@ -26,6 +26,7 @@ class ExamAttempt extends Model
         'started_at',
         'submitted_at',
         'expires_at',
+        'violation_count',
     ];
 
     protected $casts = [
@@ -38,6 +39,7 @@ class ExamAttempt extends Model
         'started_at' => 'datetime',
         'submitted_at' => 'datetime',
         'expires_at' => 'datetime',
+        'violation_count' => 'integer',
     ];
 
     public function user(): BelongsTo

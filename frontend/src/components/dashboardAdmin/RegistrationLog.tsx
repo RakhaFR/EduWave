@@ -14,6 +14,7 @@ import {
   Globe
 } from "lucide-react";
 import { Registration } from "./types";
+import { Badge } from "@/components/ui/badge";
 
 interface RegistrationLogProps {
   registrations: Registration[];
@@ -100,33 +101,33 @@ export default function RegistrationLog({
     <div className="flex flex-col gap-5">
       {/* --- Mini Stats Row --- */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-100 rounded-2xl p-4 flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-[#0073e6] text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-md shadow-blue-200">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex items-center gap-3.5 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0073e6] border border-blue-100 flex items-center justify-center shrink-0">
             <Activity className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xl font-black text-[#00172e] leading-tight">{stats.total}</p>
-            <p className="text-[10px] font-semibold text-slate-400 mt-0.5">Total Aktivitas Terdeteksi</p>
+            <p className="text-xl font-bold text-[#00172e] leading-tight">{stats.total}</p>
+            <p className="text-xs font-medium text-slate-500 mt-0.5">Total Aktivitas Terdeteksi</p>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-emerald-50 to-teal-50/50 border border-emerald-100 rounded-2xl p-4 flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-md shadow-emerald-200">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex items-center gap-3.5 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0073e6] border border-blue-100 flex items-center justify-center shrink-0">
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xl font-black text-[#00172e] leading-tight">{stats.normal}</p>
-            <p className="text-[10px] font-semibold text-slate-400 mt-0.5">Aktivitas Wajar / Normal</p>
+            <p className="text-xl font-bold text-[#00172e] leading-tight">{stats.normal}</p>
+            <p className="text-xs font-medium text-slate-500 mt-0.5">Aktivitas Wajar / Normal</p>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-rose-50 to-red-50/50 border border-rose-100 rounded-2xl p-4 flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-rose-500 text-[#fff] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-md shadow-rose-200">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex items-center gap-3.5 shadow-sm">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${stats.suspicious > 0 ? "bg-rose-50 text-rose-600 border-rose-100" : "bg-blue-50 text-[#0073e6] border-blue-100"}`}>
             <ShieldAlert className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xl font-black text-rose-600 leading-tight">{stats.suspicious}</p>
-            <p className="text-[10px] font-semibold text-rose-400 mt-0.5">Aktivitas Mencurigakan</p>
+            <p className={`text-xl font-bold leading-tight ${stats.suspicious > 0 ? "text-rose-600" : "text-[#00172e]"}`}>{stats.suspicious}</p>
+            <p className="text-xs font-medium text-slate-500 mt-0.5">Aktivitas Mencurigakan</p>
           </div>
         </div>
       </div>
@@ -167,12 +168,8 @@ export default function RegistrationLog({
               onClick={() => setFilterType(type)}
               className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer border ${
                 filterType === type
-                  ? type === "Mencurigakan"
-                    ? "bg-rose-500 text-white border-rose-500 shadow-sm"
-                    : type === "Normal"
-                    ? "bg-emerald-500 text-white border-emerald-500 shadow-sm"
-                    : "bg-[#0073e6] text-white border-[#0073e6] shadow-sm"
-                  : "bg-white text-slate-400 border-slate-200 hover:text-slate-600 hover:border-slate-300"
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-background text-muted-foreground border-border hover:text-foreground hover:border-border"
               }`}
             >
               {type}
@@ -203,12 +200,12 @@ export default function RegistrationLog({
                     r.isSuspicious ? "bg-rose-50/40 hover:bg-rose-50/70" : "hover:bg-slate-50/50"
                   }`}
                 >
-                  <td className="py-3.5 px-5 font-mono text-slate-400">{r.id}</td>
+                  <td className="py-3.5 px-5 font-mono text-muted-foreground">{r.id}</td>
                   <td className="py-3.5 px-5">
-                    <p className="font-bold text-[#00172e]">{r.user}</p>
-                    <p className="text-[11px] text-slate-400">{r.email}</p>
+                    <p className="font-bold text-foreground">{r.user}</p>
+                    <p className="text-[11px] text-muted-foreground">{r.email}</p>
                   </td>
-                  <td className="py-3.5 px-5 font-semibold text-slate-700">{r.action}</td>
+                  <td className="py-3.5 px-5 font-semibold text-foreground">{r.action}</td>
                   <td className="py-3.5 px-5">
                     <div className="flex flex-col text-[11px] text-slate-500 gap-0.5">
                       <span className="flex items-center gap-1 font-mono text-slate-600">
@@ -225,19 +222,16 @@ export default function RegistrationLog({
                     </span>
                   </td>
                   <td className="py-3.5 px-5 text-center">
-                    <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        r.isSuspicious
-                          ? "bg-rose-100 text-rose-600 border border-rose-200"
-                          : "bg-emerald-50 text-emerald-600 border border-emerald-100"
-                      }`}
+                    <Badge
+                      variant={r.isSuspicious ? "destructive" : "secondary"}
+                      className="inline-flex items-center gap-1 text-[10px]"
                     >
                       {r.isSuspicious ? (
-                        <><ShieldAlert className="w-3 h-3 text-rose-500" /> Mencurigakan</>
+                        <><ShieldAlert className="w-3 h-3 text-destructive" /> Mencurigakan</>
                       ) : (
-                        <><ShieldCheck className="w-3 h-3 text-emerald-500" /> Normal</>
+                        <><ShieldCheck className="w-3 h-3 text-[#0073e6]" /> Normal</>
                       )}
-                    </span>
+                    </Badge>
                   </td>
                 </tr>
               ))

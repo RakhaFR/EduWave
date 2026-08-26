@@ -72,7 +72,7 @@ export default function PelajarLessonDetailPage() {
 
   // Timer counter + persist to localStorage
   useEffect(() => {
-    if (isCompleted || !params.id) return;
+    if (lesson?.type === "quiz" || isCompleted || !params.id) return;
     const interval = setInterval(() => {
       setSecondsSpent((prev) => {
         const nextVal = prev >= REQUIRED_TIME_SEC ? REQUIRED_TIME_SEC : prev + 1;
@@ -89,7 +89,7 @@ export default function PelajarLessonDetailPage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isCompleted, params.id]);
+  }, [isCompleted, params.id, lesson?.type]);
 
   // Check if content fits in view without scrollbar or check scroll position
   const checkScrollEligibility = () => {
@@ -127,22 +127,32 @@ export default function PelajarLessonDetailPage() {
     checkScrollEligibility();
   };
 
-  const isEligibleToComplete = isCompleted || (secondsSpent >= REQUIRED_TIME_SEC && (hasScrolledToBottom || !lesson?.content));
+  const isEligibleToComplete = lesson?.type === "quiz"
+    ? true
+    : isCompleted || (secondsSpent >= REQUIRED_TIME_SEC && (hasScrolledToBottom || !lesson?.content));
 
   useEffect(() => {
     async function loadLesson() {
       if (!params.id) return;
       setLoading(true);
       try {
-        const [response, progressRes] = await Promise.all([
+        const [response, progressRes, courseProgressRes] = await Promise.all([
           courseService.getLessonById(params.id),
           courseService.getUserCourseProgress().catch(() => null),
+          (async () => {
+            const lRes = await courseService.getLessonById(params.id).catch(() => null);
+            const cId = lRes?.data?.lesson?.course_id || lRes?.lesson?.course_id || lRes?.course_id;
+            if (cId) {
+              return courseService.getCourseProgress(cId).catch(() => null);
+            }
+            return null;
+          })(),
         ]);
 
         const lessonData = response.data?.lesson ?? response.lesson ?? response.data ?? response;
         setLesson(lessonData);
 
-        // Check completion status from DB / progressRes + lessonData (isolated per current user)
+        // Check completion status from DB / progressRes + courseProgressRes + lessonData (isolated per current user)
         let currentUserId = "";
         try {
           const userObj = JSON.parse(localStorage.getItem("user") || "{}");
@@ -155,6 +165,8 @@ export default function PelajarLessonDetailPage() {
         const completedIds = new Set([
           ...localCompleted,
           ...(progressRes?.success && progressRes.data?.completed_lessons ? progressRes.data.completed_lessons.map((l: any) => l.lesson_id || l.id || l) : []),
+          ...(courseProgressRes?.success && courseProgressRes.data?.completed_lessons ? courseProgressRes.data.completed_lessons.map((l: any) => l.lesson_id || l.id || l) : []),
+          ...(courseProgressRes?.success && courseProgressRes.data?.lessons_progress ? courseProgressRes.data.lessons_progress.filter((lp: any) => lp.is_completed).map((lp: any) => lp.id || lp.lesson_id) : []),
         ]);
 
         const completed = Boolean(lessonData.is_completed) || completedIds.has(params.id);
@@ -167,13 +179,16 @@ export default function PelajarLessonDetailPage() {
           setCourseTitle(courseData?.title ?? "");
 
         // Mark completed status on course lessons list
-        const rawLessons: Lesson[] = courseData?.lessons ?? [];
-        setCourseLessons(
-          rawLessons.map((l) => {
+          const rawLessons: Lesson[] = courseData?.lessons ?? [];
+          const mappedLessons = rawLessons.map((l) => {
             const isFinished = Boolean(l.is_completed) || completedIds.has(l.id) || (l.id === params.id && completed);
             return { ...l, is_completed: isFinished };
-          })
-        );
+          });
+          setCourseLessons(mappedLessons);
+          const courseLesson = mappedLessons.find((item) => item.id === params.id);
+          if (!lessonData.exam_id && courseLesson?.exam_id) {
+            setLesson({ ...lessonData, exam_id: courseLesson.exam_id });
+          }
         }
       } catch (err: any) {
         if (err?.response?.status === 403 || err?.response?.data?.error?.code === "LESSON_LOCKED") {
@@ -268,7 +283,7 @@ export default function PelajarLessonDetailPage() {
             <Menu className="w-5 h-5 text-slate-600" />
           </button>
           <button
-            onClick={() => courseId ? router.push(`/pelajar/course`) : router.back()}
+             onClick={() => courseId ? router.push(`/course/${courseId}`) : router.back()}
             className="rounded-xl p-2 hover:bg-slate-100 transition-colors shrink-0"
           >
             <ArrowLeft className="w-5 h-5 text-slate-600" />
@@ -283,7 +298,8 @@ export default function PelajarLessonDetailPage() {
         <div className="flex items-center gap-2 shrink-0">
           {lesson.exam_id && (
             <Link
-              href={`/pelajar/exam/${lesson.exam_id}`}
+                href={`/pelajar/exam/${lesson.exam_id}?returnTo=${encodeURIComponent(`/pelajar/lesson/${lesson.id}`)}`}
+                onClick={() => sessionStorage.setItem(`exam_journey_${lesson.exam_id}`, lesson.id)}
               className="hidden sm:flex items-center gap-1.5 rounded-full bg-amber-500 px-4 py-2 text-xs font-bold text-white hover:bg-amber-600 shadow-md shadow-amber-500/20 transition-colors"
             >
               <Trophy className="w-3.5 h-3.5" />
@@ -479,7 +495,8 @@ export default function PelajarLessonDetailPage() {
                   </div>
                 </div>
                 <Link
-                  href={`/pelajar/exam/${lesson.exam_id}`}
+                    href={`/pelajar/exam/${lesson.exam_id}?returnTo=${encodeURIComponent(`/pelajar/lesson/${lesson.id}`)}`}
+                    onClick={() => sessionStorage.setItem(`exam_journey_${lesson.exam_id}`, lesson.id)}
                   className="shrink-0 flex items-center gap-1.5 rounded-full bg-amber-500 hover:bg-amber-600 px-4 py-2 text-xs font-bold text-white transition-colors shadow-sm"
                 >
                   Kerjakan
@@ -488,7 +505,8 @@ export default function PelajarLessonDetailPage() {
               </div>
             )}
 
-            {/* Complete bar */}
+            {/* Reading completion is not required for quiz lessons. */}
+            {lesson.type !== "quiz" && (
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 md:p-5 flex flex-col gap-4 mb-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -556,6 +574,7 @@ export default function PelajarLessonDetailPage() {
                 </div>
               )}
             </div>
+            )}
 
             {/* Prev / Next navigation */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 overflow-hidden">

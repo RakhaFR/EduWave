@@ -13,6 +13,8 @@ use Illuminate\Validation\ValidationException;
 
 class ExamService
 {
+    private const MAX_VIOLATIONS = 3;
+
     /**
      * Start a new exam attempt or resume an active in-progress attempt.
      */
@@ -163,6 +165,56 @@ class ExamService
     }
 
     /**
+     * Record a client-reported focus/tab violation and auto-submit at the limit.
+     */
+    public function recordViolation(ExamAttempt $attempt, string $event, array $answersInput = []): array
+    {
+        if (! is_null($attempt->submitted_at)) {
+            return [
+                'attempt_id' => $attempt->id,
+                'violation_count' => (int) $attempt->violation_count,
+                'max_violations' => self::MAX_VIOLATIONS,
+                'auto_submitted' => true,
+                'result' => $this->formatSubmittedPayload($attempt, $attempt->exam),
+            ];
+        }
+
+        if ($attempt->expires_at->isPast()) {
+            $attempt->submitted_at = $attempt->expires_at;
+            $attempt->save();
+
+            return [
+                'attempt_id' => $attempt->id,
+                'violation_count' => (int) $attempt->violation_count,
+                'max_violations' => self::MAX_VIOLATIONS,
+                'auto_submitted' => true,
+                'result' => $this->formatSubmittedPayload($attempt, $attempt->exam),
+            ];
+        }
+
+        $attempt->increment('violation_count');
+        $attempt->refresh();
+
+        if ($attempt->violation_count < self::MAX_VIOLATIONS) {
+            return [
+                'attempt_id' => $attempt->id,
+                'violation_count' => (int) $attempt->violation_count,
+                'max_violations' => self::MAX_VIOLATIONS,
+                'auto_submitted' => false,
+                'event' => $event,
+            ];
+        }
+
+        return [
+            'attempt_id' => $attempt->id,
+            'violation_count' => (int) $attempt->violation_count,
+            'max_violations' => self::MAX_VIOLATIONS,
+            'auto_submitted' => true,
+            'result' => $this->submit($attempt->user, $attempt, $answersInput),
+        ];
+    }
+
+    /**
      * Format in-progress attempt / start response.
      * SECURITY: NEVER include correct_answer or explanation here!
      */
@@ -177,6 +229,8 @@ class ExamService
             'exam' => [
                 'id' => $exam->id,
                 'title' => $exam->title,
+                'mode' => $exam->mode,
+                'requires_fullscreen' => $exam->requires_fullscreen,
                 'time_limit_sec' => $exam->time_limit_sec,
                 'question_count' => $questions->count(),
                 'passing_score' => $exam->passing_score,

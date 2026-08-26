@@ -134,6 +134,7 @@ The table below reflects confirmed implementation status and auth boundaries:
 | **Exam** | `DELETE` | `/api/v1/exams/{exam}` | Admin/Instructor | Delete an exam | Yes |
 | **Attempt** | `POST` | `/api/v1/exams/{exam}/attempts` | Bearer | Start a new attempt or resume active attempt | Yes |
 | **Attempt** | `POST` | `/api/v1/exams/{exam}/attempts/{attempt}/submit` | Bearer | Submit attempt for auto-grading & reward calculation | Yes |
+| **Attempt** | `POST` | `/api/v1/exams/{exam}/attempts/{attempt}/violations` | Bearer | Record focus/tab/fullscreen violation and auto-submit on the third violation | Yes |
 | **Attempt** | `GET` | `/api/v1/exams/{exam}/attempts` | Bearer | List authenticated user's attempt history for an exam | Yes |
 | **Attempt** | `GET` | `/api/v1/exams/{exam}/attempts/{attempt}` | Bearer | View attempt details | Yes |
 | **Leaderboard** | `GET` | `/api/v1/leaderboard` | Public | Get global all-time leaderboard rankings | Yes |
@@ -1128,7 +1129,9 @@ Retrieve exam metadata and question outline.
     "course_id": "c1f2e3d4-5678-90ab-cdef-1234567890ab",
     "lesson_id": null,
     "title": "Ujian Akhir: Oceanografi Dasar",
-    "time_limit_sec": 3600,
+     "mode": "locked",
+     "requires_fullscreen": true,
+     "time_limit_sec": 3600,
     "passing_score": 70,
     "max_attempts": 3,
     "pearls_reward": 30,
@@ -1167,6 +1170,8 @@ Start a new exam attempt or resume an active `in_progress` attempt. Enforces `ma
     "exam": {
       "id": "x1f2e3d4-5678-90ab-cdef-1234567890ab",
       "title": "Ujian Akhir: Oceanografi Dasar",
+      "mode": "locked",
+      "requires_fullscreen": true,
       "time_limit_sec": 3600,
       "question_count": 10,
       "passing_score": 70
@@ -1208,7 +1213,7 @@ Start a new exam attempt or resume an active `in_progress` attempt. Enforces `ma
 ---
 
 #### `POST /api/v1/exams/{exam}/attempts/{attempt}/submit`
-Submit answers for auto-grading. Calculates percentage score, determines pass/fail status, and idempotently awards `pearls_reward` on pass.
+Submit answers for auto-grading. Calculates percentage score, determines pass/fail status, and idempotently awards `pearls_reward` on pass. `answers` may be an empty array, and omitted questions are graded as unanswered with `your_answer: null`.
 
 * **Headers:** `Authorization: Bearer <token>`
 * **Request Body:**
@@ -1247,6 +1252,39 @@ Submit answers for auto-grading. Calculates percentage score, determines pass/fa
   "meta": null
 }
 ```
+
+---
+
+#### `POST /api/v1/exams/{exam}/attempts/{attempt}/violations`
+Record a client-reported anti-cheat event. The backend cannot independently detect browser focus or tab changes; the frontend must call this endpoint when the browser reports an event. The third violation immediately submits the attempt using the latest answers supplied in the request. The violation counter is server-side and cannot be reset by the client.
+
+* **Headers:** `Authorization: Bearer <token>`
+* **Request Body:**
+```json
+{
+  "event": "visibility_hidden",
+  "answers": [
+    { "question_id": "q1f2e3d4-5678-90ab-cdef-1234567890ab", "selected_key": "B" }
+  ]
+}
+```
+* **Allowed `event` values:** `blur`, `visibility_hidden`, `fullscreen_exit`, `tab_switch`.
+* **Response before the limit (`201 Created`):**
+```json
+{
+  "success": true,
+  "data": {
+    "attempt_id": "a1f2e3d4-5678-90ab-cdef-1234567890ab",
+    "violation_count": 1,
+    "max_violations": 3,
+    "auto_submitted": false,
+    "event": "visibility_hidden"
+  },
+  "error": null,
+  "meta": null
+}
+```
+* **Response at the limit (`200 OK`):** `auto_submitted` is `true` and `result` contains the same grading payload returned by the submit endpoint. This mechanism is browser-reported and is not a tamper-proof anti-cheat system.
 
 ---
 
@@ -1379,6 +1417,7 @@ List exams for management screens.
 
 * **Headers:** `Authorization: Bearer <token>`
 * **Authorization:** Admin or instructor. Instructors receive only exams belonging to their own courses.
+* **Response fields:** Each exam includes the explicit `mode` (`locked` or `quiz`) and `requires_fullscreen` boolean. These fields replace frontend inference from `lesson.type`.
 * **Success Response (`200 OK`):**
 ```json
 {
@@ -1388,9 +1427,11 @@ List exams for management screens.
       "id": "x1f2e3d4-5678-90ab-cdef-1234567890ab",
       "title": "Ujian Akhir: Oceanografi Dasar",
       "course_id": "c1f2e3d4-5678-90ab-cdef-1234567890ab",
-      "course_title": "Dasar Oceanografi",
-      "lesson_id": null,
-      "time_limit_sec": 3600,
+       "course_title": "Dasar Oceanografi",
+       "lesson_id": null,
+       "mode": "locked",
+       "requires_fullscreen": true,
+       "time_limit_sec": 3600,
       "passing_score": 70,
       "max_attempts": 3,
       "pearls_reward": 30
@@ -1400,6 +1441,17 @@ List exams for management screens.
   "meta": null
 }
 ```
+
+For `POST /api/v1/exams` and `PUT /api/v1/exams/{exam}`, send these optional fields to configure the exam explicitly:
+
+```json
+{
+  "mode": "quiz",
+  "requires_fullscreen": false
+}
+```
+
+`mode` accepts `locked` or `quiz`. If omitted during creation, the backend defaults to `locked` and `requires_fullscreen: true`. If `mode` is changed during an update without sending `requires_fullscreen`, fullscreen follows the selected mode (`true` for `locked`, `false` for `quiz`).
 
 ---
 
@@ -1692,10 +1744,14 @@ Get current week leaderboard rankings (week format: ISO 8601 year-week, e.g., `2
     "scope": "weekly",
     "week": "2026-W33",
     "current_page": 1,
-    "per_page": 50
+    "per_page": 50,
+    "total": 15,
+    "last_page": 1
   }
 }
 ```
+
+`total` is the total number of participants in the current week's leaderboard. `last_page` is calculated from `total` and `per_page`; frontend pagination should use these fields instead of inferring totals from the returned ranking count.
 
 ---
 

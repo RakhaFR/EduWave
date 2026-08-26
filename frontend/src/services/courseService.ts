@@ -77,6 +77,8 @@ export interface Exam {
   passing_score: number;
   max_attempts: number;
   pearls_reward: number;
+  mode: "locked" | "quiz";
+  requires_fullscreen: boolean;
   questions?: ExamQuestion[];
 }
 
@@ -107,10 +109,21 @@ export interface ExamAttemptResult {
   results: {
     question_id: string;
     is_correct: boolean;
-    your_answer: string;
-    correct_answer: string;
-    explanation: string;
+    your_answer: string | null;
+    correct_answer: string | null;
+    explanation: string | null;
   }[];
+}
+
+export type ExamViolationEvent = "blur" | "visibility_hidden" | "fullscreen_exit" | "tab_switch";
+
+export interface ExamViolationResponse {
+  attempt_id: string;
+  violation_count: number;
+  max_violations: number;
+  auto_submitted: boolean;
+  event: ExamViolationEvent;
+  result?: ExamAttemptResult;
 }
 
 export interface ExamAttemptHistory {
@@ -197,6 +210,16 @@ export const courseService = {
     return response.data;
   },
 
+  async reportExamViolation(
+    examId: string,
+    attemptId: string,
+    event: ExamViolationEvent,
+    answers: { question_id: string; selected_key: string }[],
+  ) {
+    const response = await api.post(`/exams/${examId}/attempts/${attemptId}/violations`, { event, answers });
+    return response.data;
+  },
+
   async getExamAttempts(examId: string) {
     const response = await api.get(`/exams/${examId}/attempts`);
     return response.data;
@@ -236,6 +259,46 @@ export const courseService = {
 
   async searchStudyRoomUsers(username: string) {
     const response = await api.get("/users/invite-candidates", { params: { search: username, per_page: 10, page: 1 } });
+    return response.data;
+  },
+
+  async getFriends() {
+    const response = await api.get("/friends");
+    return response.data;
+  },
+
+  async getFriendRequests() {
+    const response = await api.get("/friends/requests");
+    return response.data;
+  },
+
+  async followFriend(userId: string) {
+    const response = await api.post(`/friends/follow/${userId}`);
+    return response.data;
+  },
+
+  async unfollowFriend(userId: string) {
+    const response = await api.delete(`/friends/unfollow/${userId}`);
+    return response.data;
+  },
+
+  async getPrivateChats() {
+    const response = await api.get("/private-chats");
+    return response.data;
+  },
+
+  async startPrivateChat(friendId: string) {
+    const response = await api.post(`/private-chats/start/${friendId}`);
+    return response.data;
+  },
+
+  async getPrivateChatMessages(conversationId: string, page = 1, perPage = 50) {
+    const response = await api.get(`/private-chats/${conversationId}/messages`, { params: { page, per_page: perPage } });
+    return response.data;
+  },
+
+  async sendPrivateChatMessage(conversationId: string, content: string) {
+    const response = await api.post(`/private-chats/${conversationId}/messages`, { content });
     return response.data;
   },
 

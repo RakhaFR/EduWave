@@ -54,6 +54,7 @@ class LeaderboardController extends ApiController
         $perPage = min(100, max(1, (int) $request->query('per_page', 50)));
         $offset = ($page - 1) * $perPage;
 
+        $total = $this->leaderboardService->getTotal('weekly');
         $rankings = $this->leaderboardService->getTopN('weekly', $perPage, $offset);
         $enrichedRankings = $this->enrichWithUserData($rankings, 'weekly');
 
@@ -64,6 +65,8 @@ class LeaderboardController extends ApiController
             'week' => now()->format('o-\WW'),
             'current_page' => $page,
             'per_page' => $perPage,
+            'total' => $total,
+            'last_page' => (int) ceil($total / $perPage),
         ]);
     }
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import WelcomeBanner from "@/components/dashboardAdmin/WelcomeBanner";
+import StatsGrid from "@/components/dashboardAdmin/StatsGrid";
 import ExamTable from "@/components/dashboardPembimbing/ExamTable";
 import Modals from "@/components/dashboardPembimbing/Modals";
 import { useAdmin } from "@/components/dashboardAdmin/AdminContext";
@@ -28,6 +29,8 @@ const DEFAULT_EXAM_FORM: PembimbingExamForm = {
   max_attempts: 3,
   pearls_reward: 0,
   lesson_id: "",
+  mode: "locked",
+  requires_fullscreen: true,
 };
 
 export default function AdminExamPage() {
@@ -54,7 +57,11 @@ export default function AdminExamPage() {
     try {
       const res = await adminService.getExams();
       if (res.success && Array.isArray(res.data)) {
-        setExams(res.data);
+        setExams(res.data.map((exam: Exam) => ({
+          ...exam,
+          mode: exam.mode === "quiz" ? "quiz" : "locked",
+          requires_fullscreen: exam.requires_fullscreen ?? exam.mode !== "quiz",
+        })));
       }
     } catch {
       showToast("Gagal memuat daftar ujian.", "error");
@@ -78,7 +85,9 @@ export default function AdminExamPage() {
       passing_score: exam.passing_score,
       max_attempts: exam.max_attempts,
       pearls_reward: exam.pearls_reward,
-      lesson_id: (exam as any).lesson_id || "",
+       lesson_id: (exam as any).lesson_id || "",
+       mode: exam.mode === "quiz" ? "quiz" : "locked",
+       requires_fullscreen: exam.requires_fullscreen ?? exam.mode !== "quiz",
     });
     setIsExamModalOpen(true);
   };
@@ -120,6 +129,8 @@ export default function AdminExamPage() {
             passing_score: res.data.passing_score,
             max_attempts: res.data.max_attempts,
             pearls_reward: res.data.pearls_reward,
+             mode: res.data.mode === "quiz" ? "quiz" : "locked",
+             requires_fullscreen: res.data.requires_fullscreen ?? res.data.mode !== "quiz",
           };
           setExams([...exams, newExam]);
           showToast("Ujian baru berhasil ditambahkan!");
@@ -161,6 +172,8 @@ export default function AdminExamPage() {
     <>
       <WelcomeBanner />
 
+      <StatsGrid totalCourses={courses.length} />
+
       <div className="flex-1 min-h-0">
         <ExamTable
           exams={exams}
@@ -168,6 +181,7 @@ export default function AdminExamPage() {
           onEditClick={handleOpenExamEdit}
           onDeleteClick={handleDeleteExamClick}
           searchGlobal={searchGlobal}
+          basePath="/admin"
         />
       </div>
 

@@ -129,13 +129,13 @@ export default function Sidebar({ showToast }: SidebarProps) {
               <span>Kategori</span>
             </Link>
 
-            <button
-              onClick={() => showToast("Pengaturan sistem segera hadir!")}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-[#0073e6] transition-all text-left w-full cursor-pointer"
+            <Link
+              href="/admin/profile"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left w-full cursor-pointer ${isActive("/admin/profile") ? "bg-[#e6f3ff] text-[#0073e6] font-semibold" : "text-slate-500 hover:bg-slate-50 hover:text-[#0073e6]"}`}
             >
               <Settings className="w-5 h-5 shrink-0" />
               <span>Pengaturan</span>
-            </button>
+            </Link>
           </nav>
         </div>
       </div>

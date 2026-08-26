@@ -31,4 +31,6 @@ export interface Exam {
   max_attempts: number;
   pearls_reward: number;
   lesson_id?: string | null;
+  mode: "locked" | "quiz";
+  requires_fullscreen: boolean;
 }

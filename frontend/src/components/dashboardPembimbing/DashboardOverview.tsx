@@ -6,10 +6,11 @@ import {
   ClipboardList,
   Users,
   CheckCircle,
-  Sparkles,
   Loader2,
+  Activity
 } from "lucide-react";
 import { PembimbingCourse, Exam } from "./types";
+import { Card } from "@/components/ui/card";
 
 interface DashboardOverviewProps {
   courses: PembimbingCourse[];
@@ -33,88 +34,113 @@ export default function DashboardOverview({ courses, coursesLoading = false, exa
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-2">
-        <Sparkles className="w-5 h-5 text-[#0073e6]" />
-        <h2 className="text-base font-extrabold text-[#00172e]">Ringkasan Statistik</h2>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#0073e6] flex items-center justify-center border border-blue-100/80">
+            <Activity className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-[#00172e] tracking-tight">Ringkasan Statistik</h2>
+            <p className="text-xs text-slate-500 font-medium">Statistik kursus & materi bimbingan Anda</p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-[#f0f7ff] to-white border border-blue-100 rounded-2xl p-5 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
-          <div className="flex items-start justify-between">
-            <div className="w-10 h-10 rounded-xl bg-[#0073e6] text-white flex items-center justify-center shadow-md shadow-blue-200 group-hover:scale-110 transition-transform">
-              <BookOpen className="w-5 h-5" />
+        {/* Card 1 */}
+        <Card className="bg-white border-slate-200/80 p-5 rounded-2xl shadow-sm hover:border-blue-200 transition-all flex flex-col justify-between group">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-500">Kursus Saya</span>
+              <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0073e6] border border-blue-100 flex items-center justify-center group-hover:bg-[#0073e6] group-hover:text-white transition-all">
+                <BookOpen className="w-4 h-4" />
+              </div>
             </div>
-            <span className="text-[10px] font-bold bg-blue-50 text-[#0073e6] px-2.5 py-1 rounded-full">Kursus</span>
+            <div className="mt-3">
+              {coursesLoading ? (
+                <Loader2 className="w-6 h-6 animate-spin text-slate-300 my-1" />
+              ) : (
+                <p className="text-3xl font-extrabold text-[#00172e] tracking-tight">{courseStats.total}</p>
+              )}
+            </div>
           </div>
-          <div className="mt-4">
-            {coursesLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin text-slate-300" />
-            ) : (
-              <p className="text-2xl font-black text-[#00172e]">{courseStats.total}</p>
-            )}
-            <p className="text-xs font-semibold text-slate-400 mt-0.5">Total Kursus Saya</p>
+          <div className="flex items-center justify-between text-xs font-medium text-slate-600 pt-3 mt-4 border-t border-slate-100">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>Terbit: <strong className="text-slate-800 font-semibold">{courseStats.published}</strong></span>
+            </div>
+            <span className="text-slate-400">|</span>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-slate-300"></span>
+              <span>Draft: <strong className="text-slate-800 font-semibold">{courseStats.draft}</strong></span>
+            </div>
           </div>
-          <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 pt-3 mt-3 border-t border-blue-50">
-            <span>Terbit: <strong className="text-green-600 font-bold">{courseStats.published}</strong></span>
-            <span>Draft: <strong className="text-slate-600 font-bold">{courseStats.draft}</strong></span>
-          </div>
-        </div>
+        </Card>
 
-        <div className="bg-gradient-to-br from-[#f5f3ff] to-white border border-purple-100 rounded-2xl p-5 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
-          <div className="flex items-start justify-between">
-            <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-md shadow-purple-200 group-hover:scale-110 transition-transform">
-              <Users className="w-5 h-5" />
+        {/* Card 2 */}
+        <Card className="bg-white border-slate-200/80 p-5 rounded-2xl shadow-sm hover:border-blue-200 transition-all flex flex-col justify-between group">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-500">Siswa Terdaftar</span>
+              <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0073e6] border border-blue-100 flex items-center justify-center group-hover:bg-[#0073e6] group-hover:text-white transition-all">
+                <Users className="w-4 h-4" />
+              </div>
             </div>
-            <span className="text-[10px] font-bold bg-purple-50 text-purple-600 px-2.5 py-1 rounded-full">Siswa</span>
+            <div className="mt-3">
+              {coursesLoading ? (
+                <Loader2 className="w-6 h-6 animate-spin text-slate-300 my-1" />
+              ) : (
+                <p className="text-3xl font-extrabold text-[#00172e] tracking-tight">{courseStats.totalEnrolled}</p>
+              )}
+            </div>
           </div>
-          <div className="mt-4">
-            {coursesLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin text-slate-300" />
-            ) : (
-              <p className="text-2xl font-black text-[#00172e]">{courseStats.totalEnrolled}</p>
-            )}
-            <p className="text-xs font-semibold text-slate-400 mt-0.5">Total Siswa Terdaftar</p>
+          <div className="flex items-center justify-between text-xs font-medium text-slate-600 pt-3 mt-4 border-t border-slate-100">
+            <span>Dari <strong className="text-slate-800 font-semibold">{courseStats.total}</strong> total kursus</span>
           </div>
-          <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 pt-3 mt-3 border-t border-purple-50">
-            <span>Dari <strong className="text-purple-600 font-bold">{courseStats.total}</strong> kursus</span>
-          </div>
-        </div>
+        </Card>
 
-        <div className="bg-gradient-to-br from-[#ecfdf5] to-white border border-emerald-100 rounded-2xl p-5 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
-          <div className="flex items-start justify-between">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-200 group-hover:scale-110 transition-transform">
-              <ClipboardList className="w-5 h-5" />
+        {/* Card 3 */}
+        <Card className="bg-white border-slate-200/80 p-5 rounded-2xl shadow-sm hover:border-blue-200 transition-all flex flex-col justify-between group">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-500">Total Ujian</span>
+              <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0073e6] border border-blue-100 flex items-center justify-center group-hover:bg-[#0073e6] group-hover:text-white transition-all">
+                <ClipboardList className="w-4 h-4" />
+              </div>
             </div>
-            <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full">Ujian</span>
+            <div className="mt-3">
+              <p className="text-3xl font-extrabold text-[#00172e] tracking-tight">{examStats.total}</p>
+            </div>
           </div>
-          <div className="mt-4">
-            <p className="text-2xl font-black text-[#00172e]">{examStats.total}</p>
-            <p className="text-xs font-semibold text-slate-400 mt-0.5">Total Ujian Dibuat</p>
+          <div className="flex items-center justify-between text-xs font-medium text-slate-600 pt-3 mt-4 border-t border-slate-100">
+            <span>Ujian terkonfigurasi</span>
           </div>
-          <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 pt-3 mt-3 border-t border-emerald-50">
-            <span>Dari data ujian saya</span>
-          </div>
-        </div>
+        </Card>
 
-        <div className="bg-gradient-to-br from-[#fff7ed] to-white border border-amber-100 rounded-2xl p-5 shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
-          <div className="flex items-start justify-between">
-            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-200 group-hover:scale-110 transition-transform">
-              <CheckCircle className="w-5 h-5" />
+        {/* Card 4 */}
+        <Card className="bg-white border-slate-200/80 p-5 rounded-2xl shadow-sm hover:border-blue-200 transition-all flex flex-col justify-between group">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-500">Kursus Aktif</span>
+              <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#0073e6] border border-blue-100 flex items-center justify-center group-hover:bg-[#0073e6] group-hover:text-white transition-all">
+                <CheckCircle className="w-4 h-4" />
+              </div>
             </div>
-            <span className="text-[10px] font-bold bg-amber-50 text-amber-600 px-2.5 py-1 rounded-full">Terbit</span>
+            <div className="mt-3">
+              {coursesLoading ? (
+                <Loader2 className="w-6 h-6 animate-spin text-slate-300 my-1" />
+              ) : (
+                <p className="text-3xl font-extrabold text-[#00172e] tracking-tight">{courseStats.published}</p>
+              )}
+            </div>
           </div>
-          <div className="mt-4">
-            {coursesLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin text-slate-300" />
-            ) : (
-              <p className="text-2xl font-black text-[#00172e]">{courseStats.published}</p>
-            )}
-            <p className="text-xs font-semibold text-slate-400 mt-0.5">Kursus Aktif Terbit</p>
+          <div className="flex items-center justify-between text-xs font-medium text-slate-600 pt-3 mt-4 border-t border-slate-100">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>Siap diakses siswa</span>
+            </div>
           </div>
-          <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 pt-3 mt-3 border-t border-amber-50">
-            <span>Dari <strong className="text-amber-600 font-bold">{courseStats.total}</strong> total kursus</span>
-          </div>
-        </div>
+        </Card>
       </div>
 
       <div className="mt-2">
