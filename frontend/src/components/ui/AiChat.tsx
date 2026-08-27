@@ -8,7 +8,7 @@ import { AiChatResponse, courseService } from "@/services/courseService";
 type ChatItem = { role: "user" | "assistant"; content: string };
 
 function renderInline(value: string): ReactNode[] {
-  const tokenPattern = /(\\(?:d?frac|tfrac)\{[^{}]+\}\{[^{}]+\}|\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_)/g;
+  const tokenPattern = /(\\(?:d?frac|tfrac)\{[^{}]+\}\{[^{}]+\}|\$[^$]+\$|\\\([^\)]+\\\)|\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_)/g;
   const parts = value.split(tokenPattern);
   return parts.filter(Boolean).map((part, index) => {
     const fraction = part.match(/^\\(?:d?frac|tfrac)\{([^{}]+)\}\{([^{}]+)\}$/);
@@ -20,6 +20,10 @@ function renderInline(value: string): ReactNode[] {
         </span>
       );
     }
+    if ((part.startsWith("$") && part.endsWith("$")) || (part.startsWith("\\(") && part.endsWith("\\)"))) {
+      const math = part.startsWith("$") ? part.slice(1, -1) : part.slice(2, -2);
+      return <span key={index} className="mx-0.5 font-serif italic text-[1.05em]">{renderMath(math)}</span>;
+    }
     if ((part.startsWith("**") && part.endsWith("**")) || (part.startsWith("__") && part.endsWith("__"))) {
       return <strong key={index}>{renderInline(part.slice(2, -2))}</strong>;
     }
@@ -30,12 +34,65 @@ function renderInline(value: string): ReactNode[] {
   });
 }
 
+function renderMath(value: string): ReactNode[] {
+  const parts = value.split(/(\\(?:d?frac|tfrac)\{[^{}]+\}\{[^{}]+\})/g).filter(Boolean);
+  return parts.map((part, index) => {
+    const fraction = part.match(/^\\(?:d?frac|tfrac)\{([^{}]+)\}\{([^{}]+)\}$/);
+    if (!fraction) return <span key={index}>{part}</span>;
+    return (
+      <span key={index} className="mx-1 inline-flex flex-col items-center align-middle not-italic text-[0.9em] leading-none">
+        <span className="border-b border-current px-1 pb-0.5">{fraction[1]}</span>
+        <span className="px-1 pt-0.5">{fraction[2]}</span>
+      </span>
+    );
+  });
+}
+
 function renderAiMessage(content: string) {
-  return content.split("\n").map((line, index) => (
-    <span key={index} className="block min-h-[1.25em]">
-      {renderInline(line)}
-    </span>
-  ));
+  const lines = content.split("\n");
+  const rendered: ReactNode[] = [];
+  let index = 0;
+  while (index < lines.length) {
+    const line = lines[index];
+    if (line.trim() === "---" || line.trim() === "***") {
+      rendered.push(<hr key={index} className="my-3 border-slate-200" />);
+    } else if (line.trim().startsWith("$$")) {
+      const mathLines: string[] = [];
+      const first = line.trim().slice(2);
+      if (first.endsWith("$$")) {
+        mathLines.push(first.slice(0, -2));
+      } else {
+        if (first) mathLines.push(first);
+        index += 1;
+        while (index < lines.length && !lines[index].trim().endsWith("$$")) {
+          mathLines.push(lines[index]);
+          index += 1;
+        }
+        if (index < lines.length) mathLines.push(lines[index].trim().slice(0, -2));
+      }
+      rendered.push(<div key={index} className="my-3 overflow-x-auto rounded-xl bg-slate-50 px-3 py-3 text-center font-serif text-sm">{renderMath(mathLines.join(" "))}</div>);
+    } else {
+      const heading = line.match(/^(#{1,6})\s+(.+)$/);
+      const bullet = line.match(/^\s*[-*+]\s+(.+)$/);
+      const numbered = line.match(/^\s*(\d+)\.\s+(.+)$/);
+      const quote = line.match(/^\s*>\s?(.+)$/);
+      if (heading) {
+        const level = heading[1].length;
+        const className = level <= 2 ? "mt-3 text-base font-extrabold text-[#00172e]" : "mt-2 text-sm font-extrabold text-[#00172e]";
+        rendered.push(<span key={index} className={`block min-h-[1.25em] ${className}`}>{renderInline(heading[2])}</span>);
+      } else if (bullet) {
+        rendered.push(<span key={index} className="block min-h-[1.25em] pl-3 before:mr-2 before:content-['•']">{renderInline(bullet[1])}</span>);
+      } else if (numbered) {
+        rendered.push(<span key={index} className="block min-h-[1.25em] pl-3"><strong>{numbered[1]}.</strong> {renderInline(numbered[2])}</span>);
+      } else if (quote) {
+        rendered.push(<span key={index} className="my-1 block border-l-2 border-[#008be3] pl-3 italic text-slate-500">{renderInline(quote[1])}</span>);
+      } else {
+        rendered.push(<span key={index} className="block min-h-[1.25em]">{renderInline(line)}</span>);
+      }
+    }
+    index += 1;
+  }
+  return rendered;
 }
 
 export default function AiChat({ courseId, lessonId }: { courseId?: string; lessonId?: string }) {
