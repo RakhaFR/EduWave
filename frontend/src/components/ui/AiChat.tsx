@@ -1,10 +1,42 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import type { ReactNode } from "react";
 import { Bot, Loader2, Send, Sparkles, X } from "lucide-react";
 import { AiChatResponse, courseService } from "@/services/courseService";
 
 type ChatItem = { role: "user" | "assistant"; content: string };
+
+function renderInline(value: string): ReactNode[] {
+  const tokenPattern = /(\\(?:d?frac|tfrac)\{[^{}]+\}\{[^{}]+\}|\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_)/g;
+  const parts = value.split(tokenPattern);
+  return parts.filter(Boolean).map((part, index) => {
+    const fraction = part.match(/^\\(?:d?frac|tfrac)\{([^{}]+)\}\{([^{}]+)\}$/);
+    if (fraction) {
+      return (
+        <span key={index} className="mx-1 inline-flex flex-col items-center align-middle text-[0.9em] leading-none">
+          <span className="border-b border-current px-1 pb-0.5">{renderInline(fraction[1])}</span>
+          <span className="px-1 pt-0.5">{renderInline(fraction[2])}</span>
+        </span>
+      );
+    }
+    if ((part.startsWith("**") && part.endsWith("**")) || (part.startsWith("__") && part.endsWith("__"))) {
+      return <strong key={index}>{renderInline(part.slice(2, -2))}</strong>;
+    }
+    if ((part.startsWith("*") && part.endsWith("*")) || (part.startsWith("_") && part.endsWith("_"))) {
+      return <em key={index}>{renderInline(part.slice(1, -1))}</em>;
+    }
+    return <span key={index}>{part}</span>;
+  });
+}
+
+function renderAiMessage(content: string) {
+  return content.split("\n").map((line, index) => (
+    <span key={index} className="block min-h-[1.25em]">
+      {renderInline(line)}
+    </span>
+  ));
+}
 
 export default function AiChat({ courseId, lessonId }: { courseId?: string; lessonId?: string }) {
   const [open, setOpen] = useState(false);
@@ -65,7 +97,7 @@ export default function AiChat({ courseId, lessonId }: { courseId?: string; less
           </header>
           <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-4">
             {messages.length === 0 && <div className="rounded-2xl bg-white p-4 text-sm text-slate-500 shadow-sm"><p className="font-bold text-[#00172e]">Butuh bantuan memahami materi?</p><p className="mt-1 text-xs leading-relaxed">Tanyakan ringkasan, contoh, atau penjelasan dengan bahasa yang lebih sederhana.</p></div>}
-            {messages.map((item, index) => <div key={`${item.role}-${index}`} className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`}><div className={`max-w-[88%] whitespace-pre-wrap rounded-2xl px-3 py-2.5 text-sm leading-relaxed ${item.role === "user" ? "bg-[#008be3] text-white" : "bg-white text-slate-700 shadow-sm"}`}>{item.content}</div></div>)}
+            {messages.map((item, index) => <div key={`${item.role}-${index}`} className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`}><div className={`max-w-[88%] rounded-2xl px-3 py-2.5 text-sm leading-relaxed ${item.role === "user" ? "bg-[#008be3] text-white" : "bg-white text-slate-700 shadow-sm"}`}>{renderAiMessage(item.content)}</div></div>)}
             {loading && <div className="flex items-center gap-2 text-xs text-slate-400"><Loader2 className="h-4 w-4 animate-spin" /> AI sedang berpikir...</div>}
           </div>
           {error && <p className="border-t border-red-100 bg-red-50 px-4 py-2 text-xs text-red-600">{error}</p>}
