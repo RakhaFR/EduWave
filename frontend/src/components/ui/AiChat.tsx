@@ -7,6 +7,10 @@ import { AiChatResponse, courseService } from "@/services/courseService";
 
 type ChatItem = { role: "user" | "assistant"; content: string };
 
+function applyAiBranding(content: string) {
+  return content.replace(/Qwen\s*3\.7/gi, "Quli AI").replace(/Qwen/gi, "Quli AI");
+}
+
 function renderInline(value: string): ReactNode[] {
   const tokenPattern = /(\\(?:d?frac|tfrac)\{[^{}]+\}\{[^{}]+\}|\$[^$]+\$|\\\([^\)]+\\\)|\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_)/g;
   const parts = value.split(tokenPattern);
@@ -127,7 +131,7 @@ export default function AiChat({ courseId, lessonId }: { courseId?: string; less
       }
       const data: AiChatResponse = response.data;
       setConversationId(data.conversation_id || conversationId);
-      setMessages((current) => [...current, { role: "assistant", content: data.message }]);
+      setMessages((current) => [...current, { role: "assistant", content: applyAiBranding(data.message) }]);
     } catch (err: unknown) {
       const apiError = err as { response?: { data?: { error?: { code?: string; message?: string } } } };
       const apiMessage = apiError.response?.data?.error?.message;
@@ -149,7 +153,7 @@ export default function AiChat({ courseId, lessonId }: { courseId?: string; less
       {open && (
         <section className="fixed bottom-5 right-5 z-40 flex h-[min(620px,calc(100vh-2rem))] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-slate-200">
           <header className="flex items-center justify-between bg-[#00172e] p-4 text-white">
-            <div className="flex items-center gap-3"><div className="rounded-xl bg-[#008be3] p-2"><Bot className="h-5 w-5" /></div><div><p className="font-extrabold">Asisten AI EduWave</p><p className="text-[10px] text-white/60">Konteks lesson aktif</p></div></div>
+            <div className="flex items-center gap-3"><div className="rounded-xl bg-[#008be3] p-2"><Bot className="h-5 w-5" /></div><div><p className="font-extrabold">Quli AI EduWave</p><p className="text-[10px] text-white/60">Asisten belajar kontekstual</p></div></div>
             <button type="button" onClick={() => setOpen(false)} className="rounded-full p-1.5 text-white/60 hover:bg-white/10 hover:text-white" aria-label="Tutup AI Chat"><X className="h-4 w-4" /></button>
           </header>
           <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-4">
