@@ -1,4 +1,4 @@
-# EduWave
+# 🌊 EduWave
 
 EduWave adalah platform Learning Management System (LMS) interaktif bertema laut dan bawah laut. Platform ini menggabungkan pembelajaran berbasis course, ujian online, tracking progres, gamifikasi XP dan mutiara, maskot yang dapat dikustomisasi, kolaborasi study room, komunikasi sosial, serta AI Study Assistant.
 
