@@ -92,6 +92,13 @@ export interface ChatAttachment {
   original_name: string;
 }
 
+interface ChatAttachmentUploadResponse {
+  success: boolean;
+  data: { attachment: ChatAttachment };
+  error: { code?: string; message?: string } | null;
+  meta: unknown;
+}
+
 export interface AiChatResponse {
   message: string;
   conversation_id: string | null;
@@ -347,14 +354,14 @@ export const courseService = {
     const form = new FormData();
     form.append("file", file);
     const response = await api.post(`/study-rooms/${roomId}/attachments`, form);
-    return response.data;
+    return response.data as ChatAttachmentUploadResponse;
   },
 
   async uploadPrivateChatAttachment(conversationId: string, file: File) {
     const form = new FormData();
     form.append("file", file);
     const response = await api.post(`/private-chats/${conversationId}/attachments`, form);
-    return response.data;
+    return response.data as ChatAttachmentUploadResponse;
   },
 
   async kickStudyRoomParticipant(roomId: string, userId: string) {

@@ -15,7 +15,7 @@ import {
   ArrowDown,
 } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
-import { courseService } from "@/services/courseService";
+import { ChatAttachment, courseService } from "@/services/courseService";
 import { getEcho } from "@/lib/echo";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -31,6 +31,15 @@ type Person = {
   status?: string;
 };
 type FriendRequest = Person;
+type ApiRequestError = {
+  response?: {
+    data?: {
+      error?: { message?: string };
+      message?: string;
+      errors?: Record<string, string | string[]>;
+    };
+  };
+};
 type Chat = {
   id: string;
   friend: Person;
@@ -64,15 +73,40 @@ function avatar(person?: Person) {
   );
 }
 
-function renderAttachment(url: string) {
-  const cleanUrl = url.split("?")[0].toLowerCase();
-  if (/\.(png|jpe?g|gif|webp|bmp|svg)$/.test(cleanUrl)) return <img src={url} alt="Lampiran" className="max-h-64 max-w-full rounded-xl object-contain" />;
-  if (/\.(mp4|webm|mov|ogg)$/.test(cleanUrl)) return <video src={url} controls className="max-h-64 max-w-full rounded-xl" />;
-  return <a href={url} target="_blank" rel="noreferrer" className="break-all underline">Buka lampiran</a>;
+function parseAttachment(content: string): ChatAttachment | null {
+  try {
+    const attachment = JSON.parse(content) as Partial<ChatAttachment>;
+    return attachment && typeof attachment.url === "string"
+      ? (attachment as ChatAttachment)
+      : null;
+  } catch {
+    return null;
+  }
 }
 
-function isAttachmentUrl(value: string) {
-  return /^https?:\/\//i.test(value) && /\.(png|jpe?g|gif|webp|bmp|svg|mp4|webm|mov|ogg|pdf|docx?|xlsx?|pptx?|txt)(\?|$)/i.test(value);
+function getApiErrorMessage(error: unknown, fallback: string) {
+  const data = (error as ApiRequestError)?.response?.data;
+  const validationMessage = data?.errors
+    ? Object.values(data.errors).flat().find((value) => typeof value === "string")
+    : undefined;
+  return data?.error?.message || validationMessage || data?.message || fallback;
+}
+
+function renderAttachment(content: string) {
+  const attachment = parseAttachment(content);
+  const url = attachment?.url ?? content;
+  const mimeType = attachment?.mime_type?.toLowerCase() ?? "";
+  const cleanUrl = url.split("?")[0].toLowerCase();
+  if (mimeType.startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(cleanUrl)) return <img src={url} alt={attachment?.original_name || "Lampiran"} className="max-h-64 max-w-full rounded-xl object-contain" />;
+  if (mimeType.startsWith("video/") || /\.(mp4|webm|mov|ogg)$/.test(cleanUrl)) return <video src={url} controls className="max-h-64 max-w-full rounded-xl" />;
+  return <a href={url} target="_blank" rel="noreferrer" className="break-all underline">{attachment?.original_name || "Buka lampiran"}</a>;
+}
+
+function isAttachmentContent(value: string) {
+  return Boolean(parseAttachment(value)) || (
+    /^https?:\/\//i.test(value) &&
+    /\.(png|jpe?g|gif|webp|bmp|svg|mp4|webm|mov|ogg|pdf|docx?|xlsx?|pptx?|txt)(\?|$)/i.test(value)
+  );
 }
 
 export default function FriendsComponent() {
@@ -338,7 +372,7 @@ export default function FriendsComponent() {
       let content = draft.trim();
       if (attachment) {
         const upload = await courseService.uploadPrivateChatAttachment(selectedChat.id, attachment);
-        content = upload.data?.attachment?.url ?? upload.attachment?.url ?? "";
+        content = JSON.stringify(upload.data.attachment);
       }
       if (!content) return;
       const response = await courseService.sendPrivateChatMessage(selectedChat.id, content);
@@ -351,8 +385,8 @@ export default function FriendsComponent() {
         );
       setDraft("");
       setAttachment(null);
-    } catch (err: any) {
-      setError(err?.response?.data?.error?.message || "Pesan gagal dikirim.");
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "Pesan gagal dikirim."));
     } finally {
       setUploading(false);
     }
@@ -449,7 +483,7 @@ export default function FriendsComponent() {
                               "Teman"}
                         </p>
                         <p className="break-words text-sm [overflow-wrap:anywhere]">
-                           {isAttachmentUrl(item.content) ? renderAttachment(item.content) : item.content}
+                           {isAttachmentContent(item.content) ? renderAttachment(item.content) : item.content}
                         </p>
                         <p
                           className={`mt-1 text-[10px] ${own ? "text-white/70" : "text-slate-400"}`}

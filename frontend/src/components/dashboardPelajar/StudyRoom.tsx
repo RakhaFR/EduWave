@@ -20,7 +20,7 @@ import {
   Paperclip,
 } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
-import { courseService } from "@/services/courseService";
+import { ChatAttachment, courseService } from "@/services/courseService";
 import { getEcho } from "@/lib/echo";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -43,6 +43,15 @@ type Room = {
   participants?: Participant[];
 };
 type UserSearchResult = Participant;
+type ApiRequestError = {
+  response?: {
+    data?: {
+      error?: { message?: string };
+      message?: string;
+      errors?: Record<string, string | string[]>;
+    };
+  };
+};
 type Message = {
   id: string;
   content: string;
@@ -71,15 +80,37 @@ function formatMessageTime(value?: string) {
   });
 }
 
-function renderAttachment(url: string, className = "") {
-  const cleanUrl = url.split("?")[0].toLowerCase();
-  if (/\.(png|jpe?g|gif|webp|bmp|svg)$/.test(cleanUrl)) {
-    return <img src={url} alt="Lampiran" className={`max-h-64 max-w-full rounded-xl object-contain ${className}`} />;
+function parseAttachment(content: string): ChatAttachment | null {
+  try {
+    const attachment = JSON.parse(content) as Partial<ChatAttachment>;
+    return attachment && typeof attachment.url === "string"
+      ? (attachment as ChatAttachment)
+      : null;
+  } catch {
+    return null;
   }
-  if (/\.(mp4|webm|mov|ogg)$/.test(cleanUrl)) {
+}
+
+function getApiErrorMessage(error: unknown, fallback: string) {
+  const data = (error as ApiRequestError)?.response?.data;
+  const validationMessage = data?.errors
+    ? Object.values(data.errors).flat().find((value) => typeof value === "string")
+    : undefined;
+  return data?.error?.message || validationMessage || data?.message || fallback;
+}
+
+function renderAttachment(content: string, className = "") {
+  const attachment = parseAttachment(content);
+  const url = attachment?.url ?? content;
+  const mimeType = attachment?.mime_type?.toLowerCase() ?? "";
+  const cleanUrl = url.split("?")[0].toLowerCase();
+  if (mimeType.startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(cleanUrl)) {
+    return <img src={url} alt={attachment?.original_name || "Lampiran"} className={`max-h-64 max-w-full rounded-xl object-contain ${className}`} />;
+  }
+  if (mimeType.startsWith("video/") || /\.(mp4|webm|mov|ogg)$/.test(cleanUrl)) {
     return <video src={url} controls className={`max-h-64 max-w-full rounded-xl ${className}`} />;
   }
-  return <a href={url} target="_blank" rel="noreferrer" className={`break-all underline ${className}`}>Buka lampiran</a>;
+  return <a href={url} target="_blank" rel="noreferrer" className={`break-all underline ${className}`}>{attachment?.original_name || "Buka lampiran"}</a>;
 }
 
 export default function StudyRoomComponent() {
@@ -523,7 +554,7 @@ export default function StudyRoomComponent() {
       let type = "text";
       if (attachment) {
         const upload = await courseService.uploadStudyRoomAttachment(selected.id, attachment);
-        content = upload.data?.attachment?.url ?? upload.attachment?.url ?? "";
+        content = JSON.stringify(upload.data.attachment);
         type = "file";
       }
       if (!content) return;
@@ -556,7 +587,7 @@ export default function StudyRoomComponent() {
       setMessage("");
       setAttachment(null);
     } catch (err: any) {
-      setError(err?.response?.data?.error?.message || "Pesan gagal dikirim.");
+      setError(getApiErrorMessage(err, "Pesan gagal dikirim."));
     } finally {
       setUploading(false);
     }
