@@ -1,350 +1,365 @@
-# 🌊 EduWave — Interactive Ocean-Themed Learning Platform
+# EduWave
 
-EduWave adalah platform pembelajaran interaktif bertema bawah laut yang mengintegrasikan sistem gamifikasi mutiara, AI Study Assistant, ruang kolaborasi real-time, serta penyesuaian maskot untuk meningkatkan pengalaman belajar pengguna.
+EduWave adalah platform Learning Management System (LMS) interaktif bertema laut dan bawah laut. Platform ini menggabungkan pembelajaran berbasis course, ujian online, tracking progres, gamifikasi XP dan mutiara, maskot yang dapat dikustomisasi, kolaborasi study room, komunikasi sosial, serta AI Study Assistant.
 
----
+Repository ini berisi dua aplikasi yang berjalan terpisah:
 
-## 🛠️ Tech Stack
+- `frontend`: aplikasi web Next.js untuk pelajar, pembimbing/instructor, dan admin.
+- `backend`: REST API Laravel, autentikasi, database, queue, broadcasting, dan integrasi layanan eksternal.
 
-- **Frontend:** Next.js (App Router), TypeScript, Tailwind CSS, Axios
-- **Backend:** Laravel (RESTful API), MySQL / PostgreSQL
+## Fitur
 
----
+### Pelajar
 
-## 📁 Repository Structure
+- Registrasi, login, logout, reset password, dan autentikasi berbasis token.
+- Menjelajahi course publik, mencari/filter course, enrollment, dan unenrollment.
+- Membaca lesson dengan sequential locking dan menyelesaikan lesson untuk memperoleh reward.
+- Mengikuti ujian dengan batas waktu, maksimum percobaan, auto-grading, passing score, dan riwayat attempt.
+- Pencatatan pelanggaran fullscreen/tab dan auto-submit pada pelanggaran ketiga.
+- Melihat XP, level, streak, mutiara, leaderboard global/mingguan, dan progress belajar.
+- Membeli serta mengatur maskot dan accessories.
+- Melihat dan mengklaim achievement.
+- Membuat atau bergabung ke public/private study room.
+- Mengirim pesan dan attachment di study room.
+- Follow user, mengelola pertemanan, dan private chat dengan teman.
+- Menggunakan AI Study Assistant dengan konteks course atau lesson yang diizinkan.
+
+### Pembimbing / Instructor
+
+- Mengelola course milik sendiri.
+- Membuat, mengubah, dan menghapus lesson.
+- Membuat dan mengelola exam serta pertanyaan exam.
+- Import pertanyaan pilihan ganda dari PDF.
+- Mengelola profil dan melihat course yang dimiliki.
+
+### Admin
+
+- Dashboard overview dan analytics platform.
+- Mengelola user, role, status aktif, dan data pengguna.
+- Melihat ringkasan gamifikasi pengguna.
+- Mengelola course, lesson, exam, dan pertanyaan.
+- Moderasi status course: `draft`, `published`, dan `archived`.
+
+### Status fitur
+
+Halaman `Live Class` sudah tersedia di frontend sebagai bagian dari navigasi pelajar, tetapi implementasinya masih berupa placeholder dan belum menjadi layanan kelas live yang terhubung ke backend.
+
+## Arsitektur
 
 ```text
-eduwave/
-├── frontend/                     # Next.js Application
-│   ├── src/
-│   │   ├── app/                 # App Router Pages
-│   │   │   ├── (auth)/          # Login & Register Routes
-│   │   │   ├── admin/           # Admin Dashboard
-│   │   │   ├── course/[id]/     # Course Detail & Modules
-│   │   │   ├── dashboard/       # Student Dashboard
-│   │   │   ├── exam/[id]/       # Examination Page
-│   │   │   ├── leaderboard/     # Student Ranking
-│   │   │   ├── mascot-customize/# Mascot Customization
-│   │   │   ├── profile/         # User Profile
-│   │   │   └── study-room/      # Real-time Collaboration Room
-│   │   ├── components/          # Reusable UI Components
-│   │   ├── lib/                 # Axios & Utility Configs
-│   │   ├── services/            # API Call Handlers
-│   │   └── types/               # TypeScript Definitions
-│   └── package.json
-│
-└── backend/                      # Laravel REST API
-    ├── app/                     # Controllers, Models, Middleware
-    ├── database/                # Migrations & Seeders
-    ├── routes/                  # API Endpoints (`api.php`)
-    └── composer.json
+Browser
+  |-- Next.js frontend (port 3000)
+  |      |-- Axios REST API
+  |      `-- Laravel Echo / Reverb untuk realtime
+  |
+  `-- Laravel backend (port 8000, API /api/v1)
+         |-- Sanctum Bearer token
+         |-- MySQL/MariaDB atau SQLite
+         |-- Database queue/cache dan Redis opsional
+         |-- Laravel Reverb
+         |-- Cloudinary untuk attachment
+         `-- Xkiro OpenAI-compatible API untuk AI
 ```
 
----
+Komunikasi utama frontend ke backend menggunakan base URL `/api/v1`. Realtime study room dan private chat menggunakan Laravel Broadcasting/Reverb. Backend memakai UUID untuk primary key domain dan mengembalikan response dalam envelope API yang konsisten.
 
-## 🚀 Getting Started
+## Tech Stack
 
-### Prerequisites
+### Frontend
 
-Pastikan perangkat Anda sudah terinstal:
-- **Node.js** (v18.x atau lebih baru)
-- **PHP** (v8.2 atau lebih baru) & **Composer**
-- **MySQL** / **PostgreSQL**
+- Next.js `16.3.0` dengan App Router
+- React `19.2.8`
+- TypeScript
+- Tailwind CSS v4
+- Axios
+- Laravel Echo dan Pusher JS client
+- Motion, AOS, Marked, Lucide React, dan React Icons
 
----
+### Backend
 
-### 1. Setup Frontend (Next.js)
+- PHP `8.2+`
+- Laravel `12`
+- Laravel Sanctum `4` untuk personal access token
+- Laravel Reverb `1.11` untuk realtime broadcasting
+- MySQL/MariaDB untuk deployment dan SQLite in-memory untuk test
+- Predis/Redis untuk kebutuhan leaderboard bila diaktifkan
+- Cloudinary PHP SDK untuk upload attachment
+- Smalot PDF Parser untuk import soal dari PDF
+- PHPUnit `11` dan Laravel Pint
+
+## Struktur Repository
+
+```text
+.
+├── README.md
+├── render.yaml                 # Konfigurasi deployment backend di Render
+├── backend/
+│   ├── app/
+│   │   ├── Http/Controllers/   # Controller API dan controller admin
+│   │   ├── Http/Requests/       # Validasi request
+│   │   ├── Models/              # Model Eloquent
+│   │   ├── Policies/            # Authorization/ownership
+│   │   └── Services/            # Logic leaderboard dan AI, dll.
+│   ├── database/
+│   │   ├── migrations/
+│   │   └── seeders/
+│   ├── routes/api.php           # Semua endpoint di bawah /api/v1
+│   ├── tests/Feature/
+│   ├── Dockerfile
+│   ├── composer.json
+│   └── .env.example
+├── frontend/
+│   ├── src/app/                 # Route Next.js
+│   ├── src/components/          # Komponen UI dan dashboard
+│   ├── src/hooks/
+│   ├── src/lib/                 # Axios, Echo, security, dan utility
+│   ├── src/services/            # Client service untuk API
+│   ├── src/types/
+│   └── package.json
+└── docs/postman/                # Koleksi/dokumentasi API tambahan
+```
+
+## Prasyarat
+
+- Node.js dan npm yang kompatibel dengan Next.js `16.3.0`.
+- PHP `8.2` atau lebih baru.
+- Composer.
+- MySQL/MariaDB untuk konfigurasi lokal yang menyerupai deployment, atau SQLite untuk setup sederhana.
+- Redis diperlukan agar leaderboard global dan mingguan berfungsi penuh; proses lain tetap dapat berjalan tanpanya.
+- Cloudinary diperlukan untuk upload attachment.
+- Xkiro API key diperlukan untuk AI Study Assistant.
+
+## Menjalankan Secara Lokal
+
+Backend harus dijalankan sebelum frontend.
+
+### 1. Backend
+
+Pada Windows PowerShell:
+
+```powershell
+cd backend
+composer install
+Copy-Item .env.example .env
+php artisan key:generate
+```
+
+Atur koneksi database di `backend/.env`, kemudian jalankan migration:
+
+```powershell
+php artisan migrate
+```
+
+Untuk database lokal baru dengan data contoh:
+
+```powershell
+php artisan migrate:fresh --seed
+```
+
+Jalankan API:
+
+```powershell
+php artisan serve
+```
+
+API tersedia di `http://localhost:8000` dengan base endpoint `http://localhost:8000/api/v1`.
+
+Di Linux/macOS, gunakan `cp .env.example .env` sebagai pengganti `Copy-Item`.
+
+### 2. Frontend
+
+Buka terminal lain:
 
 ```bash
-# Pindah ke direktori frontend
 cd frontend
-
-# Install dependencies
 npm install
-
-# Konfigurasi Environment Variables
-# Buat file .env.local di dalam folder frontend
 ```
 
-Isi file `frontend/.env.local`:
+Buat `frontend/.env.local`:
+
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000/api
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_REVERB_APP_KEY=your-key
+NEXT_PUBLIC_REVERB_HOST="localhost"
+NEXT_PUBLIC_REVERB_PORT=8080
+NEXT_PUBLIC_REVERB_SCHEME=http
 ```
 
-Jalankan development server:
+Jalankan frontend:
+
 ```bash
 npm run dev
 ```
-Aplikasi frontend akan berjalan di `http://localhost:3000`.
 
----
+Buka `http://localhost:3000`.
 
-### 2. Setup Backend (Laravel)
+### Development dengan queue, log, dan Vite backend
+
+Dari direktori `backend`, `composer dev` menjalankan server Laravel, queue listener, Pail logs, dan Vite backend secara bersamaan:
 
 ```bash
-# Pindah ke direktori backend
-cd ../backend
-
-# Install dependencies
-composer install
-
-# Salin file konfigurasi environment
-cp .env.example .env
-
-# Generate Application Key
-php artisan key:generate
-
-# Jalankan migrasi database
-php artisan migrate --seed
+composer dev
 ```
 
-Jalankan server Laravel:
-```bash
-php artisan serve
-```
-API backend akan berjalan di `http://localhost:8000`.
+Next.js frontend tetap dijalankan terpisah dari direktori `frontend` dengan `npm run dev`.
 
----
+## Environment Variables
 
-## 🤖 AI Study Assistant
-
-Backend menyediakan endpoint chat yang meneruskan request ke API OpenAI-compatible Xkiro. API key hanya disimpan di backend, bukan di frontend.
-
-### Konfigurasi Backend
-
-Tambahkan ke `backend/.env`, lalu bersihkan cache konfigurasi:
+### Frontend
 
 ```env
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_REVERB_APP_KEY=
+NEXT_PUBLIC_REVERB_HOST=
+NEXT_PUBLIC_REVERB_PORT=
+NEXT_PUBLIC_REVERB_SCHEME=http
+NEXT_PUBLIC_APP_VERSION=
+```
+
+Variable Reverb diperlukan untuk fitur realtime. Jangan menaruh secret backend di frontend.
+
+### Backend
+
+Salin `backend/.env.example` sebagai titik awal. Variable penting:
+
+```env
+APP_URL=http://localhost:8000
+CORS_ALLOWED_ORIGINS=http://localhost:3000
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=eduwave
+DB_USERNAME=root
+DB_PASSWORD=
+SESSION_DRIVER=database
+CACHE_STORE=database
+QUEUE_CONNECTION=database
+BROADCAST_CONNECTION=log
+FILESYSTEM_DISK=public
+CLOUDINARY_URL=
 XKIRO_BASE_URL=https://api.xkiro.com/v1
-XKIRO_API_KEY=your-xkiro-api-key
+XKIRO_API_KEY=
 XKIRO_MODEL=qwen/qwen3.7-plus:free
 XKIRO_TIMEOUT=60
 ```
 
-Hasil pengujian langsung ke Xkiro pada 26 Agustus 2026 tanpa header `Authorization` adalah **HTTP 401**. Jadi, meskipun model bertanda `:free`, environment ini tetap memerlukan API key Xkiro.
+Untuk deployment Reverb, gunakan `BROADCAST_CONNECTION=reverb` dan isi variable `REVERB_APP_ID`, `REVERB_APP_KEY`, `REVERB_APP_SECRET`, `REVERB_HOST`, `REVERB_PORT`, dan `REVERB_SCHEME` di environment backend. Detail variable tambahan tersedia di `backend/.env.example` dan `render.yaml`.
+
+API key Xkiro dan `CLOUDINARY_URL` hanya boleh disimpan di backend. Setelah mengubah konfigurasi Laravel, jalankan:
 
 ```bash
-cd backend
 php artisan config:clear
 ```
 
-### Endpoint Chat
+## Command Penting
+
+### Frontend
+
+```bash
+npm run dev       # Development server
+npm run build     # Production build
+npm run start     # Jalankan hasil production build
+npm run lint      # ESLint
+```
+
+### Backend
+
+```bash
+composer setup                         # Install, env, key, migration, dan asset build
+composer dev                           # Server, queue, log, dan Vite backend
+composer test                          # Bersihkan config lalu jalankan semua test
+php artisan test                       # Jalankan test PHPUnit
+php artisan test --filter=NamaTest     # Jalankan test berdasarkan filter
+php artisan queue:work                  # Jalankan worker queue
+php artisan reverb:start                # Jalankan server Reverb
+php artisan users:recalc-levels         # Sinkronisasi level dari XP
+vendor/bin/pint                        # Format kode PHP
+```
+
+`composer setup` menjalankan migration dengan `--force`, sehingga gunakan hanya pada environment/database yang sesuai.
+
+## Testing
+
+Backend memiliki test unit dan feature di `backend/tests/`. Konfigurasi PHPUnit menggunakan SQLite in-memory, cache/session array, queue synchronous, dan broadcasting nonaktif agar test tidak membutuhkan service eksternal.
+
+```bash
+cd backend
+composer test
+```
+
+Frontend saat ini memiliki lint dan production build, tetapi belum memiliki script unit test, integration test, atau end-to-end test.
+
+## API
+
+Semua route API berada di bawah `/api/v1` dan didefinisikan di `backend/routes/api.php`. Endpoint utama meliputi:
+
+- Auth: `/auth/register`, `/auth/login`, `/auth/logout`, `/auth/me`, password reset.
+- User: `/users/me`, statistik, course aktif, progress, mascot, dan achievement.
+- Course dan lesson: `/courses`, `/lessons`, enrollment, dan progress.
+- Exam: exam, questions, attempt, submit, violation, dan import PDF.
+- Gamifikasi: `/leaderboard`, `/mascots`, dan `/achievements`.
+- Kolaborasi: `/study-rooms`, room messages, dan attachments.
+- Sosial: `/friends` dan `/private-chats`.
+- AI: `POST /ai/chat`.
+- Admin: `/admin/users`, `/admin/courses`, dan `/admin/analytics/overview`.
+
+Endpoint yang membutuhkan autentikasi menggunakan:
 
 ```http
-POST /api/v1/ai/chat
-Authorization: Bearer {eduwave_token}
-Content-Type: application/json
-Accept: application/json
+Authorization: Bearer <sanctum_token>
 ```
 
-Body minimal:
-
-```json
-{
-  "message": "Jelaskan fotosintesis dengan singkat"
-}
-```
-
-Body dengan konteks pembelajaran:
-
-```json
-{
-  "message": "Buatkan ringkasan materi ini",
-  "course_context_id": "COURSE_UUID",
-  "lesson_context_id": "LESSON_UUID",
-  "conversation_id": "OPTIONAL_CLIENT_CONVERSATION_UUID"
-}
-```
-
-`message` maksimal 4.000 karakter. Student hanya dapat mengirim konteks kursus yang published dan sudah di-enroll; admin/instructor dapat menggunakan konteks kursus apa pun. `conversation_id` saat ini hanya dikembalikan sebagai identifier client dan belum disimpan server.
-
-Contoh penggunaan dari frontend menggunakan `fetch`:
-
-```ts
-const response = await fetch(`${API_URL}/v1/ai/chat`, {
-  method: "POST",
-  headers: {
-    "Authorization": `Bearer ${token}`,
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-  },
-  body: JSON.stringify({ message: "Apa inti lesson ini?", lesson_context_id: lessonId }),
-});
-
-const result = await response.json();
-if (!response.ok) throw new Error(result.error?.message ?? "AI tidak tersedia");
-console.log(result.data.message);
-```
-
-Respons berhasil mengikuti envelope API EduWave:
+Response API menggunakan format:
 
 ```json
 {
   "success": true,
-  "data": {
-    "message": "Fotosintesis adalah ...",
-    "conversation_id": null,
-    "model": "qwen/qwen3.7-plus:free",
-    "usage": { "prompt_tokens": 30, "completion_tokens": 20, "total_tokens": 50 }
-  },
+  "data": {},
   "error": null,
   "meta": null
 }
 ```
 
-Error upstream atau key yang belum dikonfigurasi menghasilkan HTTP `503` dengan `error.code` `AI_SERVICE_UNAVAILABLE`.
+Spesifikasi endpoint, field request, response detail, dan status test tersedia di [`backend/README.md`](backend/README.md). Koleksi Postman tersedia di [`docs/postman`](docs/postman/).
 
----
+## Upload Attachment
 
-## 📎 Chat Attachments (Cloudinary)
+Study room dan private chat mendukung satu attachment per request melalui Cloudinary.
 
-Fitur ini menyediakan upload gambar, video, dan dokumen untuk study room chat serta private friend chat. File diunggah oleh backend ke Cloudinary dan endpoint mengembalikan URL HTTPS yang dapat dikirim sebagai isi pesan. Frontend belum diubah oleh implementasi ini.
+- Endpoint study room: `POST /api/v1/study-rooms/{room}/attachments`
+- Endpoint private chat: `POST /api/v1/private-chats/{conversation}/attachments`
+- Field multipart: `file`
+- Batas ukuran: 10 MB
+- Tipe: JPEG, PNG, GIF, WebP, MP4, WebM, MOV, PDF, TXT, DOC/DOCX, XLS/XLSX, PPT/PPTX
 
-### A. Setup Cloudinary
+Upload tidak otomatis menjadi pesan. URL hasil upload kemudian dikirim ke endpoint message terkait. Jangan pernah mengekspos API secret Cloudinary ke frontend.
 
-1. Buat akun gratis di [Cloudinary](https://cloudinary.com/) dan buka **Dashboard**.
-2. Salin **API Environment Variable** dengan format berikut.
-3. Tambahkan nilainya ke `backend/.env`:
+## Deployment
+
+### Backend
+
+Backend menyediakan `backend/Dockerfile` yang menjalankan PHP-FPM, Nginx, Supervisor, queue, dan konfigurasi runtime Laravel. `render.yaml` mengatur deployment service Docker backend di Render, termasuk health check `/up`, migration, database, CORS, dan Reverb.
+
+Variable `RUN_MIGRATIONS`, `RUN_SEEDERS`, `RUN_LEADERBOARD_SEEDER`, `RUN_RECALC_LEVELS`, dan `RUN_MIGRATE_FRESH` mengontrol operasi database saat container start. Aktifkan `RUN_MIGRATE_FRESH` hanya pada database disposable karena akan menghapus data yang ada.
+
+### Frontend
+
+Frontend dapat dideploy ke Vercel dengan `frontend` sebagai Root Directory. Setidaknya isi:
 
 ```env
-CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+NEXT_PUBLIC_API_URL=https://<backend-host>/api/v1
 ```
 
-Jangan menaruh `API_SECRET` di frontend, `frontend/.env.local`, atau repository. Setelah mengubah environment, jalankan:
+Jika realtime digunakan, tambahkan variable `NEXT_PUBLIC_REVERB_*` yang sesuai dengan konfigurasi Reverb backend.
 
-```bash
-cd backend
-php artisan config:clear
-```
+## Catatan Keamanan
 
-Dependensi PHP sudah didefinisikan sebagai `cloudinary/cloudinary_php` di `backend/composer.json`. Jika checkout dari repository baru, jalankan `composer install`.
+- Jangan commit `.env`, API key, password database, secret Reverb, atau kredensial Cloudinary.
+- `APP_DEBUG` harus `false` di production.
+- CORS production harus dibatasi ke origin frontend yang benar.
+- Client-side validation/rate limiting bukan pengganti validasi dan rate limiting backend.
+- Perintah `migrate:fresh --seed` bersifat destruktif terhadap database.
 
-### B. Aturan Upload
+## Lisensi
 
-- Maksimal satu file per request.
-- Ukuran maksimal: **10 MB** (`10240 KB`).
-- Gambar: JPEG, PNG, GIF, WebP.
-- Video: MP4, WebM, MOV/QuickTime.
-- Dokumen: PDF, TXT, DOC/DOCX, XLS/XLSX, PPT/PPTX.
-- Upload harus menggunakan `multipart/form-data` dengan nama field `file`.
-- Semua endpoint memerlukan header `Authorization: Bearer {token}`.
-- File tidak otomatis menjadi pesan. Setelah upload berhasil, frontend mengirim URL hasil upload melalui endpoint message yang sudah ada.
-
-### C. Endpoint Study Room
-
-```http
-POST /api/v1/study-rooms/{room}/attachments
-```
-
-Syarat akses: user harus menjadi peserta room dan room harus berstatus `active`.
-
-Contoh request:
-
-```bash
-curl -X POST "http://localhost:8000/api/v1/study-rooms/ROOM_ID/attachments" \
-  -H "Authorization: Bearer TOKEN" \
-  -H "Accept: application/json" \
-  -F "file=@/path/to/photo.jpg"
-```
-
-### D. Endpoint Private Friend Chat
-
-```http
-POST /api/v1/private-chats/{conversation}/attachments
-```
-
-Syarat akses: user harus merupakan salah satu anggota conversation tersebut.
-
-Contoh request:
-
-```bash
-curl -X POST "http://localhost:8000/api/v1/private-chats/CONVERSATION_ID/attachments" \
-  -H "Authorization: Bearer TOKEN" \
-  -H "Accept: application/json" \
-  -F "file=@/path/to/document.pdf"
-```
-
-### E. Respons Berhasil
-
-Kedua endpoint memakai format respons API EduWave:
-
-```json
-{
-  "success": true,
-  "data": {
-    "attachment": {
-      "url": "https://res.cloudinary.com/.../upload/.../photo.jpg",
-      "public_id": "chat/study-rooms/ROOM_ID/photo_abc123",
-      "resource_type": "image",
-      "format": "jpg",
-      "mime_type": "image/jpeg",
-      "size": 245678,
-      "original_name": "photo.jpg"
-    }
-  },
-  "error": null,
-  "meta": null
-}
-```
-
-`resource_type` bernilai `image`, `video`, atau `raw` untuk dokumen. URL yang dipakai untuk pesan adalah `data.attachment.url`.
-
-### F. Panduan Implementasi Frontend
-
-Frontend dapat memakai alur berikut tanpa membocorkan kredensial Cloudinary:
-
-1. Saat user memilih file, tolak file jika `file.size > 10 * 1024 * 1024` dan tampilkan tipe file yang diperbolehkan.
-2. Buat `FormData`, lalu append file dengan key `file`.
-3. POST `FormData` ke endpoint attachment sesuai konteks chat menggunakan Bearer token. Jangan set header `Content-Type` secara manual jika memakai Axios/fetch; browser akan menambahkan boundary multipart.
-4. Ambil `data.attachment` dari respons.
-5. Kirim pesan melalui endpoint yang sudah ada:
-   - Study room: `POST /api/v1/study-rooms/{room}/messages` dengan `{ "content": attachment.url, "type": "file" }`.
-   - Private chat: `POST /api/v1/private-chats/{conversation}/messages` dengan `{ "content": attachment.url }`.
-6. Render berdasarkan MIME/resource type. Untuk gambar gunakan `<img>`, video `<video controls>`, sedangkan dokumen gunakan link download/open pada `attachment.url`.
-7. Simpan metadata attachment dari respons pada state pesan jika UI memerlukan nama file, ukuran, atau preview. Backend saat ini menyimpan URL sebagai `content`, jadi perubahan model/database belum diperlukan untuk endpoint upload tahap pertama.
-
-Contoh fungsi client-side:
-
-```ts
-const form = new FormData();
-form.append("file", file);
-
-const upload = await api.post(
-  `/study-rooms/${roomId}/attachments`,
-  form,
-  { headers: { Authorization: `Bearer ${token}` } }
-);
-
-await api.post(`/study-rooms/${roomId}/messages`, {
-  content: upload.data.data.attachment.url,
-  type: "file",
-});
-```
-
-### G. Error Utama
-
-- `401`: token tidak ada atau tidak valid.
-- `403 NOT_A_PARTICIPANT` / `UNAUTHORIZED_CONVERSATION`: user tidak memiliki akses chat.
-- `422`: field `file` kosong, tipe file tidak diperbolehkan, atau ukuran lebih dari 10 MB.
-- `502 UPLOAD_FAILED`: Cloudinary gagal menerima file.
-- `503 CLOUDINARY_NOT_CONFIGURED`: `CLOUDINARY_URL` belum diisi di backend.
-
----
-
-## 🌐 Deployment Configuration (Vercel)
-
-Jika melakukan *deployment* platform frontend ke **Vercel**:
-
-1. Hubungkan repositori Git ini ke Vercel.
-2. Di bagian **Project Settings > Root Directory**, atur nilainya ke:
-   ```text
-   frontend
-   ```
-3. Tambahkan Environment Variable di Vercel:
-   - `NEXT_PUBLIC_API_URL`: URL API Laravel yang sudah terisolasi/online.
-
----
-
-## 📝 License
-
-Proyek ini dikembangkan untuk perlombaan **EduWave**. Hak cipta dilindungi undang-undang.
+Proyek ini dikembangkan untuk kebutuhan proyek EduWave dan Kompetisi OSCAR 3.0 mata lomba Web Development.
