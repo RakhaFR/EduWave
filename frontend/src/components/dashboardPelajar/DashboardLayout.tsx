@@ -299,10 +299,10 @@ export default function DashboardLayout({
 
       {/* ── SIDEBAR DESKTOP (lg+) ── */}
       <div
-        className="hidden lg:block w-64 shrink-0 p-3 relative"
+        className="hidden lg:block w-64 shrink-0 p-3 fixed top-0 left-0 h-screen overflow-hidden"
         style={{ zIndex: 20 }}
       >
-        <aside className="relative h-full rounded-3xl bg-white flex flex-col px-5 py-6 shadow-xl">
+        <aside className="relative h-full max-h-full rounded-3xl bg-[#ffffff] flex flex-col px-5 py-6 shadow-xl overflow-y-auto">
           {/* Logo */}
           <Link
             href="/pelajar"
@@ -389,7 +389,7 @@ export default function DashboardLayout({
 
       {/* ── MAIN CONTENT ── */}
       <div
-        className="flex-1 flex flex-col min-w-0 relative"
+        className="flex-1 flex flex-col min-w-0 relative lg:pl-64"
         style={{ zIndex: 10 }}
       >
         {/* Topbar */}

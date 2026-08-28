@@ -8,6 +8,7 @@ import { mascotService, MascotItem, InventoryMascot } from "@/services/mascotSer
 import { UserProfile } from "@/types/auth";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { GridSkeleton } from "@/components/ui/PageSkeleton";
+import { formatMascotDisplayName } from "@/lib/mascotNames";
 
 const RARITY_CONFIG = {
   common: { label: "Umum", color: "bg-slate-100 text-slate-600", border: "border-slate-200", glow: "", icon: Star },
@@ -227,7 +228,7 @@ export default function MascotCustomizeComponent() {
         <div className="mb-6">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h1 className="text-xl md:text-2xl font-extrabold text-white">Maskot Quli</h1>
+              <h1 className="text-xl md:text-2xl font-extrabold text-white">Pilih Maskot</h1>
               <p className="text-sm text-slate-300 mt-0.5">Koleksi & pasang maskot pendampingmu</p>
             </div>
             <div className="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-2xl border border-white/20">
@@ -244,14 +245,16 @@ export default function MascotCustomizeComponent() {
             <div className="relative w-20 h-20 shrink-0">
               <Image
                 src={getInventoryImage(activeMascot, activeMascotIdx)}
-                alt={activeMascot.name}
+                alt={formatMascotDisplayName(activeMascot.name, activeMascot.avatar_url)}
                 fill
                 className="object-contain drop-shadow-lg"
               />
             </div>
             <div>
               <p className="text-xs font-bold text-cyan-300 uppercase tracking-widest mb-0.5">Maskot Aktif</p>
-              <p className="text-white font-extrabold text-lg leading-tight">{activeMascot.name}</p>
+              <p className="text-white font-extrabold text-lg leading-tight">
+                {formatMascotDisplayName(activeMascot.name, activeMascot.avatar_url)}
+              </p>
               <p className="text-slate-300 text-xs mt-1 line-clamp-2">{activeMascot.description}</p>
             </div>
           </div>
@@ -297,14 +300,16 @@ export default function MascotCustomizeComponent() {
                         <div className="relative w-20 h-20">
                           <Image
                             src={getMascotImage(mascot, globalIdx)}
-                            alt={mascot.name}
+                            alt={formatMascotDisplayName(mascot.name, mascot.avatar_url)}
                             fill
                             className="object-contain"
                           />
                         </div>
 
                         <div className="text-center w-full">
-                          <p className="font-extrabold text-[#00172e] text-xs leading-tight">{mascot.name}</p>
+                          <p className="font-extrabold text-[#00172e] text-xs leading-tight">
+                            {formatMascotDisplayName(mascot.name, mascot.avatar_url)}
+                          </p>
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold mt-1 ${rarity.color}`}>
                             <RarityIcon className="w-3 h-3" />
                             {rarity.label}
@@ -390,7 +395,7 @@ export default function MascotCustomizeComponent() {
                         <div className="relative w-20 h-20">
                           <Image
                             src={getInventoryImage(mascot, globalIdx)}
-                            alt={mascot.name}
+                            alt={formatMascotDisplayName(mascot.name, mascot.avatar_url)}
                             fill
                             className="object-contain"
                           />
@@ -402,7 +407,9 @@ export default function MascotCustomizeComponent() {
                         </div>
 
                         <div className="text-center w-full">
-                          <p className="font-extrabold text-[#00172e] text-xs leading-tight">{mascot.name}</p>
+                          <p className="font-extrabold text-[#00172e] text-xs leading-tight">
+                            {formatMascotDisplayName(mascot.name, mascot.avatar_url)}
+                          </p>
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold mt-1 ${rarity.color}`}>
                             <RarityIcon className="w-3 h-3" />
                             {rarity.label}

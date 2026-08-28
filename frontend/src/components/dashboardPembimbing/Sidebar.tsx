@@ -23,7 +23,7 @@ export default function Sidebar({ showToast }: SidebarProps) {
   };
 
   return (
-    <div className="bg-white rounded-[24px] shadow-2xl flex flex-col p-6 h-full min-h-full">
+    <div className="bg-white rounded-[24px] shadow-2xl flex flex-col p-6 h-full max-h-full overflow-hidden">
       <Link href="/pembimbing" className="flex items-center gap-3 mb-6 px-1 shrink-0">
         <Image
           src="/logo-eduwave.webp"

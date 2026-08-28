@@ -42,12 +42,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <FloatingBubbles count={15} className="z-0 opacity-40 animate-float-bubble" />
 
       {/* --- SIDEBAR DESKTOP (>= 1024px) --- */}
-      <aside className="hidden lg:block w-72 shrink-0 p-4 z-10">
+      <aside className="hidden lg:block w-72 shrink-0 p-4 z-10 fixed top-0 left-0 h-screen overflow-hidden">
         <Sidebar showToast={(msg) => showToast(msg)} />
       </aside>
 
       {/* --- CONTENT AREA & HEADER --- */}
-      <div className="flex-1 flex flex-col p-4 z-10 min-w-0 lg:pl-0">
+      <div className="flex-1 flex flex-col p-4 z-10 min-w-0 lg:pl-72">
         {/* Topbar */}
         <Topbar
           searchGlobal={searchGlobal}

@@ -267,7 +267,7 @@ export default function PelajarLessonDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-[#00172e] flex flex-col max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 text-[#00172e] flex flex-col max-w-full">
 
       {/* Overlay mobile */}
       {sidebarOpen && (
@@ -311,14 +311,14 @@ export default function PelajarLessonDetailPage() {
       </header>
 
       {/* ── Body: sidebar + content ── */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 relative min-h-[calc(100vh-57px)]">
 
         {/* ── Sidebar Kiri ── */}
         <aside
           className={`
-            fixed left-0 top-0 bottom-0 z-40 w-72 bg-white border-r border-slate-100 shadow-xl flex flex-col
+            fixed left-0 top-[57px] bottom-0 z-40 w-72 bg-white border-r border-slate-100 shadow-xl flex flex-col h-[calc(100vh-57px)] overflow-hidden
             transition-transform duration-300 ease-in-out
-            lg:sticky lg:top-[57px] lg:h-[calc(100vh-57px)] lg:translate-x-0 lg:shadow-none
+            lg:translate-x-0 lg:shadow-none
             ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
           `}
         >
@@ -429,7 +429,7 @@ export default function PelajarLessonDetailPage() {
           data-tour="lesson-content"
           ref={contentAreaRef}
           onScroll={handleScroll}
-          className="flex-1 min-w-0 overflow-y-auto"
+          className="flex-1 min-w-0 overflow-y-auto lg:ml-72"
         >
           <div className="max-w-3xl mx-auto px-4 py-6 md:px-8">
 
