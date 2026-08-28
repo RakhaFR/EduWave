@@ -3582,17 +3582,96 @@ Request body:
 
 `content` is required, must be a string, and has a maximum length of 5,000 characters. A successful request returns `201 Created` and the created message under `data.message`.
 
+#### Edit your own message
+
+Only the original sender may edit a private message. The message must also belong to the conversation in the URL.
+
+```http
+PUT /api/v1/private-chats/{conversationId}/messages/{messageId}
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "content": "Pesan yang sudah diperbarui"
+}
+```
+
+`content` follows the send-message rules: it is required, must be a string, and may contain at most 5,000 characters. A successful request returns `200 OK` with the updated message under `data.message`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "message": {
+      "id": "message-uuid",
+      "conversation_id": "conversation-uuid",
+      "content": "Pesan yang sudah diperbarui",
+      "sender_id": "user-uuid",
+      "sent_at": "2026-08-24T07:10:00.000000Z",
+      "sender": {
+        "id": "user-uuid",
+        "username": "andi",
+        "full_name": "Andi Pratama",
+        "avatar_url": null
+      }
+    }
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+The backend broadcasts `.message_updated` on `private-chat.{conversationId}` after the database update.
+
+#### Delete your own message
+
+Only the original sender may delete a private message. Deleting a message also removes any Cloudinary attachment referenced by its content.
+
+```http
+DELETE /api/v1/private-chats/{conversationId}/messages/{messageId}
+Authorization: Bearer <token>
+```
+
+No request body is required. A successful request returns `200 OK`:
+
+```json
+{
+  "success": true,
+  "data": {
+    "message_id": "message-uuid"
+  },
+  "error": null,
+  "meta": null
+}
+```
+
+The backend broadcasts `.message_deleted` on `private-chat.{conversationId}` before deleting the database record.
+
+#### Edit/delete errors
+
+| Status | Error code | Meaning |
+|---|---|---|
+| `403` | `UNAUTHORIZED_CONVERSATION` | The authenticated user is not a participant in the conversation |
+| `403` | `MESSAGE_NOT_OWNED` | The authenticated user did not send the message |
+| `404` | `MESSAGE_NOT_FOUND` | The message does not belong to the conversation in the URL |
+| `404` | Laravel not-found response | The conversation or message UUID does not exist |
+| `422` | `VALIDATION_ERROR` | Edit content is empty, not a string, or longer than 5,000 characters |
+
 ### Realtime Private Chat with Laravel Reverb
 
 The backend broadcasts a `PrivateMessageSent` event after a message is stored. The frontend should:
 
 1. Authenticate the current user with the Sanctum Bearer token.
 2. Subscribe to the private channel `private-chat.{conversationId}`.
-3. Listen for the event name `.message_sent` because the event uses `broadcastAs()`.
-4. Append the event payload to the message list, ignoring a duplicate if the HTTP response has already added the same message ID.
+3. Listen for `.message_sent`, `.message_updated`, and `.message_deleted` because the events use `broadcastAs()`.
+4. Append sent messages, replace updated messages by ID, and remove deleted messages by ID.
 5. Unsubscribe when leaving the conversation screen.
 
-Channel authorization is handled by `routes/channels.php`; only `user_one_id` and `user_two_id` may subscribe. The broadcast payload is:
+Channel authorization is handled by `routes/channels.php`; only `user_one_id` and `user_two_id` may subscribe. The `.message_sent` and `.message_updated` payloads contain the complete message:
 
 ```json
 {
@@ -3610,25 +3689,69 @@ Channel authorization is handled by `routes/channels.php`; only `user_one_id` an
 }
 ```
 
-Example frontend pseudocode:
+The `.message_deleted` payload contains only the identifiers needed to remove the message:
 
-```js
+```json
+{
+  "id": "message-uuid",
+  "conversation_id": "conversation-uuid"
+}
+```
+
+Example frontend service methods:
+
+```ts
+async function updatePrivateMessage(conversationId: string, messageId: string, content: string) {
+  const response = await api.put(
+    `/private-chats/${conversationId}/messages/${messageId}`,
+    { content },
+  );
+
+  return response.data.data.message;
+}
+
+async function deletePrivateMessage(conversationId: string, messageId: string) {
+  const response = await api.delete(
+    `/private-chats/${conversationId}/messages/${messageId}`,
+  );
+
+  return response.data.data.message_id;
+}
+```
+
+Example frontend state and realtime integration:
+
+```ts
 const start = await api.post(`/private-chats/start/${friendId}`);
-const conversationId = start.data.conversation.id;
+const conversationId = start.data.data.conversation.id;
 
 const history = await api.get(`/private-chats/${conversationId}/messages`);
-setMessages(history.data.messages);
+setMessages(history.data.data.messages);
 
 reverb.private(`private-chat.${conversationId}`)
   .listen('.message_sent', (message) => {
     setMessages((current) => current.some((item) => item.id === message.id)
       ? current
       : [...current, message]);
+  })
+  .listen('.message_updated', (message) => {
+    setMessages((current) => current.map((item) =>
+      item.id === message.id ? { ...item, ...message } : item,
+    ));
+  })
+  .listen('.message_deleted', ({ id }) => {
+    setMessages((current) => current.filter((item) => item.id !== id));
   });
 
-await api.post(`/private-chats/${conversationId}/messages`, {
-  content: draftMessage,
-});
+const updated = await updatePrivateMessage(conversationId, messageId, editedContent);
+setMessages((current) => current.map((item) =>
+  item.id === updated.id ? { ...item, ...updated } : item,
+));
+
+const deletedId = await deletePrivateMessage(conversationId, messageId);
+setMessages((current) => current.filter((item) => item.id !== deletedId));
 ```
+
+The sender should update local state from the HTTP response because `toOthers()` prevents that sender's socket from receiving its own broadcast. Other conversation participants receive the realtime event. Show edit/delete controls only when `message.sender_id === currentUser.id`; the backend still enforces ownership independently.
 
 ---

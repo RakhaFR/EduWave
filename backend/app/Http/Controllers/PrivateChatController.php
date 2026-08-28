@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\PrivateMessageDeleted;
 use App\Events\PrivateMessageSent;
+use App\Events\PrivateMessageUpdated;
 use App\Http\Requests\PrivateChat\SendPrivateMessageRequest;
 use App\Models\PrivateConversation;
 use App\Models\PrivateMessage;
 use App\Models\User;
+use App\Services\ChatAttachmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -171,5 +174,84 @@ class PrivateChatController extends ApiController
                 ],
             ],
         ], 'Pesan berhasil dikirim.', 201);
+    }
+
+    /**
+     * Update a private message owned by the authenticated sender.
+     * PUT /api/v1/private-chats/{conversation}/messages/{message}
+     */
+    public function updateMessage(SendPrivateMessageRequest $request, PrivateConversation $conversation, PrivateMessage $message): JsonResponse
+    {
+        $authorizationError = $this->authorizeMessageAction($request, $conversation, $message);
+        if ($authorizationError) {
+            return $authorizationError;
+        }
+
+        $message->update($request->validated());
+        $message->load('sender:id,username,full_name,avatar_url');
+        $conversation->touch();
+
+        broadcast(new PrivateMessageUpdated($message))->toOthers();
+
+        return $this->success([
+            'message' => $this->messageData($message),
+        ], 'Pesan berhasil diperbarui.');
+    }
+
+    /**
+     * Delete a private message owned by the authenticated sender.
+     * DELETE /api/v1/private-chats/{conversation}/messages/{message}
+     */
+    public function deleteMessage(Request $request, PrivateConversation $conversation, PrivateMessage $message, ChatAttachmentService $attachments): JsonResponse
+    {
+        $authorizationError = $this->authorizeMessageAction($request, $conversation, $message);
+        if ($authorizationError) {
+            return $authorizationError;
+        }
+
+        broadcast(new PrivateMessageDeleted($conversation, $message->id))->toOthers();
+        $attachments->deleteFromPrivateMessage($message);
+        $message->delete();
+        $conversation->touch();
+
+        return $this->success([
+            'message_id' => $message->id,
+        ], 'Pesan berhasil dihapus.');
+    }
+
+    private function authorizeMessageAction(Request $request, PrivateConversation $conversation, PrivateMessage $message): ?JsonResponse
+    {
+        $user = $request->user();
+
+        if ($message->conversation_id !== $conversation->id) {
+            return $this->error('MESSAGE_NOT_FOUND', 'Pesan tidak ditemukan di percakapan ini.', 404);
+        }
+
+        if ($conversation->user_one_id !== $user->id && $conversation->user_two_id !== $user->id) {
+            return $this->error('UNAUTHORIZED_CONVERSATION', 'Anda tidak memiliki akses ke percakapan ini.', 403);
+        }
+
+        if ($message->sender_id !== $user->id) {
+            return $this->error('MESSAGE_NOT_OWNED', 'Anda hanya dapat mengubah atau menghapus pesan milik sendiri.', 403);
+        }
+
+        return null;
+    }
+
+    private function messageData(PrivateMessage $message): array
+    {
+        return [
+            'id' => $message->id,
+            'conversation_id' => $message->conversation_id,
+            'content' => $message->content,
+            'sender_id' => $message->sender_id,
+            'sent_at' => $message->sent_at,
+            'sender' => $message->sender ? [
+                'id' => $message->sender->id,
+                'username' => $message->sender->username,
+                'full_name' => $message->sender->full_name,
+                'avatar_url' => $message->sender->avatar_url,
+            ] : null,
+        ];
     }
 }

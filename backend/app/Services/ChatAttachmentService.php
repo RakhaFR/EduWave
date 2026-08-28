@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\PrivateMessage;
 use App\Models\RoomMessage;
 use App\Models\StudyRoom;
 use Cloudinary\Api\Upload\UploadApi;
@@ -13,6 +14,14 @@ class ChatAttachmentService
      * Delete every Cloudinary asset referenced by a message.
      */
     public function deleteFromMessage(RoomMessage $message): void
+    {
+        $this->deleteAttachments($message->content);
+    }
+
+    /**
+     * Delete every Cloudinary asset referenced by a private message.
+     */
+    public function deleteFromPrivateMessage(PrivateMessage $message): void
     {
         $this->deleteAttachments($message->content);
     }

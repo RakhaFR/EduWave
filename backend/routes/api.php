@@ -148,6 +148,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('private-chats/{conversation}/messages', [PrivateChatController::class, 'messages'])->name('private-chats.messages.index');
         Route::post('private-chats/{conversation}/messages', [PrivateChatController::class, 'sendMessage'])->name('private-chats.messages.store');
         Route::post('private-chats/{conversation}/attachments', [ChatAttachmentController::class, 'privateChat'])->name('private-chats.attachments.store');
+        Route::put('private-chats/{conversation}/messages/{message}', [PrivateChatController::class, 'updateMessage'])->name('private-chats.messages.update');
+        Route::delete('private-chats/{conversation}/messages/{message}', [PrivateChatController::class, 'deleteMessage'])->name('private-chats.messages.destroy');
 
         // Admin / Instructor only — course management
         Route::middleware('role:admin,instructor')->group(function () {
