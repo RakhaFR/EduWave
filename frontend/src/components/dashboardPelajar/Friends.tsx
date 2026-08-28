@@ -13,6 +13,9 @@ import {
   Smile,
   Paperclip,
   ArrowDown,
+  Check,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import DashboardLayout from "@/components/dashboardPelajar/DashboardLayout";
 import { ChatAttachment, courseService } from "@/services/courseService";
@@ -130,6 +133,10 @@ export default function FriendsComponent() {
   const [chatUnread, setChatUnread] = useState<Record<string, number>>({});
   const [newMessageCount, setNewMessageCount] = useState(0);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
+  const [messageActionId, setMessageActionId] = useState<string | null>(null);
+  const [deleteMessageId, setDeleteMessageId] = useState<string | null>(null);
   const { user: currentUser } = useCurrentUser();
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const shouldScrollMessagesRef = useRef(true);
@@ -358,8 +365,26 @@ export default function FriendsComponent() {
         }
       },
     );
+    channel.listen(".message_updated", (event: PrivateMessage & { message?: PrivateMessage }) => {
+      const updated = event.message ?? event;
+      if (!updated?.id) return;
+      setMessages((current) =>
+        current.map((item) =>
+          item.id === updated.id ? { ...item, ...updated } : item,
+        ),
+      );
+    });
+    channel.listen(".message_deleted", (event: { id?: string; message_id?: string }) => {
+      const deletedId = event.id ?? event.message_id;
+      if (!deletedId) return;
+      setMessages((current) => current.filter((item) => item.id !== deletedId));
+      setEditingMessageId((current) => current === deletedId ? null : current);
+      setDeleteMessageId((current) => current === deletedId ? null : current);
+    });
     return () => {
       channel.stopListening(".message_sent");
+      channel.stopListening(".message_updated");
+      channel.stopListening(".message_deleted");
       echo.leave(channelName);
     };
   }, [selectedChat]);
@@ -402,6 +427,66 @@ export default function FriendsComponent() {
     setAttachment(file);
   };
 
+  const startEditingMessage = (item: PrivateMessage) => {
+    if (isAttachmentContent(item.content)) return;
+    setError("");
+    setEditingMessageId(item.id);
+    setEditingContent(item.content);
+  };
+
+  const cancelEditingMessage = () => {
+    setEditingMessageId(null);
+    setEditingContent("");
+  };
+
+  const updateMessage = async (event: FormEvent, messageId: string) => {
+    event.preventDefault();
+    const content = editingContent.trim();
+    if (!selectedChat || !content) return;
+    setMessageActionId(messageId);
+    setError("");
+    try {
+      const response = await courseService.updatePrivateChatMessage(
+        selectedChat.id,
+        messageId,
+        content,
+      );
+      const updated = response.data?.message ?? response.message;
+      if (updated) {
+        setMessages((current) =>
+          current.map((item) =>
+            item.id === updated.id ? { ...item, ...updated } : item,
+          ),
+        );
+      }
+      cancelEditingMessage();
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "Pesan gagal diubah."));
+    } finally {
+      setMessageActionId(null);
+    }
+  };
+
+  const deleteMessage = async (messageId: string) => {
+    if (!selectedChat) return;
+    setMessageActionId(messageId);
+    setError("");
+    try {
+      const response = await courseService.deletePrivateChatMessage(
+        selectedChat.id,
+        messageId,
+      );
+      const deletedId = response.data?.message_id ?? response.message_id ?? messageId;
+      setMessages((current) => current.filter((item) => item.id !== deletedId));
+      if (editingMessageId === deletedId) cancelEditingMessage();
+      setDeleteMessageId(null);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, "Pesan gagal dihapus."));
+    } finally {
+      setMessageActionId(null);
+    }
+  };
+
   return (
     <DashboardLayout searchPlaceholder="Cari teman...">
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-5 px-4 py-4 md:px-8 md:py-6">
@@ -420,7 +505,11 @@ export default function FriendsComponent() {
           <section className="flex h-[calc(100vh-190px)] min-h-[420px] flex-col overflow-hidden rounded-3xl bg-white shadow-xl">
             <div className="flex items-center gap-3 border-b border-slate-100 p-4">
               <button
-                onClick={() => setSelectedChat(null)}
+                onClick={() => {
+                  setSelectedChat(null);
+                  cancelEditingMessage();
+                  setDeleteMessageId(null);
+                }}
                 className="rounded-xl p-2 text-slate-500 hover:bg-slate-100"
               >
                 <ArrowLeft className="h-5 w-5" />
@@ -473,26 +562,75 @@ export default function FriendsComponent() {
                       <div
                         className={`max-w-[75%] rounded-2xl p-3 shadow-sm ${own ? "bg-[#008be3] text-white" : "bg-white text-slate-900"}`}
                       >
-                        <p
-                          className={`mb-1 text-[10px] font-bold ${own ? "text-white/80" : "text-[#008be3]"}`}
-                        >
-                          {own
-                            ? "Kamu"
-                            : sender?.username ||
-                              selectedChat.friend.username ||
-                              "Teman"}
-                        </p>
-                        <p className="break-words text-sm [overflow-wrap:anywhere]">
-                           {isAttachmentContent(item.content) ? renderAttachment(item.content) : item.content}
-                        </p>
-                        <p
-                          className={`mt-1 text-[10px] ${own ? "text-white/70" : "text-slate-400"}`}
-                        >
-                          {new Date(item.sent_at).toLocaleTimeString("en-US", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
+                        {editingMessageId === item.id ? (
+                          <form onSubmit={(event) => updateMessage(event, item.id)} className="min-w-52">
+                            <input
+                              value={editingContent}
+                              onChange={(event) => setEditingContent(event.target.value)}
+                              maxLength={5000}
+                              autoFocus
+                              className="w-full rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-900 outline-none focus:border-[#008be3]"
+                            />
+                            <div className="mt-2 flex gap-2">
+                              <button
+                                type="submit"
+                                disabled={messageActionId === item.id || !editingContent.trim()}
+                                className="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-1 text-[10px] font-bold text-[#008be3] disabled:opacity-60"
+                              >
+                                <Check className="h-3 w-3" />
+                                Simpan
+                              </button>
+                              <button
+                                type="button"
+                                onClick={cancelEditingMessage}
+                                className="rounded-lg bg-white/15 px-2 py-1 text-[10px] font-bold text-white"
+                              >
+                                Batal
+                              </button>
+                            </div>
+                          </form>
+                        ) : (
+                          <>
+                            <div className="flex items-start justify-between gap-3">
+                              <p className={`mb-1 text-[10px] font-bold ${own ? "text-white/80" : "text-[#008be3]"}`}>
+                                {own ? "Kamu" : sender?.username || selectedChat.friend.username || "Teman"}
+                              </p>
+                              {own && (
+                                <div className="flex gap-1">
+                                  {!isAttachmentContent(item.content) && (
+                                    <button
+                                      type="button"
+                                      onClick={() => startEditingMessage(item)}
+                                      disabled={messageActionId === item.id}
+                                      className="rounded p-1 text-white/70 hover:bg-white/15 hover:text-white"
+                                      aria-label="Edit pesan"
+                                    >
+                                      <Pencil className="h-3 w-3" />
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleteMessageId(item.id)}
+                                    disabled={messageActionId === item.id}
+                                    className="rounded p-1 text-white/70 hover:bg-white/15 hover:text-white"
+                                    aria-label="Hapus pesan"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                            <p className="break-words text-sm [overflow-wrap:anywhere]">
+                              {isAttachmentContent(item.content) ? renderAttachment(item.content) : item.content}
+                            </p>
+                            <p className={`mt-1 text-[10px] ${own ? "text-white/70" : "text-slate-400"}`}>
+                              {new Date(item.sent_at).toLocaleTimeString("en-US", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </p>
+                          </>
+                        )}
                       </div>
                       {own && (
                         <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-[#008be3] text-center text-xs font-bold leading-8 text-white">
@@ -741,6 +879,42 @@ export default function FriendsComponent() {
               </section>
             )}
           </>
+        )}
+        {deleteMessageId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <button
+              type="button"
+              aria-label="Tutup konfirmasi hapus"
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => setDeleteMessageId(null)}
+            />
+            <div className="relative z-10 flex w-full max-w-sm flex-col gap-4 rounded-3xl bg-white p-6 text-center shadow-2xl">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-2xl font-bold text-red-500">!</div>
+              <div>
+                <h3 className="text-base font-extrabold text-[#00172e]">Konfirmasi Hapus</h3>
+                <p className="mt-2 font-medium text-slate-400">
+                  Apakah kamu yakin ingin menghapus pesan ini? Tindakan ini tidak dapat dibatalkan.
+                </p>
+              </div>
+              <div className="mt-4 flex items-center justify-center gap-3.5">
+                <button
+                  type="button"
+                  onClick={() => setDeleteMessageId(null)}
+                  className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 font-bold text-slate-500 hover:bg-slate-50"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => deleteMessageId && deleteMessage(deleteMessageId)}
+                  disabled={messageActionId === deleteMessageId}
+                  className="flex-1 rounded-xl bg-red-500 px-4 py-2.5 font-bold text-white shadow-md hover:bg-red-600 disabled:opacity-60"
+                >
+                  Hapus
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </main>
     </DashboardLayout>

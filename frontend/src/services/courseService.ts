@@ -345,6 +345,16 @@ export const courseService = {
     return response.data;
   },
 
+  async updatePrivateChatMessage(conversationId: string, messageId: string, content: string) {
+    const response = await api.put(`/private-chats/${conversationId}/messages/${messageId}`, { content });
+    return response.data;
+  },
+
+  async deletePrivateChatMessage(conversationId: string, messageId: string) {
+    const response = await api.delete(`/private-chats/${conversationId}/messages/${messageId}`);
+    return response.data;
+  },
+
   async inviteStudyRoomParticipant(roomId: string, userId: string) {
     const response = await api.post(`/study-rooms/${roomId}/invite`, { user_id: userId });
     return response.data;
