@@ -42,7 +42,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <FloatingBubbles count={15} className="z-0 opacity-40 animate-float-bubble" />
 
       {/* --- SIDEBAR DESKTOP (>= 1024px) --- */}
-      <aside className="hidden lg:block w-72 shrink-0 p-4 z-10 fixed top-0 left-0 h-screen overflow-hidden">
+      <aside className="hidden lg:block w-72 shrink-0 p-4 z-20 fixed top-0 left-0 h-screen overflow-hidden">
         <Sidebar showToast={(msg) => showToast(msg)} />
       </aside>
 

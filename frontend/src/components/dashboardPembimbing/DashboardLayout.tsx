@@ -38,7 +38,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="min-h-screen font-sans flex flex-col md:flex-row bg-[#0073e6] text-[#00172e] relative overflow-x-hidden select-none items-stretch">
       <FloatingBubbles count={15} className="z-0 opacity-40 animate-float-bubble" />
 
-      <aside className="hidden lg:block w-72 shrink-0 p-4 z-10 fixed top-0 left-0 h-screen overflow-hidden">
+      <aside className="hidden lg:block w-72 shrink-0 p-4 z-20 fixed top-0 left-0 h-screen overflow-hidden">
         <Sidebar showToast={(msg) => showToast(msg)} />
       </aside>
 
