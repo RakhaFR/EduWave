@@ -42,7 +42,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <Sidebar showToast={(msg) => showToast(msg)} />
       </aside>
 
-      <div className="flex-1 flex flex-col p-4 z-10 min-w-0 lg:pl-72">
+      <div className="flex-1 flex flex-col p-4 z-10 min-w-0 lg:pl-72 relative">
         <Topbar
           searchGlobal={searchGlobal}
           setSearchGlobal={setSearchGlobal}
