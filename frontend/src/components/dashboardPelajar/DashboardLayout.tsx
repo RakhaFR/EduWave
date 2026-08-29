@@ -559,7 +559,7 @@ export default function DashboardLayout({
           />
 
           {/* Drawer */}
-          <div className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-2xl flex flex-col p-6">
+          <div className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-2xl flex flex-col p-6 transform transition-transform animate-slide-in">
             <div className="flex items-center justify-between mb-6">
               <Link
                 href="/pelajar"
