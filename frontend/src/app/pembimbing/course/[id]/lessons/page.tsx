@@ -6,6 +6,7 @@ import { ArrowLeft, Plus, Pencil, Trash2, Video, FileText, HelpCircle, Eye, EyeO
 import { pembimbingService } from "@/services/pembimbingService";
 import { courseService } from "@/services/courseService";
 import { usePageToast, PageToast } from "@/components/ui/PageToast";
+import LessonContentEditor from "@/components/ui/LessonContentEditor";
 
 interface Lesson {
   id: string;
@@ -49,6 +50,7 @@ export default function PembimbingCourseLessonsPage() {
     is_preview: false,
   });
   const [saveLoading, setSaveLoading] = useState(false);
+  const [editLoadingId, setEditLoadingId] = useState<string | null>(null);
 
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
@@ -91,18 +93,28 @@ export default function PembimbingCourseLessonsPage() {
     setIsModalOpen(true);
   }
 
-  function handleOpenEdit(lesson: Lesson) {
-    setEditingLesson(lesson);
-    setFormData({
-      title: lesson.title,
-      type: lesson.type,
-      content: lesson.content || "",
-      video_url: lesson.video_url || "",
-      duration_minutes: lesson.duration_minutes,
-      order: lesson.order,
-      xp_reward: lesson.xp_reward,
-      is_preview: lesson.is_preview,
-    });
+  async function handleOpenEdit(lesson: Lesson) {
+    setEditLoadingId(lesson.id);
+    try {
+      const res = await courseService.getLessonById(lesson.id);
+      const detail: Lesson = res.data?.lesson ?? res.data ?? res;
+      setEditingLesson(detail);
+      setFormData({
+        title: detail.title,
+        type: detail.type,
+        content: detail.content || "",
+        video_url: detail.video_url || "",
+        duration_minutes: detail.duration_minutes,
+        order: detail.order,
+        xp_reward: detail.xp_reward,
+        is_preview: detail.is_preview,
+      });
+    } catch {
+      showToast("Gagal memuat detail lesson.", "error");
+      return;
+    } finally {
+      setEditLoadingId(null);
+    }
     setIsModalOpen(true);
   }
 
@@ -199,8 +211,8 @@ export default function PembimbingCourseLessonsPage() {
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">{lesson.type} • {lesson.duration_minutes} menit • {lesson.xp_reward} XP</p>
                 </div>
-                <button onClick={() => handleOpenEdit(lesson)} className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer">
-                  <Pencil className="w-4 h-4" />
+                <button onClick={() => handleOpenEdit(lesson)} disabled={editLoadingId === lesson.id} className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer disabled:opacity-50">
+                  {editLoadingId === lesson.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}
                 </button>
                 <button onClick={() => setDeleteConfirm(lesson.id)} className="p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 transition-colors cursor-pointer">
                   <Trash2 className="w-4 h-4" />
@@ -256,7 +268,11 @@ export default function PembimbingCourseLessonsPage() {
                   <>
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-1.5">Konten Teks (Opsional)</label>
-                      <textarea rows={4} value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} placeholder="Isi konten lesson..." className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-blue-400 transition-all text-slate-700 resize-none" />
+                      <LessonContentEditor
+                        key={editingLesson?.id ?? "new"}
+                        value={formData.content}
+                        onChange={(val) => setFormData({ ...formData, content: val })}
+                      />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

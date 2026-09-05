@@ -8,17 +8,18 @@ import {
   BookOpen, Sparkles, Menu, X, ChevronRight, ChevronLeft,
   FileText, Video, List,
 } from "lucide-react";
+import { marked } from "marked";
 import { courseService, Lesson } from "@/services/courseService";
 import StudentTutorial from "@/components/ui/StudentTutorial";
 import AiChat from "@/components/ui/AiChat";
 
 function MarkdownRenderer({ content }: { content: string }) {
+  const html = useMemo(() => marked.parse(content) as string, [content]);
   return (
     <div
-      className="prose prose-slate max-w-none text-sm leading-relaxed whitespace-pre-wrap"
-    >
-      {content}
-    </div>
+      className="lesson-prose"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
   );
 }
 
